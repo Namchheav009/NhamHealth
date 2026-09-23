@@ -63,6 +63,31 @@ class FoodDatabaseMatchingServiceTests {
         verify(corrections).findLearnedCorrection("mystery tea");
     }
 
+    @Test
+    void matchesPreparationVariantsUsingSharedCoreIngredientTokens() {
+        FoodNutritionRepository repository = mock(FoodNutritionRepository.class);
+        when(repository.findAllByActiveTrue()).thenReturn(List.of(
+                food("Grilled Chicken Breast", "Chicken Breast")));
+        FoodDatabaseMatchingService service = new FoodDatabaseMatchingService(repository, 0.78);
+
+        var match = service.findReliableMatch("Diced chicken breast");
+
+        assertTrue(match.isPresent());
+        assertEquals("Grilled Chicken Breast", match.get().food().getName());
+    }
+
+    @Test
+    void doesNotPromoteBroadSingleTokenIngredientMatch() {
+        FoodNutritionRepository repository = mock(FoodNutritionRepository.class);
+        when(repository.findAllByActiveTrue()).thenReturn(List.of(
+                food("Cooked Jasmine Rice", "Steamed rice")));
+        FoodDatabaseMatchingService service = new FoodDatabaseMatchingService(repository, 0.78);
+
+        var match = service.findReliableMatch("rice");
+
+        assertTrue(match.isEmpty());
+    }
+
     private FoodNutrition food(String name, String aliases) {
         FoodNutrition food = new FoodNutrition();
         food.setName(name);

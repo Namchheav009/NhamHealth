@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/planner/meal_planner_controller.dart';
+import 'package:nhamhealth_flutter/app/modules/models/planner/ai_meal_recommendation_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/planner/meal_plan.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/planner/meal_planner_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/views/planner/planner_shared.dart';
@@ -1318,4 +1319,94 @@ void main() {
     expect(controller.plans[tomorrowKey], isEmpty);
     expect(deletedMealIds, containsAll([10, 20, 30]));
   });
+
+  test(
+    'AiMealRecommendationResult parses ADD and SWAP responses correctly',
+    () {
+      final json = {
+        'recommendedMeal': {
+          'plannerMealId': 501,
+          'mealName': 'Healthy Khmer Soup',
+          'calories': 380,
+          'proteinGrams': 26.5,
+          'mealSlot': 'LUNCH',
+        },
+        'alternatives': [
+          {
+            'plannerMealId': 502,
+            'mealName': 'Steamed Fish with Greens',
+            'calories': 350,
+            'proteinGrams': 30.0,
+            'mealSlot': 'LUNCH',
+          },
+        ],
+        'aiRationale': 'សមស្របសម្រាប់ការគ្រប់គ្រងទម្ងន់',
+        'actionType': 'ADD',
+        'modelUsed': 'gemini-3.5-flash-lite',
+      };
+
+      final result = AiMealRecommendationResult.fromJson(
+        json,
+        defaultSlot: MealPlanSlot.lunch,
+      );
+
+      expect(result.recommendedMeal.id, 501);
+      expect(result.recommendedMeal.name, 'Healthy Khmer Soup');
+      expect(result.recommendedMeal.calories, 380);
+      expect(result.recommendedMeal.slot, MealPlanSlot.lunch);
+      expect(result.alternatives.length, 1);
+      expect(result.alternatives.first.id, 502);
+      expect(result.aiRationale, 'សមស្របសម្រាប់ការគ្រប់គ្រងទម្ងន់');
+      expect(result.actionType, 'ADD');
+      expect(result.modelUsed, 'gemini-3.5-flash-lite');
+    },
+  );
+
+  test(
+    'controller.getAiMealRecommendation requests AI suggestion and returns result',
+    () async {
+      final client = MockClient((request) async {
+        if (request.url.path.contains('/api/v1/meal-planner/recommend-meal')) {
+          return http.Response(
+            jsonEncode({
+              'recommendedMeal': {
+                'plannerMealId': 601,
+                'mealName': 'Brown Rice Bowl',
+                'calories': 420,
+                'proteinGrams': 22.0,
+                'mealSlot': 'DINNER',
+              },
+              'alternatives': [],
+              'aiRationale': 'ល្អសម្រាប់អាហារពេលល្ងាច',
+              'actionType': 'SWAP',
+              'modelUsed': 'gemini-3.5-flash-lite',
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response('[]', 404);
+      });
+
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: client,
+      );
+      final controller = MealPlannerController(
+        provider: provider,
+        storage: const FlutterSecureStorage(),
+        authService: _FakeAuthService(),
+      );
+
+      final res = await controller.getAiMealRecommendation(
+        slot: MealPlanSlot.dinner,
+      );
+
+      expect(res, isNotNull);
+      expect(res!.recommendedMeal.id, 601);
+      expect(res.recommendedMeal.name, 'Brown Rice Bowl');
+      expect(res.actionType, 'SWAP');
+      expect(res.aiRationale, 'ល្អសម្រាប់អាហារពេលល្ងាច');
+    },
+  );
 }

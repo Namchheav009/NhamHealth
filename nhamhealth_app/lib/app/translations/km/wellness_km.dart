@@ -327,6 +327,12 @@ const Map<String, String> wellnessKm = {
   'wellness.review_and_adjust_ingredients':
       'ពិនិត្យ និងកែសម្រួលគ្រឿងផ្សំប្រសិនបើចាំបាច់។',
   'wellness.add_ingredient': 'បន្ថែមគ្រឿងផ្សំ',
+  'wellness.analyze_ingredients_again': 'វិភាគម្តងទៀត',
+  'wellness.analyzing_ingredients': 'កំពុងវិភាគ…',
+  'wellness.ingredient_reanalysis_error':
+      'មិនអាចវិភាគគ្រឿងផ្សំដែលបានកែប្រែបានទេ។ សូមព្យាយាមម្តងទៀត។',
+  'wellness.ingredient_reanalysis_success':
+      'បានកែប្រែការប៉ាន់ស្មានអាហារូបត្ថម្ភ និងជាតិស្កររួចរាល់។',
   'wellness.ai_ingredient_analysis': 'ការវិភាគគ្រឿងផ្សំដោយ AI',
   'wellness.identity_confidence': 'ភាពជឿជាក់លើគ្រឿងផ្សំ',
   'wellness.portion_confidence': 'ភាពជឿជាក់លើបរិមាណ',

@@ -47,6 +47,7 @@ class AiFoodController extends GetxController {
   final isModelLoading = false.obs;
   final isAnalyzing = false.obs;
   final isNutritionLoading = false.obs;
+  final isReanalyzingIngredients = false.obs;
   final isSaving = false.obs;
   final isFeedbackSaving = false.obs;
   final analysisStage = 0.obs;
@@ -849,6 +850,22 @@ class AiFoodController extends GetxController {
     plateItems.clear();
     final items = FoodDecompositionService.decompose(food);
     plateItems.assignAll(items);
+    unawaited(_hydratePlateIngredientImages());
+  }
+
+  Future<void> _hydratePlateIngredientImages() async {
+    final snapshot = List<PlateItemState>.from(plateItems);
+    await Future.wait(
+      snapshot.map((item) async {
+        final imageUrl = await nutritionRepository.lookupIngredientImage(
+          item.name,
+        );
+        if (imageUrl != null && imageUrl.isNotEmpty && plateItems.contains(item)) {
+          item.imageUrl = imageUrl;
+        }
+      }),
+    );
+    plateItems.refresh();
   }
 
   void togglePlateItem(int index) {
@@ -903,6 +920,91 @@ class AiFoodController extends GetxController {
     );
     _syncNutritionFromPlate();
   }
+
+  Future<bool> reanalyzePlateIngredients() async {
+    if (isReanalyzingIngredients.value) return false;
+    final selected = plateItems.where((item) => item.isSelected).toList();
+    if (selected.isEmpty) return false;
+    isReanalyzingIngredients.value = true;
+    try {
+      final payload = await nutritionRepository.reanalyzeIngredients(
+        selected
+            .map(
+              (item) => <String, dynamic>{
+                'name': item.name,
+                'estimatedAmount': item.servingSize,
+                'unit': item.unit,
+                'confidence': item.confidence,
+                'portionConfidence': item.portionConfidence,
+                'preparationMethod': item.preparationMethod,
+                'visibleEvidence':
+                    item.visibleEvidence.trim().isNotEmpty
+                        ? item.visibleEvidence
+                        : 'User added or confirmed this ingredient in Plate Breakdown.',
+                'componentType': item.componentType,
+                'liquidVolumeMl':
+                    item.componentType == 'drink' ? item.servingSize : 0,
+                'beverageType':
+                    item.componentType == 'drink' ? item.name : 'none',
+              },
+            )
+            .toList(growable: false),
+      );
+      final rawIngredients = payload['ingredients'];
+      if (rawIngredients is! List || rawIngredients.length != selected.length) {
+        throw const FoodNutritionException(
+          'The ingredient analysis response was incomplete.',
+        );
+      }
+      for (var index = 0; index < selected.length; index++) {
+        final raw = rawIngredients[index];
+        if (raw is! Map) continue;
+        final values = Map<String, dynamic>.from(raw);
+        final item = selected[index];
+        item.baseCalories = _jsonNumber(values['calories']);
+        item.baseProtein = _jsonNumber(values['protein']);
+        item.baseCarbs = _jsonNumber(values['carbohydrates']);
+        item.baseFat = _jsonNumber(values['fat']);
+        item.baseSugar = _jsonNumber(values['sugar']);
+        item.baseFiber = _jsonNumber(values['fiber']);
+        item.baseSodium = _jsonNumber(values['sodium']);
+        item.baseServingSize = _jsonNumber(
+          values['estimatedAmount'],
+          fallback: item.servingSize,
+        );
+        item.portionMultiplier = 1;
+        item.confidence = _jsonNumber(
+          values['confidence'],
+          fallback: item.confidence,
+        );
+        item.databaseMatched = values['databaseMatched'] == true;
+        item.databaseMatchConfidence = _jsonNumber(
+          values['databaseMatchConfidence'],
+        );
+        item.nutritionSource =
+            values['nutritionSource']?.toString() ?? 'AI_ESTIMATED';
+        item.requiresUserConfirmation =
+            values['requiresUserConfirmation'] == true;
+        item.imageUrl = values['imageUrl']?.toString() ?? item.imageUrl;
+      }
+      plateItems.refresh();
+      _syncNutritionFromPlate();
+      unawaited(_hydratePlateIngredientImages());
+      AppAlert.toast(message: 'wellness.ingredient_reanalysis_success'.tr);
+      return true;
+    } catch (_) {
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'wellness.ingredient_reanalysis_error'.tr,
+      );
+      return false;
+    } finally {
+      isReanalyzingIngredients.value = false;
+    }
+  }
+
+  double _jsonNumber(Object? value, {double fallback = 0}) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 
   void _syncNutritionFromPlate() {
     final current = nutrition.value;

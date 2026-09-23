@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
+import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../models/planner/weight_loss_forecast_model.dart';
 
@@ -91,6 +92,46 @@ class MealPlannerProvider {
       );
     }
     return AiAutoFillPlanResponse.fromJson(payload);
+  }
+
+  Future<AiMealRecommendationResult> recommendMeal({
+    required DateTime date,
+    required MealPlanSlot slot,
+    MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
+    int? currentMealId,
+    String? actionType,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meal-planner/recommend-meal',
+    ).replace(queryParameters: {'lang': _lang});
+    final headers = await _headers();
+    headers['Content-Type'] = 'application/json';
+    final body = {
+      'date': _date(date),
+      'slot': slot.name.toUpperCase(),
+      'goal': goal.apiValue,
+      'currentMealId': currentMealId,
+      'actionType': actionType ?? (currentMealId != null ? 'SWAP' : 'ADD'),
+    };
+    final response = await _client
+        .post(uri, headers: headers, body: jsonEncode(body))
+        .timeout(const Duration(seconds: 25));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MealPlannerProviderException(
+        'Unable to get AI meal recommendation.',
+        statusCode: response.statusCode,
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! Map) {
+      throw const MealPlannerProviderException(
+        'AI meal recommendation response is incomplete.',
+      );
+    }
+    return AiMealRecommendationResult.fromJson(
+      Map<String, dynamic>.from(payload),
+      defaultSlot: slot,
+    );
   }
 
   Future<List<PlannedMeal>> getRecommendations({

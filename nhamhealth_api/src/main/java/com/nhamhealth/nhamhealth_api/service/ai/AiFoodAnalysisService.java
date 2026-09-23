@@ -20,6 +20,7 @@ import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionResult;
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodDetectionResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AiIngredientReanalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.DetectedFoodComponent;
 import com.nhamhealth.nhamhealth_api.dto.response.NutritionSource;
 import com.nhamhealth.nhamhealth_api.dto.response.NutritionSummaryResponse;
@@ -91,6 +92,32 @@ public class AiFoodAnalysisService {
                                 vision.mealConfidence(),
                                 vision.cuisine() != null ? vision.cuisine() : "Unknown",
                                 vision.candidates() != null ? vision.candidates() : List.of());
+        }
+
+        /**
+         * Recalculates nutrition after a user reviews or adds plate ingredients.
+         * Database matches are preferred; Gemini estimates only unmatched ingredients.
+         */
+        public AiIngredientReanalysisResponse reanalyzeIngredients(List<FoodVisionComponent> ingredients) {
+                if (ingredients == null || ingredients.isEmpty()) {
+                        throw new IllegalArgumentException("At least one ingredient is required.");
+                }
+                if (ingredients.size() > 30) {
+                        throw new IllegalArgumentException("No more than 30 ingredients can be analyzed at once.");
+                }
+                for (FoodVisionComponent ingredient : ingredients) {
+                        if (ingredient == null || ingredient.name() == null || ingredient.name().isBlank()
+                                        || ingredient.name().trim().length() > 120
+                                        || !Double.isFinite(ingredient.estimatedAmount())
+                                        || ingredient.estimatedAmount() <= 0
+                                        || ingredient.estimatedAmount() > 10_000) {
+                                throw new IllegalArgumentException("Each ingredient needs a valid name and amount.");
+                        }
+                }
+                ComponentEnrichment enrichment = matchCalculateAndEstimate(ingredients);
+                return new AiIngredientReanalysisResponse(
+                                enrichment.components(),
+                                calculationService.aggregate(enrichment.components()));
         }
 
         @Transactional

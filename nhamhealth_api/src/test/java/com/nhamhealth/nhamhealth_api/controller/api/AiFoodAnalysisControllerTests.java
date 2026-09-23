@@ -14,11 +14,45 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.service.ai.AiFoodAnalysisService;
+import com.nhamhealth.nhamhealth_api.dto.ai.FoodVisionComponent;
+import com.nhamhealth.nhamhealth_api.dto.request.AiIngredientReanalysisRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodDetectionResponse;
 import com.nhamhealth.nhamhealth_api.service.notification.UserNotificationService;
 
 class AiFoodAnalysisControllerTests {
+
+    @Test
+    void reanalyzesUserEditedIngredients() {
+        AiFoodAnalysisService service = mock(AiFoodAnalysisService.class);
+        AiFoodAnalysisController controller = new AiFoodAnalysisController(
+                service, mock(UserNotificationService.class));
+        Jwt jwt = mock(Jwt.class);
+        when(jwt.getClaim("userId")).thenReturn(7);
+        FoodVisionComponent ingredient = new FoodVisionComponent(
+                "Brown sugar", 20, "g", 1, 1, "added", "user supplied");
+        AiIngredientReanalysisRequest request = new AiIngredientReanalysisRequest(
+                java.util.List.of(ingredient));
+
+        controller.reanalyzeIngredients(jwt, request);
+
+        verify(service).reanalyzeIngredients(java.util.List.of(ingredient));
+    }
+
+    @Test
+    void ingredientReanalysisRequiresAuthentication() {
+        AiFoodAnalysisController controller = new AiFoodAnalysisController(
+                mock(AiFoodAnalysisService.class), mock(UserNotificationService.class));
+        AiIngredientReanalysisRequest request = new AiIngredientReanalysisRequest(
+                java.util.List.of(new FoodVisionComponent(
+                        "Rice", 100, "g", 1, 1, "cooked", "user supplied")));
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.reanalyzeIngredients(null, request));
+
+        assertEquals(401, error.getStatusCode().value());
+    }
 
     @Test
     void detectionRunsBeforeFullAnalysisWithoutSaving() throws Exception {

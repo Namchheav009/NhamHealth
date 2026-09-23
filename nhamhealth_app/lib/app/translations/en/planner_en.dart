@@ -19,7 +19,7 @@ const Map<String, String> plannerEn = {
   'planner.today': 'Today',
   'planner.tab_today': "Today's Plan",
   'planner.tab_forecast': 'Forecast & Week',
-  'planner.quick_auto_fill_title': 'Auto-Fill Empty Meals with AI',
+  'planner.quick_auto_fill_title': 'Add Recommended Meals',
   'planner.quick_auto_fill_desc':
       'Balanced for your goal with zero duplicate meals.',
   'planner.quick_auto_fill_btn': 'Auto-Fill Now',
@@ -74,15 +74,15 @@ const Map<String, String> plannerEn = {
   'planner.analysis_food_maintain': 'Maintenance Food Analysis',
   'planner.analysis_drink_loss': 'Weight Loss Beverage Analysis',
   'planner.analysis_drink_maintain': 'Health & Vitality Beverage Analysis',
-  'planner.autofill_btn_loss': 'Auto-Fill for Weight Loss',
+  'planner.autofill_btn_loss': 'Add Recommended Meals',
   'planner.autofill_btn_maintain': 'Auto-Fill for Maintenance',
-  'planner.autofill_title_loss': 'AI Auto-Fill for Weight Loss',
-  'planner.autofill_title_maintain': 'AI Auto-Fill for Maintenance',
+  'planner.autofill_title_loss': 'Recommended Meals for Your Goal',
+  'planner.autofill_title_maintain': 'Recommended Meals for Maintenance',
   'planner.autofill_desc_loss':
-      'Fills calorie-controlled, high-protein meals tailored to your fat loss deficit.',
+      'Choose suitable meals from our catalog and add them to your plan.',
   'planner.autofill_desc_maintain':
       'Fills varied, nutrient-dense meals supporting steady energy and stable weight.',
-  'planner.autofill_action_loss': 'Auto-Fill Weight Loss Plan',
+  'planner.autofill_action_loss': 'Add Recommended Meals',
   'planner.autofill_action_maintain': 'Auto-Fill Maintenance Plan',
   'planner.analyzed_badge': 'Analyzed',
   'planner.view_weight_loss_analysis': 'Weight Loss Analysis',
@@ -92,7 +92,7 @@ const Map<String, String> plannerEn = {
       'Open your Weight Loss analysis in its focused page.',
   'planner.analysis_center_preview_desc':
       'Preview the outlook for your currently selected goal.',
-  'planner.analysis_ready': 'AI analysis ready',
+  'planner.analysis_ready': 'Analysis ready',
   'planner.analysis_preview': 'Goal outlook',
   'planner.analysis_loss_page_desc':
       'A calorie-aware outlook focused on steady, sustainable weight loss.',
@@ -155,7 +155,7 @@ const Map<String, String> plannerEn = {
   'planner.tab_suitable_foods': 'Suitable Foods',
   'planner.tab_healthy_beverages': 'Healthy Beverages',
   'planner.add_to_plan': 'Add to Plan',
-  'planner.ai_suggestion_for_slot': 'AI suggestion for @slot',
+  'planner.ai_suggestion_for_slot': 'Recommended for @slot',
   'planner.suggested_swap': 'Suggested alternative',
   'planner.suggested_meal': 'Suggested meal',
   'planner.smart_plan_ready': 'Smart plan ready',
@@ -371,7 +371,7 @@ const Map<String, String> plannerEn = {
   'planner.grocery_no_meal_source': 'No linked meal details are available.',
   'planner.grocery_mark_bought': 'Mark as bought',
   'planner.grocery_mark_needed': 'Mark as needed',
-  'planner.grocery_analyze_nutrition': 'AI & database nutrition details',
+  'planner.grocery_analyze_nutrition': 'Nutrition details',
   'planner.grocery_list_help':
       'Ingredients are combined from every meal in your weekly plan.',
   'planner.empty_grocery_list':
@@ -413,8 +413,8 @@ const Map<String, String> plannerEn = {
   'planner.ingredient_cashews': 'Cashews',
   'planner.ingredient_apple': 'Apple',
   'planner.ingredient_peanut_butter': 'Peanut butter',
-  'planner.autofill_ai_title': 'AI Auto-Fill Plan',
-  'planner.autofill_ai_btn': 'Auto-Fill Plan with AI',
+  'planner.autofill_ai_title': 'Meal Recommendations',
+  'planner.autofill_ai_btn': 'Add Recommended Meals',
   'planner.autofill_mode_empty_only': 'Fill Empty Slots Only',
   'planner.autofill_mode_empty_only_desc':
       'Keeps your already planned meals and fills remaining gaps.',
@@ -451,8 +451,8 @@ const Map<String, String> plannerEn = {
       'Calorie deficit for sustainable fat loss with high protein to protect muscle.',
   'planner.goal_maintain_card_desc':
       'Calorie balance with nutrient-dense meals for all-day energy and weight stability.',
-  'planner.clinical_fallback': 'Nutrition rules • Offline fallback',
-  'planner.autofill_action_banner_btn': 'Auto-Fill Plan with AI',
+  'planner.clinical_fallback': 'Nutrition-based recommendations',
+  'planner.autofill_action_banner_btn': 'Add Recommended Meals',
   'planner.dietary_safety': 'Dietary safety and preferences',
   'planner.dietary_safety_help':
       'Only listed allergies can be selected here. If yours is missing, choose meals manually. Always verify ingredients and cross-contact.',
@@ -468,11 +468,24 @@ const Map<String, String> plannerEn = {
   'planner.medical_diabetes': 'Diabetes',
   'planner.medical_hypertension': 'High blood pressure',
   'planner.medical_disclaimer':
-      'AI meal plans are general guidance, not medical advice. If you are pregnant, breastfeeding, under 18, or managing a medical condition, consult a qualified clinician before changing your diet.',
+      'Meal recommendations are general guidance, not medical advice. If you are pregnant, breastfeeding, under 18, or managing a medical condition, consult a qualified clinician before changing your diet.',
   'planner.restrictions_no_match':
       'No meals match these dietary restrictions. Review your exclusions and try again.',
   'planner.medical_review_required': 'Medical review recommended',
   'planner.pregnancy_weight_loss_warning':
       'Weight-loss auto-planning is not available during pregnancy or breastfeeding. Please consult your clinician for an appropriate meal plan.',
   'planner.autofill_unavailable': 'Auto-Fill unavailable',
+  'planner.ai_suggest_meal': 'Recommend a Meal',
+  'planner.ai_suggest_swap': 'Recommend an Alternative',
+  'planner.ai_recommending_add': 'Finding a suitable meal...',
+  'planner.ai_recommending_swap': 'Finding a suitable alternative...',
+  'planner.ai_recommend_title': 'Meal Recommendation',
+  'planner.ai_swap_title': 'Recommended Alternative',
+  'planner.ai_recommendation_error':
+      'Unable to get a meal recommendation. Please try again.',
+  'planner.meal_added_success': 'Meal added to your schedule!',
+  'planner.meal_swapped_success': 'Meal swapped successfully!',
+  'planner.accept_and_add': 'Add to Plan',
+  'planner.accept_and_swap': 'Confirm Swap',
+  'planner.other_alternatives': 'Other Alternatives',
 };

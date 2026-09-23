@@ -18,6 +18,7 @@ import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
 import '../../models/auth/authenticated_user_model.dart';
+import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
 import 'planner_shared.dart';
 
@@ -851,8 +852,8 @@ class _MealPlannerViewState extends State<MealPlannerView>
       padding: const EdgeInsets.only(bottom: 16),
       child: _goalAutoFillCard(
         context,
-        accentColor: const Color(0xFF0F62FE),
-        icon: Icons.directions_run_rounded,
+        accentColor: AppColors.primaryGreen,
+        icon: Icons.restaurant_menu_rounded,
         title: 'planner.autofill_title_loss'.tr,
         description: 'planner.autofill_desc_loss'.tr,
         buttonLabel: 'planner.autofill_btn_loss'.tr,
@@ -875,16 +876,12 @@ class _MealPlannerViewState extends State<MealPlannerView>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              accentColor.withValues(alpha: 0.12),
-              accentColor.withValues(alpha: 0.03),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color:
+              context.appIsDark
+                  ? context.appSurfaceLow
+                  : accentColor.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
+          border: Border.all(color: accentColor.withValues(alpha: 0.28)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1835,18 +1832,71 @@ class _MealPlannerViewState extends State<MealPlannerView>
                     ),
                     const SizedBox(width: 8),
                     if (meal == null)
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap:
+                                  () => _recommendAndShowSheet(
+                                    context,
+                                    slot: slot,
+                                  ),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryGreen.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppColors.primaryGreen.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.auto_awesome_rounded,
+                                      size: 13,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'planner.ai_suggest_meal'.tr,
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primaryGreen,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ],
                       )
                     else
                       Column(
@@ -2064,6 +2114,19 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   },
                   context: context,
                 ),
+                sheetAction(
+                  Icons.auto_awesome_rounded,
+                  'planner.ai_suggest_swap'.tr,
+                  () {
+                    Get.back<void>();
+                    _recommendAndShowSheet(
+                      context,
+                      slot: meal.slot,
+                      currentMeal: meal,
+                    );
+                  },
+                  context: context,
+                ),
                 sheetAction(Icons.sync_rounded, 'planner.replace_meal'.tr, () {
                   Get.back<void>();
                   Get.toNamed(
@@ -2140,6 +2203,26 @@ class _MealPlannerViewState extends State<MealPlannerView>
               ],
             ),
           ),
+        ),
+  );
+
+  Future<void> _recommendAndShowSheet(
+    BuildContext context, {
+    required MealPlanSlot slot,
+    PlannedMeal? currentMeal,
+  }) => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: context.appSurfaceLow,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+    ),
+    builder:
+        (sheetContext) => _AiMealRecommendationSheet(
+          slot: slot,
+          currentMeal: currentMeal,
+          controller: controller,
         ),
   );
 
@@ -2795,5 +2878,557 @@ class _MealPlannerViewState extends State<MealPlannerView>
     }
 
     Get.toNamed(AppRoutes.mealPlannerGrocery);
+  }
+}
+
+class _AiMealRecommendationSheet extends StatefulWidget {
+  const _AiMealRecommendationSheet({
+    required this.slot,
+    this.currentMeal,
+    required this.controller,
+  });
+
+  final MealPlanSlot slot;
+  final PlannedMeal? currentMeal;
+  final MealPlannerController controller;
+
+  @override
+  State<_AiMealRecommendationSheet> createState() =>
+      _AiMealRecommendationSheetState();
+}
+
+class _AiMealRecommendationSheetState
+    extends State<_AiMealRecommendationSheet> {
+  bool _loading = true;
+  AiMealRecommendationResult? _result;
+  String? _errorMessage;
+  int? _applyingMealId;
+
+  bool get isSwap => widget.currentMeal != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecommendation();
+  }
+
+  Future<void> _fetchRecommendation() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+    try {
+      final res = await widget.controller.getAiMealRecommendation(
+        slot: widget.slot,
+        currentMeal: widget.currentMeal,
+      );
+      if (!mounted) return;
+      if (res != null) {
+        setState(() {
+          _result = res;
+          _loading = false;
+        });
+      } else {
+        final err = widget.controller.recommendationsError.value;
+        setState(() {
+          _errorMessage =
+              err.isNotEmpty ? err : 'planner.ai_recommendation_error'.tr;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'planner.ai_recommendation_error'.tr;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _applyMeal(PlannedMeal meal) async {
+    if (_applyingMealId != null) return;
+    setState(() => _applyingMealId = meal.id);
+    try {
+      bool success;
+      if (isSwap) {
+        success = await widget.controller.replaceMeal(
+          widget.currentMeal!,
+          meal,
+        );
+      } else {
+        success = await widget.controller.addMeal(
+          meal,
+          targetSlot: widget.slot,
+        );
+      }
+      if (!mounted) return;
+      if (success) {
+        Navigator.of(context).pop();
+        AppAlert.toast(
+          message:
+              isSwap
+                  ? 'planner.meal_swapped_success'.tr
+                  : 'planner.meal_added_success'.tr,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _applyingMealId = null);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: context.appBorder,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isSwap
+                              ? 'planner.ai_swap_title'.tr
+                              : 'planner.ai_recommend_title'.tr,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          widget.slot.labelKey.tr,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    style: IconButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(32, 32),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 14),
+              Flexible(
+                child: SingleChildScrollView(child: _buildBody(context)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_loading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        child: Column(
+          children: [
+            const SizedBox(
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.primaryGreen,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              isSwap
+                  ? 'planner.ai_recommending_swap'.tr
+                  : 'planner.ai_recommending_add'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_errorMessage != null || _result == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
+        child: Column(
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              size: 40,
+              color: context.appMutedText,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage ?? 'planner.ai_recommendation_error'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: _fetchRecommendation,
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: Text('planner.retry'.tr),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final recMeal = _result!.recommendedMeal;
+    final rationale = _result!.aiRationale;
+    final alts = _result!.alternatives;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (rationale.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.primaryGreen.withValues(alpha: 0.22),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.primaryGreen,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    rationale,
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 13,
+                      height: 1.45,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        _buildHeroMealCard(context, recMeal),
+        if (alts.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Text(
+                'planner.other_alternatives'.tr,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: context.appBorder.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${alts.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: context.appMutedText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...alts.map((alt) => _buildAlternativeTile(context, alt)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildHeroMealCard(BuildContext context, PlannedMeal meal) {
+    final isBusy = _applyingMealId == meal.id;
+    return Container(
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              PlannerMealImage(meal: meal, width: 64, height: 64, radius: 14),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plannerMealName(meal),
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        _metricBadge(
+                          context,
+                          Icons.local_fire_department_outlined,
+                          '${meal.calories.round()} ${'planner.kcal'.tr}',
+                        ),
+                        _metricBadge(
+                          context,
+                          Icons.bolt_rounded,
+                          '${meal.proteinGrams.toStringAsFixed(0)}g ${'planner.protein'.tr}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 44,
+            child: ElevatedButton(
+              onPressed: isBusy ? null : () => _applyMeal(meal),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child:
+                  isBusy
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isSwap
+                                ? Icons.sync_rounded
+                                : Icons.add_circle_outline_rounded,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isSwap
+                                ? 'planner.accept_and_swap'.tr
+                                : 'planner.accept_and_add'.tr,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlternativeTile(BuildContext context, PlannedMeal meal) {
+    final isBusy = _applyingMealId == meal.id;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        children: [
+          PlannerMealImage(meal: meal, width: 48, height: 48, radius: 10),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  plannerMealName(meal),
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${meal.calories.round()} ${'planner.kcal'.tr} • ${meal.proteinGrams.toStringAsFixed(0)}g ${'planner.protein'.tr}',
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: isBusy ? null : () => _applyMeal(meal),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: const BorderSide(color: AppColors.primaryGreen),
+              foregroundColor: AppColors.primaryGreen,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child:
+                isBusy
+                    ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primaryGreen,
+                        ),
+                      ),
+                    )
+                    : Text(
+                      'planner.select'.tr,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricBadge(BuildContext context, IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: context.appMutedText),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            color: context.appMutedText,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -70,6 +70,14 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             when the defining ingredients or preparation are not visible. Candidate names must be
             meaningfully different food identities, not spelling variants or synonyms.
 
+            Name every component with a short, common, database-searchable ingredient name.
+            Prefer "Chicken breast", "Jasmine rice", "Egg", "Cooking oil", "Carrot", or
+            "Fish sauce" over decorative menu language such as "tender protein cut", "savory
+            seasoning blend", or "fresh garden vegetables". Put preparation details in
+            preparationMethod instead of embedding unnecessary adjectives in the component name.
+            When a specific variety is not visually defensible, use the common parent ingredient
+            rather than inventing a premium, organic, regional, or brand-specific variety.
+
             Partition all consumable content into non-overlapping nutrition components. For plated
             meals and composite dishes (such as fried rice, noodle dishes, stir-fries, bowls, burgers,
             sandwiches, or curries), itemize the visible constituent ingredients and culinary components
@@ -190,7 +198,7 @@ public class GeminiFoodVisionService implements FoodVisionProvider {
             @Value("${app.ai.gemini.api-key:}") String apiKey,
             @Value("${app.ai.gemini.vision-model:${app.ai.gemini.model:gemini-3.5-flash-lite}}") String model,
             @Value("${app.ai.gemini.vision-fallback-model:${app.ai.gemini.fallback-model:gemini-3.6-flash}}") String fallbackModel,
-            @Value("${app.ai.prompt-version:food-drink-vision-v9}") String promptVersion,
+            @Value("${app.ai.prompt-version:food-drink-vision-v10}") String promptVersion,
             @Value("${app.ai.gemini.text-max-tokens:8192}") int maxTokens,
             @Autowired(required = false) NvidiaFoodVisionService nvidiaFallback,
             GeminiRateLimitGuard rateLimitGuard) {

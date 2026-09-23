@@ -44,6 +44,7 @@ class FoodNutritionRepository {
   final TokenStorage _tokenStorage;
   final AuthService? _authService;
   final Map<String, FoodNutritionModel> _searchCache = {};
+  final Map<String, String?> _ingredientImageCache = {};
 
   AuthService get _effectiveAuthService =>
       _authService ??
@@ -52,6 +53,48 @@ class FoodNutritionRepository {
           : AuthService(client: _client, tokenStorage: _tokenStorage));
 
   void clearSearchCache() => _searchCache.clear();
+
+  Future<String?> lookupIngredientImage(String ingredientName) async {
+    final name = ingredientName.trim();
+    if (name.isEmpty) return null;
+    final key = name.toLowerCase();
+    if (_ingredientImageCache.containsKey(key)) {
+      return _ingredientImageCache[key];
+    }
+    try {
+      final token = await _tokenStorage.readAccessToken();
+      if (token == null || token.isEmpty) return null;
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/ingredients',
+      ).replace(queryParameters: {
+        'query': name,
+        'lang': Get.locale?.languageCode ?? 'en',
+      });
+      final response = await _client
+          .get(uri, headers: {'Authorization': 'Bearer $token'})
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode < 200 || response.statusCode >= 300) return null;
+      final payload = jsonDecode(response.body);
+      if (payload is! List) return null;
+      String? imageUrl;
+      for (final raw in payload.whereType<Map>()) {
+        final item = Map<String, dynamic>.from(raw);
+        final candidateName = '${item['name'] ?? ''}'.trim().toLowerCase();
+        final candidateImage = '${item['imageUrl'] ?? ''}'.trim();
+        if (candidateName == key && candidateImage.isNotEmpty) {
+          imageUrl =
+              candidateImage.startsWith('/')
+                  ? '${ApiConfig.baseUrl}$candidateImage'
+                  : candidateImage;
+          break;
+        }
+      }
+      _ingredientImageCache[key] = imageUrl;
+      return imageUrl;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<FoodNutritionModel?> searchFood(String name) async {
     final key = name.trim().toLowerCase();
@@ -174,6 +217,45 @@ class FoodNutritionRepository {
         'Could not reach the NhamHealth API at ${ApiConfig.baseUrl}. Start the API server and try again.',
       );
     }
+  }
+
+  Future<Map<String, dynamic>> reanalyzeIngredients(
+    List<Map<String, dynamic>> ingredients,
+  ) async {
+    final token = await _tokenStorage.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const FoodNutritionException(
+        'Please sign in again to analyze ingredients.',
+      );
+    }
+    if (ingredients.isEmpty) {
+      throw const FoodNutritionException('Add at least one ingredient first.');
+    }
+    final response = await _client
+        .post(
+          Uri.parse(
+            '${ApiConfig.baseUrl}/api/v1/ai/food/reanalyze-ingredients',
+          ),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'ingredients': ingredients}),
+        )
+        .timeout(const Duration(seconds: 60));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FoodNutritionException(
+        _serverErrorMessage(response.body) ??
+            'Ingredient analysis is temporarily unavailable.',
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! Map) {
+      throw const FoodNutritionException(
+        'The ingredient analysis response was invalid.',
+      );
+    }
+    return Map<String, dynamic>.from(payload);
   }
 
   Future<FoodDetectionModel> detectImage(

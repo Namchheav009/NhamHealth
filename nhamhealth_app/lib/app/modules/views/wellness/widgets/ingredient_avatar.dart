@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../config/api_config.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../services/wellness/ingredient_visual_service.dart';
 
@@ -28,7 +29,11 @@ class IngredientAvatar extends StatelessWidget {
       customImageUrl: imageUrl,
     );
 
-    final resolvedUrl = visual.imageUrl;
+    final rawUrl = visual.imageUrl;
+    final resolvedUrl =
+        rawUrl != null && rawUrl.startsWith('/')
+            ? '${ApiConfig.baseUrl}$rawUrl'
+            : rawUrl;
     final isDark = context.appIsDark;
 
     Widget fallbackWidget() => Container(

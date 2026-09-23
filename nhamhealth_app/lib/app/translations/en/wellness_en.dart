@@ -318,6 +318,12 @@ const Map<String, String> wellnessEn = {
   'wellness.review_and_adjust_ingredients':
       'Review and adjust ingredients if needed.',
   'wellness.add_ingredient': 'Add ingredient',
+  'wellness.analyze_ingredients_again': 'Analyze again',
+  'wellness.analyzing_ingredients': 'Analyzing…',
+  'wellness.ingredient_reanalysis_error':
+      'Unable to analyze the updated ingredients. Please try again.',
+  'wellness.ingredient_reanalysis_success':
+      'Nutrition and sugar estimates updated.',
   'wellness.ai_ingredient_analysis': 'AI ingredient analysis',
   'wellness.identity_confidence': 'Ingredient confidence',
   'wellness.portion_confidence': 'Portion confidence',

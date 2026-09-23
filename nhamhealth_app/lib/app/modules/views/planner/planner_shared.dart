@@ -570,7 +570,13 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                   ? accentColor.withValues(alpha: 0.08)
                   : context.appSurfaceLow,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.appBorder),
+          border: Border.all(
+            color:
+                isSelected
+                    ? accentColor.withValues(alpha: 0.48)
+                    : context.appBorder,
+            width: isSelected ? 1.4 : 1,
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,7 +722,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.auto_awesome_rounded,
+                    Icons.restaurant_menu_rounded,
                     color: accentColor,
                     size: 22,
                   ),
@@ -824,7 +830,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     _buildStrategyCard(
                       context,
                       isSelected: _fillEmptyOnly,
-                      accentColor: AppColors.primaryGreen,
+                      accentColor: accentColor,
                       icon: Icons.playlist_add_check_rounded,
                       title: 'planner.autofill_mode_empty_only'.tr,
                       description: 'planner.autofill_mode_empty_only_desc'.tr,
@@ -844,7 +850,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                   _buildStrategyCard(
                     context,
                     isSelected: !_fillEmptyOnly,
-                    accentColor: AppColors.primaryGreen,
+                    accentColor: accentColor,
                     icon: Icons.auto_mode_rounded,
                     title: 'planner.autofill_mode_rebalance'.tr,
                     description: 'planner.autofill_mode_rebalance_desc'.tr,
@@ -949,7 +955,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     height: 50,
                     child: FilledButton.icon(
                       onPressed: hasPregnancyConflict ? null : _submit,
-                      icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                      icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
                       label: Text(
                         hasPregnancyConflict
                             ? 'planner.autofill_unavailable'.tr
@@ -962,7 +968,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                         ),
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
+                        backgroundColor: accentColor,
                         foregroundColor: context.appOnBrand,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

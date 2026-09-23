@@ -69,10 +69,9 @@ const Map<String, String> mealsKm = {
   'meals.nourishing_choice': 'ជម្រើសអាហារូបត្ថម្ភល្អសម្រាប់ថ្ងៃនេះ',
   'meals.empty_search': 'រកមិនឃើញអាហារទេ។ សូមស្វែងរកម្តងទៀត។',
   'meals.ai_ranking_description':
-      'AI រៀបចំលំដាប់ដោយប្រើកម្ពស់ ទម្ងន់ និង BMI ដែលបានរក្សាទុក ព្រមទាំងសកម្មភាព និងគោលដៅអាហារូបត្ថម្ភប្រចាំថ្ងៃ។',
-  'meals.creating_personalized': 'កំពុងបង្កើតគំនិតអាហារផ្ទាល់ខ្លួនសម្រាប់អ្នក…',
-  'meals.general_ideas_fallback':
-      'កំពុងបង្ហាញគំនិតទូទៅ រហូតដល់ការណែនាំផ្ទាល់ខ្លួនដោយ AI អាចប្រើបាន។',
+      'មុខម្ហូបដែលអ្នកអាចចូលចិត្ត តាមចំណូលចិត្តរបស់អ្នក។',
+  'meals.creating_personalized': 'កំពុងស្វែងរកគំនិតអាហារសម្រាប់អ្នក…',
+  'meals.general_ideas_fallback': 'មុខម្ហូបផ្សេងទៀតដែលអ្នកអាចចូលចិត្ត។',
   'meals.filter': 'តម្រងអាហារ',
   'meals.filters': 'តម្រងអាហារ',
   'meals.category': 'ប្រភេទ',

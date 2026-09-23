@@ -12,7 +12,10 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AiAutoFillPlanRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.MealRecommendationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiAutoFillPlanResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.MealPlannerAiRecommendationResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.WeeklyMealRecommendationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.WeightLossForecastResponse;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
 import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
@@ -206,5 +209,33 @@ class WeeklyMealPlannerApiControllerTests {
                 assertEquals(1900.0, response.getBody().dailyPlannedCalories());
                 assertEquals(500.0, response.getBody().dailyDeficit());
                 assertEquals("LOSE_WEIGHT", response.getBody().goal());
+        }
+
+        @Test
+        void delegatesToMealRecommendationService() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                MealPlannerForecastService forecastService = mock(MealPlannerForecastService.class);
+
+                MealRecommendationRequest request = new MealRecommendationRequest(
+                                LocalDate.of(2026, 9, 23), "BREAKFAST", "LOSE_WEIGHT", null, "ADD");
+
+                WeeklyMealRecommendationResponse meal = new WeeklyMealRecommendationResponse(
+                                null, "ALL", "BREAKFAST", 15, "Steamed egg", "https://img.jpg",
+                                new BigDecimal("250"), new BigDecimal("18"), new BigDecimal("5"), new BigDecimal("12"),
+                                1, "Breakfast", "Desc", 15, "EASY", List.of(), List.of(), List.of(), "", 0, List.of());
+
+                MealPlannerAiRecommendationResponse mockResponse = new MealPlannerAiRecommendationResponse(
+                                meal, List.of(), "High protein breakfast recommendation", "ADD",
+                                "Google Gemini / gemini-3.5-flash-lite");
+
+                when(forecastService.recommendMeal(null, request, "en")).thenReturn(mockResponse);
+
+                var controller = new WeeklyMealPlannerApiController(repository, null, forecastService);
+                var response = controller.recommendMeal(null, request, "en");
+
+                assertNotNull(response.getBody());
+                assertEquals(15, response.getBody().recommendedMeal().plannerMealId());
+                assertEquals("ADD", response.getBody().actionType());
+                assertEquals("High protein breakfast recommendation", response.getBody().aiRationale());
         }
 }

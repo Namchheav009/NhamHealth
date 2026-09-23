@@ -70,10 +70,9 @@ const Map<String, String> mealsEn = {
   'meals.nourishing_choice': 'A nourishing choice for your day',
   'meals.empty_search': 'No meals found. Try another search.',
   'meals.ai_ranking_description':
-      'AI-ranked using saved height, weight and BMI when available, plus activity and daily nutrition goals for general wellness.',
-  'meals.creating_personalized': 'Creating your personalized meal ideas…',
-  'meals.general_ideas_fallback':
-      'Showing general ideas until AI personalization is available.',
+      'Meals you may enjoy based on your preferences.',
+  'meals.creating_personalized': 'Finding meal ideas for you…',
+  'meals.general_ideas_fallback': 'More meals you may enjoy.',
   'meals.filter': 'Filter meals',
   'meals.filters': 'Meal filters',
   'meals.category': 'Category',

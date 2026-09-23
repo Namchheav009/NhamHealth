@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
+import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 
@@ -54,6 +55,7 @@ class MealPlannerController extends GetxController {
   final isLoadingDay = false.obs;
   final isSaving = false.obs;
   final isAutoFilling = false.obs;
+  final isRecommendingMeal = false.obs;
   final autoFillStatusKey = 'planner.autofill_loading_preparing'.obs;
   final errorMessage = ''.obs;
   final recommendationsError = ''.obs;
@@ -710,6 +712,36 @@ class MealPlannerController extends GetxController {
       return false;
     } finally {
       isSaving.value = false;
+    }
+  }
+
+  Future<AiMealRecommendationResult?> getAiMealRecommendation({
+    required MealPlanSlot slot,
+    DateTime? date,
+    PlannedMeal? currentMeal,
+    String? actionType,
+  }) async {
+    if (_provider == null) return null;
+    final targetDate = date ?? selectedDate;
+    final act = actionType ?? (currentMeal != null ? 'SWAP' : 'ADD');
+    try {
+      isRecommendingMeal.value = true;
+      final result = await _provider.recommendMeal(
+        date: targetDate,
+        slot: slot,
+        goal: healthGoal.value,
+        currentMealId: currentMeal?.id,
+        actionType: act,
+      );
+      return result;
+    } catch (e) {
+      await AppAlert.actionError(
+        title: 'planner.error'.tr,
+        message: 'planner.ai_recommendation_error'.tr,
+      );
+      return null;
+    } finally {
+      isRecommendingMeal.value = false;
     }
   }
 

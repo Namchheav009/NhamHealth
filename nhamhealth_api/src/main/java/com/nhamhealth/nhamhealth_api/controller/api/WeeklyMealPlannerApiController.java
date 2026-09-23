@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AiAutoFillPlanRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.MealRecommendationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiAutoFillPlanResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.MealPlannerAiRecommendationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.WeeklyMealRecommendationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.WeightLossForecastResponse;
 import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
@@ -80,6 +82,18 @@ public class WeeklyMealPlannerApiController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(forecastService.generateAiAutoFillPlan(userId(jwt), request, lang));
+    }
+
+    @PostMapping("/recommend-meal")
+    @Transactional(readOnly = true)
+    public ResponseEntity<MealPlannerAiRecommendationResponse> recommendMeal(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody MealRecommendationRequest request,
+            @RequestParam(defaultValue = "en") String lang) {
+        if (forecastService == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(forecastService.recommendMeal(userId(jwt), request, lang));
     }
 
     @GetMapping("/recommendations")

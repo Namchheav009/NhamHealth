@@ -19,8 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AiFoodFeedbackRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.AiIngredientReanalysisRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodAnalysisResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.AiFoodDetectionResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.AiIngredientReanalysisResponse;
 import com.nhamhealth.nhamhealth_api.service.ai.AiFoodAnalysisService;
 import com.nhamhealth.nhamhealth_api.service.notification.UserNotificationService;
 
@@ -72,6 +74,18 @@ public class AiFoodAnalysisController {
         return service.detect(validated.bytes(), validated.contentType());
     }
 
+    @PostMapping("/reanalyze-ingredients")
+    public AiIngredientReanalysisResponse reanalyzeIngredients(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AiIngredientReanalysisRequest request) {
+        requireUser(jwt);
+        try {
+            return service.reanalyzeIngredients(request.ingredients());
+        } catch (IllegalArgumentException error) {
+            throw new ResponseStatusException(BAD_REQUEST, error.getMessage(), error);
+        }
+    }
+
     @PostMapping("/{analysisId}/feedback")
     public Map<String, Object> feedback(
             @AuthenticationPrincipal Jwt jwt,
@@ -86,6 +100,17 @@ public class AiFoodAnalysisController {
         }
         service.saveFeedback(userId.intValue(), analysisId, request);
         return Map.of("saved", true, "analysisId", analysisId);
+    }
+
+    private static int requireUser(Jwt jwt) {
+        if (jwt == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Authentication is required.");
+        }
+        Number userId = jwt.getClaim("userId");
+        if (userId == null) {
+            throw new ResponseStatusException(UNAUTHORIZED, "User ID not found in token.");
+        }
+        return userId.intValue();
     }
 
     private static String detectContentType(byte[] bytes) {

@@ -159,7 +159,7 @@ void main() {
     expect(tester.getSize(find.byType(Form)).height, greaterThan(0));
     for (final element in find.byType(Text).evaluate()) {
       final t = element.widget as Text;
-      print('FOUND_TEXT: ' + (t.data ?? '<null>'));
+      print('FOUND_TEXT: ${t.data ?? '<null>'}');
     }
     for (final element in find.descendant(
       of: find.byKey(const ValueKey('community-post-editor-scroll-0')),

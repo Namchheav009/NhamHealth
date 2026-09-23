@@ -175,6 +175,21 @@ class IngredientVisualService {
       );
     }
 
+    // Noodles must be checked before rice because "rice noodles" are noodles,
+    // not loose grains of rice.
+    if (n.contains('noodle') ||
+        n.contains('pasta') ||
+        n.contains('spaghetti')) {
+      return const IngredientVisual(
+        imageUrl:
+            'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=240&q=80',
+        fallbackIcon: Icons.ramen_dining_rounded,
+        iconColor: Color(0xFFEF6C00),
+        backgroundColor: Color(0xFFFFF3E0),
+        defaultRole: 'Noodle base',
+      );
+    }
+
     // Rice / Grains / Quinoa
     if (n.contains('rice') || n.contains('grain') || n.contains('quinoa')) {
       return const IngredientVisual(
@@ -239,6 +254,20 @@ class IngredientVisualService {
         iconColor: Color(0xFF2E7D32),
         backgroundColor: Color(0xFFE8F5E9),
         defaultRole: 'Fresh herb',
+      );
+    }
+
+    // A sauce containing fish is still a sauce. Prefer an accurate icon over
+    // an unrelated whole-fish stock photo when no curated database image exists.
+    if (n.contains('sauce') ||
+        n.contains('dressing') ||
+        n.contains('dip') ||
+        n.contains('paste')) {
+      return const IngredientVisual(
+        fallbackIcon: Icons.water_drop_rounded,
+        iconColor: Color(0xFFB45309),
+        backgroundColor: Color(0xFFFFF7E6),
+        defaultRole: 'Sauce or seasoning',
       );
     }
 
@@ -311,20 +340,6 @@ class IngredientVisualService {
         iconColor: Color(0xFFFBC02D),
         backgroundColor: Color(0xFFFFFDE7),
         defaultRole: 'Flavor seasoning',
-      );
-    }
-
-    // Noodles / Pasta
-    if (n.contains('noodle') ||
-        n.contains('pasta') ||
-        n.contains('spaghetti')) {
-      return const IngredientVisual(
-        imageUrl:
-            'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=240&q=80',
-        fallbackIcon: Icons.ramen_dining_rounded,
-        iconColor: Color(0xFFEF6C00),
-        backgroundColor: Color(0xFFFFF3E0),
-        defaultRole: 'Noodle base',
       );
     }
 

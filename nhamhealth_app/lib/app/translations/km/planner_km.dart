@@ -19,7 +19,7 @@ const Map<String, String> plannerKm = {
   'planner.today': 'ថ្ងៃនេះ',
   'planner.tab_today': 'អាហារថ្ងៃនេះ',
   'planner.tab_forecast': 'ការព្យាករណ៍ & សប្ដាហ៍',
-  'planner.quick_auto_fill_title': 'ឱ្យ AI រៀបចំអាហារដែលនៅទំនេរ',
+  'planner.quick_auto_fill_title': 'បន្ថែមមុខម្ហូបណែនាំ',
   'planner.quick_auto_fill_desc':
       'តុល្យភាពកាឡូរីតាមគោលដៅ និងមិនជាន់មុខម្ហូបគ្នា។',
   'planner.quick_auto_fill_btn': 'រៀបចំឥឡូវនេះ',
@@ -74,15 +74,15 @@ const Map<String, String> plannerKm = {
   'planner.analysis_food_maintain': 'ការវិភាគអាហារថែរក្សាសុខភាព',
   'planner.analysis_drink_loss': 'ការវិភាគភេសជ្ជៈសម្រកទម្ងន់',
   'planner.analysis_drink_maintain': 'ការវិភាគភេសជ្ជៈថែរក្សាសុខភាព',
-  'planner.autofill_btn_loss': 'បំពេញសម្រកទម្ងន់',
+  'planner.autofill_btn_loss': 'បន្ថែមមុខម្ហូបណែនាំ',
   'planner.autofill_btn_maintain': 'បំពេញរក្សាសុខភាព',
-  'planner.autofill_title_loss': 'បំពេញអាហារសម្រកទម្ងន់ស្វ័យប្រវត្តិ',
+  'planner.autofill_title_loss': 'មុខម្ហូបណែនាំសម្រាប់គោលដៅរបស់អ្នក',
   'planner.autofill_title_maintain': 'បំពេញអាហាររក្សាសុខភាពស្វ័យប្រវត្តិ',
   'planner.autofill_desc_loss':
-      'បំពេញមុខម្ហូបប្រូតេអ៊ីនខ្ពស់ និងកាឡូរីទាបដើម្បីជួយសម្រកទម្ងន់។',
+      'ជ្រើសរើសមុខម្ហូបសមស្របពីបញ្ជីរបស់យើង ហើយបន្ថែមទៅក្នុងផែនការរបស់អ្នក។',
   'planner.autofill_desc_maintain':
       'បំពេញមុខម្ហូបមានតុល្យភាពសារធាតុចិញ្ចឹមសម្រាប់ថាមពលថេរ។',
-  'planner.autofill_action_loss': 'បំពេញផែនការសម្រកទម្ងន់',
+  'planner.autofill_action_loss': 'បន្ថែមមុខម្ហូបណែនាំ',
   'planner.autofill_action_maintain': 'បំពេញផែនការរក្សាសុខភាព',
   'planner.analyzed_badge': 'បានវិភាគ',
   'planner.view_weight_loss_analysis': 'ការវិភាគសម្រកទម្ងន់',
@@ -92,7 +92,7 @@ const Map<String, String> plannerKm = {
       'បើកមើលការវិភាគសម្រកទម្ងន់របស់អ្នកនៅលើទំព័រដាច់ដោយឡែក។',
   'planner.analysis_center_preview_desc':
       'មើលទិដ្ឋភាពសម្រាប់គោលដៅដែលអ្នកបានជ្រើស។',
-  'planner.analysis_ready': 'ការវិភាគ AI រួចរាល់',
+  'planner.analysis_ready': 'ការវិភាគរួចរាល់',
   'planner.analysis_preview': 'ទិដ្ឋភាពគោលដៅ',
   'planner.analysis_loss_page_desc':
       'វិភាគកាឡូរី និងល្បឿនសម្រកទម្ងន់ប្រកបដោយសុវត្ថិភាព និងចីរភាព។',
@@ -155,7 +155,7 @@ const Map<String, String> plannerKm = {
   'planner.tab_suitable_foods': 'មុខម្ហូបសមស្រប',
   'planner.tab_healthy_beverages': 'ភេសជ្ជៈសុខភាព',
   'planner.add_to_plan': 'បញ្ចូលក្នុងផែនការ',
-  'planner.ai_suggestion_for_slot': 'ការណែនាំ AI សម្រាប់ @slot',
+  'planner.ai_suggestion_for_slot': 'មុខម្ហូបណែនាំសម្រាប់ @slot',
   'planner.suggested_swap': 'ជម្រើសជំនួសដែលបានណែនាំ',
   'planner.suggested_meal': 'អាហារដែលបានណែនាំ',
   'planner.smart_plan_ready': 'ផែនការឆ្លាតវៃរួចរាល់',
@@ -373,7 +373,7 @@ const Map<String, String> plannerKm = {
   'planner.grocery_no_meal_source': 'មិនមានព័ត៌មានម្ហូបដែលភ្ជាប់ទេ។',
   'planner.grocery_mark_bought': 'សម្គាល់ថាបានទិញ',
   'planner.grocery_mark_needed': 'សម្គាល់ថាត្រូវទិញ',
-  'planner.grocery_analyze_nutrition': 'ព័ត៌មានជីវជាតិពី AI និង Database',
+  'planner.grocery_analyze_nutrition': 'ព័ត៌មានអាហារូបត្ថម្ភ',
   'planner.grocery_list_help':
       'គ្រឿងផ្សំត្រូវបានប្រមូលពីអាហារទាំងអស់ក្នុងផែនការប្រចាំសប្ដាហ៍។',
   'planner.empty_grocery_list':
@@ -415,8 +415,8 @@ const Map<String, String> plannerKm = {
   'planner.ingredient_cashews': 'គ្រាប់ស្វាយចន្ទី',
   'planner.ingredient_apple': 'ផ្លែប៉ោម',
   'planner.ingredient_peanut_butter': 'ប៊ឺសណ្តែកដី',
-  'planner.autofill_ai_title': 'បំពេញអាហារស្វ័យប្រវត្តិតាម AI',
-  'planner.autofill_ai_btn': 'បំពេញអាហារស្វ័យប្រវត្តិតាម AI',
+  'planner.autofill_ai_title': 'ការណែនាំមុខម្ហូប',
+  'planner.autofill_ai_btn': 'បន្ថែមមុខម្ហូបណែនាំ',
   'planner.autofill_mode_empty_only': 'បំពេញតែពេលដែលនៅទំនេរ',
   'planner.autofill_mode_empty_only_desc':
       'រក្សាទុកមុខម្ហូបដែលមានស្រាប់ ហើយបំពេញបន្ថែមចន្លោះដែលនៅសល់។',
@@ -454,8 +454,8 @@ const Map<String, String> plannerKm = {
       'ឱនភាពកាឡូរីដើម្បីសម្រកខ្លាញ់ប្រកបដោយចីរភាព ជាមួយប្រូតេអ៊ីនខ្ពស់ដើម្បីការពារសាច់ដុំ។',
   'planner.goal_maintain_card_desc':
       'តុល្យភាពកាឡូរីជាមួយអាហារសម្បូរសារធាតុចិញ្ចឹម សម្រាប់ថាមពលពេញមួយថ្ងៃ និងទម្ងន់ថេរ។',
-  'planner.clinical_fallback': 'ក្បួនអាហារូបត្ថម្ភ • ប្រើពេល AI មិនដំណើរការ',
-  'planner.autofill_action_banner_btn': 'បំពេញអាហារស្វ័យប្រវត្តិតាម AI',
+  'planner.clinical_fallback': 'ការណែនាំផ្អែកលើអាហារូបត្ថម្ភ',
+  'planner.autofill_action_banner_btn': 'បន្ថែមមុខម្ហូបណែនាំ',
   'planner.dietary_safety': 'សុវត្ថិភាព និងចំណូលចិត្តអាហារ',
   'planner.dietary_safety_help':
       'ទីនេះអាចជ្រើសអាឡែស៊ីដែលមានក្នុងបញ្ជីប៉ុណ្ណោះ។ បើមិនមានអាឡែស៊ីរបស់អ្នក សូមជ្រើសអាហារដោយខ្លួនឯង ហើយពិនិត្យគ្រឿងផ្សំ និងការប៉ះពាល់ឆ្លងជានិច្ច។',
@@ -471,11 +471,24 @@ const Map<String, String> plannerKm = {
   'planner.medical_diabetes': 'ជំងឺទឹកនោមផ្អែម',
   'planner.medical_hypertension': 'សម្ពាធឈាមខ្ពស់',
   'planner.medical_disclaimer':
-      'ផែនការអាហារពី AI ជាការណែនាំទូទៅ មិនមែនជាដំបូន្មានវេជ្ជសាស្ត្រទេ។ ប្រសិនបើអ្នកមានផ្ទៃពោះ បំបៅដោះកូន អាយុក្រោម ១៨ ឆ្នាំ ឬមានជំងឺប្រចាំកាយ សូមពិគ្រោះអ្នកជំនាញសុខភាពមុនផ្លាស់ប្ដូររបបអាហារ។',
+      'ការណែនាំមុខម្ហូបគឺជាព័ត៌មានទូទៅ មិនមែនជាដំបូន្មានវេជ្ជសាស្ត្រទេ។ ប្រសិនបើអ្នកមានផ្ទៃពោះ បំបៅដោះកូន អាយុក្រោម ១៨ ឆ្នាំ ឬមានជំងឺប្រចាំកាយ សូមពិគ្រោះអ្នកជំនាញសុខភាពមុនផ្លាស់ប្ដូររបបអាហារ។',
   'planner.restrictions_no_match':
       'គ្មានមុខម្ហូបដែលត្រូវនឹងការកំណត់នេះទេ។ សូមពិនិត្យអាហារដែលអ្នកបានដកចេញ ហើយសាកម្ដងទៀត។',
   'planner.medical_review_required': 'គួរពិគ្រោះអ្នកជំនាញសុខភាព',
   'planner.pregnancy_weight_loss_warning':
       'មិនអាចប្រើការរៀបចំអាហារសម្រកទម្ងន់អំឡុងពេលមានផ្ទៃពោះ ឬបំបៅដោះកូនទេ។ សូមពិគ្រោះអ្នកជំនាញសុខភាពសម្រាប់ផែនការអាហារសមស្រប។',
   'planner.autofill_unavailable': 'មិនអាចប្រើការបំពេញស្វ័យប្រវត្តិ',
+  'planner.ai_suggest_meal': 'ណែនាំមុខម្ហូប',
+  'planner.ai_suggest_swap': 'ណែនាំមុខម្ហូបជំនួស',
+  'planner.ai_recommending_add': 'កំពុងស្វែងរកមុខម្ហូបសមស្រប...',
+  'planner.ai_recommending_swap': 'កំពុងស្វែងរកមុខម្ហូបជំនួស...',
+  'planner.ai_recommend_title': 'មុខម្ហូបណែនាំ',
+  'planner.ai_swap_title': 'មុខម្ហូបជំនួសដែលបានណែនាំ',
+  'planner.ai_recommendation_error':
+      'មិនអាចទាញយកការណែនាំមុខម្ហូបបានទេ។ សូមព្យាយាមម្តងទៀត។',
+  'planner.meal_added_success': 'បានបន្ថែមមុខម្ហូបទៅក្នុងកាលវិភាគដោយជោគជ័យ!',
+  'planner.meal_swapped_success': 'បានផ្លាស់ប្តូរមុខម្ហូបដោយជោគជ័យ!',
+  'planner.accept_and_add': 'បន្ថែមទៅក្នុងកាលវិភាគ',
+  'planner.accept_and_swap': 'យល់ព្រមប្តូរមុខម្ហូប',
+  'planner.other_alternatives': 'ជម្រើសជំនួសផ្សេងទៀត',
 };

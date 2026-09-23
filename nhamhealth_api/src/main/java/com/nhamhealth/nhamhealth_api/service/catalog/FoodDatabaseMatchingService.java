@@ -58,7 +58,7 @@ public class FoodDatabaseMatchingService {
         List<FoodNutrition> catalog = repository.findAllByActiveTrue();
         return detectedNames.stream()
                 .map(name -> rankAgainstCatalog(name, catalog, DEFAULT_CANDIDATE_LIMIT).stream()
-                        .filter(candidate -> candidate.score() >= reliableMatchThreshold)
+                        .filter(candidate -> isReliable(name, candidate))
                         .findFirst())
                 .toList();
     }
@@ -95,9 +95,52 @@ public class FoodDatabaseMatchingService {
     @Transactional(readOnly = true)
     public Optional<MatchCandidate> findReliableMatch(String detectedName) {
         return findCandidates(detectedName).stream()
-                .filter(candidate -> candidate.score() >= reliableMatchThreshold)
+                .filter(candidate -> isReliable(detectedName, candidate))
                 .findFirst();
     }
+
+    private boolean isReliable(String detectedName, MatchCandidate candidate) {
+        if (candidate.score() >= reliableMatchThreshold) return true;
+        String detected = normalize(detectedName);
+        FoodNutrition food = candidate.food();
+        if (hasStrongCoreTokenMatch(detected, normalize(food.getName()))) return true;
+        String aliases = food.getAliases();
+        if (aliases == null || aliases.isBlank()) return false;
+        for (String alias : aliases.split("[,;|\\n]")) {
+            if (hasStrongCoreTokenMatch(detected, normalize(alias))) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Accepts preparation variants such as "diced chicken breast" and
+     * "grilled chicken breast", while refusing broad one-word matches such as
+     * "rice" against every rice dish in the catalog.
+     */
+    private boolean hasStrongCoreTokenMatch(String left, String right) {
+        if (left.isBlank() || right.isBlank()) return false;
+        Set<String> leftTokens = meaningfulTokens(left);
+        Set<String> rightTokens = meaningfulTokens(right);
+        if (leftTokens.size() < 2 || rightTokens.size() < 2) return false;
+        Set<String> shared = new HashSet<>(leftTokens);
+        shared.retainAll(rightTokens);
+        if (shared.size() < 2) return false;
+        double coverage = (double) shared.size() / Math.min(leftTokens.size(), rightTokens.size());
+        return coverage >= 0.66;
+    }
+
+    private Set<String> meaningfulTokens(String value) {
+        Set<String> tokens = new HashSet<>();
+        for (String token : value.split(" ")) {
+            if (token.length() >= 3 && !PREPARATION_WORDS.contains(token)) tokens.add(token);
+        }
+        return tokens;
+    }
+
+    private static final Set<String> PREPARATION_WORDS = Set.of(
+            "fresh", "cooked", "diced", "sliced", "chopped", "steamed",
+            "grilled", "fried", "boiled", "roasted", "baked", "tender",
+            "organic", "plain", "mixed", "light", "crispy");
 
     public String normalize(String value) {
         return nameNormalizer.normalize(value);

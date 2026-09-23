@@ -192,29 +192,65 @@ class MultiItemPlateCard extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // Add Ingredient Button
-            OutlinedButton.icon(
-              onPressed: () => _showAddItemDialog(context),
-              icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-              label: Text(
-                'wellness.add_ingredient'.tr,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showAddItemDialog(context),
+                    icon: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      size: 19,
+                    ),
+                    label: Text('wellness.add_ingredient'.tr),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor:
+                          isDark ? const Color(0xFF4ADE80) : greenDark,
+                      side: BorderSide(
+                        color: green.withValues(alpha: isDark ? 0.6 : 0.4),
+                      ),
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: isDark ? const Color(0xFF4ADE80) : greenDark,
-                side: BorderSide(
-                  color: green.withValues(alpha: isDark ? 0.6 : 0.4),
-                  width: 1.2,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed:
+                        controller.isReanalyzingIngredients.value
+                            ? null
+                            : controller.reanalyzePlateIngredients,
+                    icon:
+                        controller.isReanalyzingIngredients.value
+                            ? const SizedBox(
+                              width: 17,
+                              height: 17,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Icon(Icons.refresh_rounded, size: 19),
+                    label: Text(
+                      controller.isReanalyzingIngredients.value
+                          ? 'wellness.analyzing_ingredients'.tr
+                          : 'wellness.analyze_ingredients_again'.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: context.appOnBrand,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
+              ],
             ),
           ],
         ),
@@ -231,7 +267,7 @@ class MultiItemPlateCard extends StatelessWidget {
       item.name,
       componentType: item.componentType,
       customRole: item.role,
-      customImageUrl: item.databaseMatched ? item.imageUrl : null,
+      customImageUrl: item.imageUrl,
     );
 
     final displayRole = item.role.isNotEmpty ? item.role : visual.defaultRole;

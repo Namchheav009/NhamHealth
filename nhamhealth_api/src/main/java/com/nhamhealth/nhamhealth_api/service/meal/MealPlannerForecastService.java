@@ -4,9 +4,9 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.Period;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -26,9 +26,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AiAutoFillPlanRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.MealRecommendationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiAutoFillPlanResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.ForecastRecommendationItem;
 import com.nhamhealth.nhamhealth_api.dto.response.MealPlanResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.MealPlannerAiRecommendationResponse;
+import com.nhamhealth.nhamhealth_api.dto.response.WeeklyMealRecommendationResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.WeightLossForecastResponse;
 import com.nhamhealth.nhamhealth_api.entity.FoodNutrition;
 import com.nhamhealth.nhamhealth_api.entity.MealPlan;
@@ -461,22 +464,12 @@ public class MealPlannerForecastService {
                 .map(PlannerMeal::getPlannerMealId)
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
-        AutoFillPlanSynthesis synthesis;
-        if (geminiAutoFillService != null) {
-            synthesis = recentlyUsedMealIds.isEmpty()
-                    ? geminiAutoFillService.synthesizeWeeklyPlan(
-                            dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang)
-                    : geminiAutoFillService.synthesizeWeeklyPlan(
-                            dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang,
-                            recentlyUsedMealIds);
-        } else {
-            synthesis = recentlyUsedMealIds.isEmpty()
-                    ? ibmRecommendationService.synthesizeWeeklyPlan(
-                            dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang)
-                    : ibmRecommendationService.synthesizeWeeklyPlan(
-                            dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang,
-                            recentlyUsedMealIds);
-        }
+        AutoFillPlanSynthesis synthesis = recentlyUsedMealIds.isEmpty()
+                ? ibmRecommendationService.synthesizeWeeklyPlan(
+                        dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang)
+                : ibmRecommendationService.synthesizeWeeklyPlan(
+                        dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang,
+                        recentlyUsedMealIds);
 
         // 7. Persist into meal_plans
         List<MealPlanResponse> createdResponses = new ArrayList<>();
@@ -872,5 +865,144 @@ public class MealPlannerForecastService {
 
     private static BigDecimal round(double value, int scale) {
         return BigDecimal.valueOf(value).setScale(scale, RoundingMode.HALF_UP);
+    }
+
+    @Transactional(readOnly = true)
+    public MealPlannerAiRecommendationResponse recommendMeal(
+            Integer userId,
+            MealRecommendationRequest request,
+            String requestedLang) {
+
+        final String lang = (requestedLang != null && requestedLang.equalsIgnoreCase("km")) ? "km" : "en";
+        final String goal = IbmMealPlannerRecommendationService.normalizeGoal(request.goal());
+        final String slot = request.slot();
+        final LocalDate date = request.date() != null ? request.date() : LocalDate.now();
+
+        // 1. Resolve User Biometrics
+        Optional<WellnessProfile> wellnessOpt = userId != null ? wellnessProfileRepository.findByUser_UserId(userId)
+                : Optional.empty();
+        Optional<UserProfile> profileOpt = userId != null ? userProfileRepository.findByUser_UserId(userId)
+                : Optional.empty();
+
+        double weightKg = 70.0;
+        double heightCm = 170.0;
+        int age = 28;
+        String activityLevel = "MODERATE";
+        String gender = "MALE";
+
+        if (wellnessOpt.isPresent()) {
+            WellnessProfile wp = wellnessOpt.get();
+            if (wp.getWeightKg() != null && wp.getWeightKg().doubleValue() > 0) {
+                weightKg = wp.getWeightKg().doubleValue();
+            }
+            if (wp.getHeightCm() != null && wp.getHeightCm().doubleValue() > 0) {
+                heightCm = wp.getHeightCm().doubleValue();
+            }
+            if (wp.getAgeCached() != null && wp.getAgeCached() > 0) {
+                age = wp.getAgeCached();
+            }
+            if (wp.getActivityLevel() != null && !wp.getActivityLevel().isBlank()) {
+                activityLevel = wp.getActivityLevel().trim().toUpperCase(Locale.ROOT);
+            }
+        }
+
+        if (profileOpt.isPresent()) {
+            UserProfile up = profileOpt.get();
+            if (up.getGender() != null && !up.getGender().isBlank()) {
+                gender = up.getGender().trim().toUpperCase(Locale.ROOT);
+            }
+            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty() || wellnessOpt.get().getAgeCached() == null)) {
+                age = Math.max(12, Period.between(up.getDateOfBirth(), LocalDate.now()).getYears());
+            }
+        }
+
+        boolean isFemale = gender.contains("FEMALE") || gender.contains("WOMAN") || gender.equalsIgnoreCase("F");
+        double bmr = (10.0 * weightKg) + (6.25 * heightCm) - (5.0 * age) + (isFemale ? -161.0 : 5.0);
+        bmr = Math.max(800.0, bmr);
+
+        double activityMultiplier = switch (activityLevel) {
+            case "SEDENTARY" -> 1.2;
+            case "LIGHT" -> 1.375;
+            case "MODERATE" -> 1.55;
+            case "ACTIVE", "VERY_ACTIVE" -> 1.725;
+            case "EXTRA_ACTIVE" -> 1.9;
+            default -> 1.55;
+        };
+        double tdee = bmr * activityMultiplier;
+
+        boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
+        double safeFloor = isFemale ? MIN_CALORIES_FEMALE : MIN_CALORIES_MALE;
+        double targetDailyCalories = isWeightLoss ? Math.max(safeFloor, tdee - 500.0) : Math.max(safeFloor, tdee);
+
+        // 2. Resolve Current Meal (for SWAP)
+        PlannerMeal currentMeal = null;
+        if (request.currentMealId() != null) {
+            currentMeal = plannerMealRepository.findById(request.currentMealId()).orElse(null);
+        }
+
+        // 3. Resolve Candidate Meals from Admin
+        List<PlannerMeal> allActive = plannerMealRepository.findAllByOrderByNameEnAsc().stream()
+                .filter(m -> Boolean.TRUE.equals(m.getActive()))
+                .toList();
+
+        List<PlannerMeal> slotCandidates = allActive.stream().filter(m -> {
+            String cat = m.getCategoryEn() != null ? m.getCategoryEn().toUpperCase(Locale.ROOT) : "";
+            String tags = m.getTagsText() != null ? m.getTagsText().toUpperCase(Locale.ROOT) : "";
+            if (cat.contains(slot) || tags.contains(slot)) {
+                return true;
+            }
+            if ("BREAKFAST".equals(slot) && (m.getCalories() != null && m.getCalories().doubleValue() <= 450.0)) {
+                return true;
+            }
+            if ("SNACK".equals(slot) && (m.getCalories() != null && m.getCalories().doubleValue() <= 250.0)) {
+                return true;
+            }
+            return "LUNCH".equals(slot) || "DINNER".equals(slot);
+        }).toList();
+
+        List<PlannerMeal> candidates = slotCandidates.size() >= 3 ? slotCandidates : allActive;
+
+        if (candidates.isEmpty()) {
+            throw new ResponseStatusException(BAD_REQUEST, "No candidate meals available in catalog.");
+        }
+
+        var result = geminiAutoFillService != null
+                ? geminiAutoFillService.recommendMeal(
+                        date, slot, currentMeal, candidates, targetDailyCalories, tdee, goal, lang,
+                        request.actionType())
+                : null;
+
+        if (result == null || result.recommendedMeal() == null) {
+            throw new ResponseStatusException(BAD_REQUEST, "Unable to generate recommendation.");
+        }
+
+        WeeklyMealRecommendationResponse recResponse = toRecommendationResponse(result.recommendedMeal(), slot,
+                date.getDayOfWeek().name(), lang);
+        List<WeeklyMealRecommendationResponse> altResponses = result.alternatives().stream()
+                .map(alt -> toRecommendationResponse(alt, slot, date.getDayOfWeek().name(), lang))
+                .toList();
+
+        return new MealPlannerAiRecommendationResponse(
+                recResponse,
+                altResponses,
+                result.aiRationale(),
+                result.actionType(),
+                result.modelUsed());
+    }
+
+    private WeeklyMealRecommendationResponse toRecommendationResponse(PlannerMeal meal, String slot, String dayOfWeek,
+            String lang) {
+        List<Integer> categoryIds = meal.getCategoryIds() != null
+                ? meal.getCategoryIds().stream().sorted().toList()
+                : (meal.getCategory() != null ? List.of(meal.getCategory().getCategoryId()) : List.of());
+        return new WeeklyMealRecommendationResponse(
+                null, dayOfWeek != null ? dayOfWeek : "ALL", slot != null ? slot : "BREAKFAST",
+                meal.getPlannerMealId(), meal.name(lang), meal.getImageUrl(),
+                meal.getCalories(), meal.getProteinGrams(), meal.getCarbsGrams(),
+                meal.getFatGrams(), meal.getCategory() != null ? meal.getCategory().getCategoryId() : null,
+                meal.category(lang), meal.description(lang),
+                meal.getCookingTimeMinutes(), "", PlannerMealContent.ingredients(meal, lang),
+                PlannerMealContent.instructions(meal, lang), PlannerMealContent.tags(meal, lang),
+                "", 0, categoryIds);
     }
 }
