@@ -40,6 +40,9 @@
               </p>
             </div>
             <div class="heading-actions">
+              <button class="btn btn-secondary" id="backfillPlannerIngredients" type="button">
+                <i class="bi bi-stars"></i> Generate missing ingredients
+              </button>
               <button
                 class="btn btn-secondary"
                 id="openRecommendationModal"
@@ -900,35 +903,21 @@
             <div class="planner-form-section">
               <h3><span>3</span> Ingredients & Cooking Details</h3>
               <div class="planner-meal-form-grid">
-                <div class="field full">
-                  <label for="mealIngredients"
-                    >Ingredients list (English)</label
-                  >
-                  <textarea
-                    id="mealIngredients"
-                    name="ingredientsText"
-                    rows="4"
-                    placeholder="Oats | 50 | g&#10;Banana | 1 | piece"
-                  ></textarea>
-                  <small
-                    >One ingredient per line: English name | quantity | unit |
-                    Khmer name (optional).</small
-                  >
-                </div>
-                <div class="field full">
-                  <label for="mealIngredientsKm"
-                    >Ingredients list (Khmer)</label
-                  >
-                  <textarea
-                    id="mealIngredientsKm"
-                    name="ingredientsTextKm"
-                    rows="4"
-                    placeholder="ស្រូវអូត | 50 | g&#10;ចេក | 1 | ផ្លែ"
-                  ></textarea>
-                  <small
-                    >One ingredient per line in Khmer: ឈ្មោះ | ចំនួន | ខ្នាត
-                    (optional, falls back to English).</small
-                  >
+                <div class="field full planner-ingredients-field">
+                  <div class="planner-ingredients-heading">
+                    <div>
+                      <label for="plannerIngredientSearch">Ingredients</label>
+                      <span>Search the ingredient catalog, then set quantity, unit, and Khmer name.</span>
+                    </div>
+                  </div>
+                  <div class="planner-ingredient-picker">
+                    <input id="plannerIngredientSearch" type="search" autocomplete="off" placeholder="Search ingredients to add..." aria-controls="plannerIngredientSearchResults" />
+                    <div id="plannerIngredientSearchResults" class="planner-ingredient-search-results" role="listbox" aria-label="Ingredient search results"></div>
+                  </div>
+                  <div id="selectedPlannerIngredients" class="selected-planner-ingredients" aria-live="polite"></div>
+                  <small>Select at least one ingredient. Quantity, unit, and Khmer name are optional.</small>
+                  <input id="mealIngredients" name="ingredientsText" type="hidden" />
+                  <input id="mealIngredientsKm" name="ingredientsTextKm" type="hidden" />
                 </div>
                 <div class="field full">
                   <label for="mealInstructions"
@@ -1021,6 +1010,6 @@
     </div>
 
     <script th:src="@{/js/admin-layout.js}"></script>
-    <script th:src="@{/js/admin-meal-planner.js(v=6)}" defer></script>
+    <script th:src="@{/js/admin-meal-planner.js(v=9)}" defer></script>
   </body>
 </html>

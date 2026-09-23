@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/current_user_service.dart';
 import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
@@ -51,6 +52,7 @@ class CommunityController extends GetxController {
   Timer? _notificationTimer;
   Timer? _feedRefreshTimer;
   StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
+  Worker? _currentUserWorker;
   Set<int> _knownCommunityNotificationIds = const {};
   bool _notificationsInitialized = false;
   bool _notificationRequestInFlight = false;
@@ -227,6 +229,7 @@ class CommunityController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _bindCurrentUser();
     unawaited(reload());
     if (!Get.testMode) {
       _feedRefreshTimer = Timer.periodic(feedRefreshInterval, (_) {
@@ -378,8 +381,22 @@ class CommunityController extends GetxController {
   }
 
   Future<void> loadTopBar() async {
-    authenticatedUser.value = await _authService.restoreSession();
+    final user = await _authService.restoreSession();
+    authenticatedUser.value = user;
+    if (Get.isRegistered<CurrentUserService>()) {
+      Get.find<CurrentUserService>().setUser(user);
+    }
     await _refreshUnreadNotificationCount();
+  }
+
+  void _bindCurrentUser() {
+    if (!Get.isRegistered<CurrentUserService>()) return;
+    final currentUser = Get.find<CurrentUserService>();
+    authenticatedUser.value = currentUser.user.value ?? authenticatedUser.value;
+    _currentUserWorker = ever<AuthenticatedUser?>(
+      currentUser.user,
+      (user) => authenticatedUser.value = user,
+    );
   }
 
   Future<void> _refreshUnreadNotificationCount() async {
@@ -1016,6 +1033,7 @@ class CommunityController extends GetxController {
     _notificationTimer?.cancel();
     _feedRefreshTimer?.cancel();
     _realtimeSubscription?.cancel();
+    _currentUserWorker?.dispose();
     feedScrollController.dispose();
     peopleScrollController.dispose();
     super.onClose();

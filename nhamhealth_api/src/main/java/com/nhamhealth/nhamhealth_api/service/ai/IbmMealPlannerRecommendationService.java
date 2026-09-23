@@ -296,7 +296,6 @@ public class IbmMealPlannerRecommendationService {
             String existingNote = row.getNote();
             if (existingNote == null || existingNote.isBlank()
                     || existingNote.contains("Healthy Nutrition")
-                    || existingNote.startsWith("IBM Granite")
                     || existingNote.startsWith("Weight-loss match")
                     || existingNote.startsWith("Maintenance match")) {
                 String note;

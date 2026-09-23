@@ -5,6 +5,20 @@ import '../../../translations/meal_localization_helpers.dart';
 import '../../models/meals/meal_model.dart';
 import '../../repositories/meals/meal_repository.dart';
 
+/// Allows another feature, such as the meal planner, to reuse the Food Detail
+/// UI with data it already has instead of requesting a regular catalog meal.
+class FoodDetailArguments {
+  const FoodDetailArguments({
+    required this.meal,
+    this.loadRemoteDetail = true,
+    this.favoritesEnabled = true,
+  });
+
+  final MealModel meal;
+  final bool loadRemoteDetail;
+  final bool favoritesEnabled;
+}
+
 class FoodDetailController extends GetxController {
   FoodDetailController({
     required this.repository,
@@ -27,6 +41,8 @@ class FoodDetailController extends GetxController {
   late final RxString languageCode;
   Worker? _localeWorker;
   int _requestVersion = 0;
+  bool _loadRemoteDetail = true;
+  bool _favoritesEnabled = true;
 
   MealModel? get meal => detail.value;
 
@@ -53,7 +69,13 @@ class FoodDetailController extends GetxController {
     languageCode = currentLang.obs;
 
     final argument = _initialMeal ?? Get.arguments;
-    if (argument is MealModel) {
+    if (argument is FoodDetailArguments) {
+      _loadRemoteDetail = argument.loadRemoteDetail;
+      _favoritesEnabled = argument.favoritesEnabled;
+      detail.value = _localizeMealModel(argument.meal, currentLang);
+      isDetailLoaded.value = true;
+      isFavorite.value = argument.meal.isFavorite;
+    } else if (argument is MealModel) {
       final cached = _detailCache['${argument.id}_$currentLang'];
       if (cached != null) {
         detail.value = cached;
@@ -71,12 +93,12 @@ class FoodDetailController extends GetxController {
         final nextLang = locale.languageCode == 'km' ? 'km' : 'en';
         if (languageCode.value != nextLang) {
           languageCode.value = nextLang;
-          loadDetail();
+          if (_loadRemoteDetail) loadDetail();
         }
       });
     }
 
-    loadDetail();
+    if (_loadRemoteDetail) loadDetail();
   }
 
   @override
@@ -127,6 +149,9 @@ class FoodDetailController extends GetxController {
         proteinGrams: model.proteinGrams,
         description: localizeMealDescription(model.description),
         cookingTimeMinutes: model.cookingTimeMinutes,
+        prepTimeMinutes: model.prepTimeMinutes,
+        totalTimeMinutes: model.totalTimeMinutes,
+        isNutritionEstimated: model.isNutritionEstimated,
         difficulty: localizeDifficulty(model.difficulty),
         servings: model.servings,
         recommendationReason: localizeRecommendationReason(
@@ -151,6 +176,9 @@ class FoodDetailController extends GetxController {
         proteinGrams: model.proteinGrams,
         description: localizeMealDescription(model.description),
         cookingTimeMinutes: model.cookingTimeMinutes,
+        prepTimeMinutes: model.prepTimeMinutes,
+        totalTimeMinutes: model.totalTimeMinutes,
+        isNutritionEstimated: model.isNutritionEstimated,
         difficulty: localizeDifficulty(model.difficulty),
         servings: model.servings,
         recommendationReason: model.recommendationReason,
@@ -181,6 +209,7 @@ class FoodDetailController extends GetxController {
   }
 
   Future<void> toggleFavorite() async {
+    if (!_favoritesEnabled) return;
     final meal = detail.value;
     if (meal == null) return;
     final previous = isFavorite.value;

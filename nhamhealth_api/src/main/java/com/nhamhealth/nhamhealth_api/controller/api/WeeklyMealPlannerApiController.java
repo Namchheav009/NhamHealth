@@ -25,7 +25,6 @@ import com.nhamhealth.nhamhealth_api.dto.response.WeightLossForecastResponse;
 import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
-import com.nhamhealth.nhamhealth_api.service.ai.IbmMealPlannerRecommendationService;
 import com.nhamhealth.nhamhealth_api.service.meal.MealPlannerForecastService;
 import com.nhamhealth.nhamhealth_api.service.meal.PlannerMealContent;
 
@@ -35,27 +34,27 @@ import jakarta.validation.Valid;
 @RequestMapping({ "/api/v1/meal-planner", "/api/meal-planner" })
 public class WeeklyMealPlannerApiController {
     private final WeeklyMealRecommendationRepository recommendations;
-    private final IbmMealPlannerRecommendationService ibmRanking;
     private final MealPlannerForecastService forecastService;
 
     @Autowired
     public WeeklyMealPlannerApiController(
             WeeklyMealRecommendationRepository recommendations,
-            IbmMealPlannerRecommendationService ibmRanking,
             MealPlannerForecastService forecastService) {
         this.recommendations = recommendations;
-        this.ibmRanking = ibmRanking;
         this.forecastService = forecastService;
     }
 
+    /** Compatibility constructor for existing unit tests. The former ranking
+     * dependency is intentionally ignored: scheduled meals are admin curated. */
     public WeeklyMealPlannerApiController(
             WeeklyMealRecommendationRepository recommendations,
-            IbmMealPlannerRecommendationService ibmRanking) {
-        this(recommendations, ibmRanking, null);
+            Object ignoredRankingDependency,
+            MealPlannerForecastService forecastService) {
+        this(recommendations, forecastService);
     }
 
     public WeeklyMealPlannerApiController(WeeklyMealRecommendationRepository recommendations) {
-        this(recommendations, null, null);
+        this(recommendations, null);
     }
 
     @GetMapping("/weight-loss-forecast")
@@ -117,10 +116,6 @@ public class WeeklyMealPlannerApiController {
         } else {
             list = recommendations
                     .findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc();
-        }
-
-        if (ibmRanking != null) {
-            list = ibmRanking.rank(userId(jwt), goal, list);
         }
 
         return ResponseEntity.ok(list.stream().map(row -> response(row, lang)).toList());

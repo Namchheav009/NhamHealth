@@ -38,6 +38,7 @@ import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+import com.nhamhealth.nhamhealth_api.service.meal.PlannerMealIngredientBackfillService;
 
 import jakarta.validation.Valid;
 
@@ -49,18 +50,21 @@ public class WeeklyMealPlannerAdminController {
     private final MealPlanRepository mealPlans;
     private final MealCategoryRepository mealCategories;
     private final ProfileImageStorageService profileImageStorageService;
+    private final PlannerMealIngredientBackfillService ingredientBackfillService;
 
     public WeeklyMealPlannerAdminController(
             WeeklyMealRecommendationRepository recommendations,
             PlannerMealRepository plannerMeals,
             MealPlanRepository mealPlans,
             MealCategoryRepository mealCategories,
-            ProfileImageStorageService profileImageStorageService) {
+            ProfileImageStorageService profileImageStorageService,
+            PlannerMealIngredientBackfillService ingredientBackfillService) {
         this.recommendations = recommendations;
         this.plannerMeals = plannerMeals;
         this.mealPlans = mealPlans;
         this.mealCategories = mealCategories;
         this.profileImageStorageService = profileImageStorageService;
+        this.ingredientBackfillService = ingredientBackfillService;
     }
 
     @GetMapping("/admin/meal-planner")
@@ -157,6 +161,17 @@ public class WeeklyMealPlannerAdminController {
         } catch (Exception ex) {
             return bad("Failed to update meal: " + ex.getMessage());
         }
+    }
+
+    @PostMapping("/admin/meal-planner/meals/backfill-ingredients")
+    @ResponseBody
+    public ResponseEntity<?> backfillMissingIngredients() {
+        var result = ingredientBackfillService.backfillMissingIngredients();
+        return ResponseEntity.ok(Map.of(
+                "updated", result.updated(),
+                "updatedCount", result.updated().size(),
+                "skipped", result.skipped(),
+                "failed", result.failed()));
     }
 
     @DeleteMapping("/admin/meal-planner/meals/{id}")

@@ -15,6 +15,8 @@
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.maven.enabled": true,
   "java.import.gradle.enabled": false,
+  "spring-boot.ls.problem.boot2.JAVA_REPOSITORY": "IGNORE",
+  "spring-boot.ls.problem.boot2.EXTRACT_REQUEST_MAPPING_PARENT_PATH": "IGNORE",
   "gradle.autoDetect": "off",
   "gradle.nestedProjects": false,
   "cmake.ignoreCMakeListsMissing": true,

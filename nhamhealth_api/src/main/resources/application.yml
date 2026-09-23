@@ -45,12 +45,6 @@ app:
       max-requests: ${FOLLOW_CONNECTION_RATE_LIMIT_MAX:20}
       window: ${FOLLOW_CONNECTION_RATE_LIMIT_WINDOW:PT1M}
   ai:
-    ibm:
-      api-key: ${IBM_WATSONX_API_KEY:}
-      project-id: ${IBM_WATSONX_PROJECT_ID:}
-      base-url: ${IBM_WATSONX_BASE_URL:https://us-south.ml.cloud.ibm.com}
-      iam-url: ${IBM_WATSONX_IAM_URL:https://iam.cloud.ibm.com}
-      model: ${IBM_WATSONX_MODEL:ibm/granite-3-3-8b-instruct}
     gemini:
       api-key: ${GEMINI_API_KEY:${APP_AI_GEMINI_API_KEY:}}
       base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}

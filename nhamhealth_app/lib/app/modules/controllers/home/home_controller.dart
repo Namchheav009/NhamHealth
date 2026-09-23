@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/current_user_service.dart';
 import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
@@ -47,6 +48,7 @@ class HomeController extends GetxController {
   final unreadNotificationCount = 0.obs;
   Timer? _notificationCountTimer;
   StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
+  Worker? _currentUserWorker;
 
   @override
   void onInit() {
@@ -60,6 +62,7 @@ class HomeController extends GetxController {
     } else {
       _restoreAuthenticatedUser();
     }
+    _bindCurrentUser();
     final initialDashboard = dashboard.value;
     if (initialDashboard != null) {
       _summariesByDay[_dayKey(DateTime.now())] = initialDashboard.dailySummary;
@@ -148,7 +151,21 @@ class HomeController extends GetxController {
   }
 
   Future<void> _restoreAuthenticatedUser() async {
-    authenticatedUser.value = await Get.find<AuthService>().restoreSession();
+    final user = await Get.find<AuthService>().restoreSession();
+    authenticatedUser.value = user;
+    if (Get.isRegistered<CurrentUserService>()) {
+      Get.find<CurrentUserService>().setUser(user);
+    }
+  }
+
+  void _bindCurrentUser() {
+    if (!Get.isRegistered<CurrentUserService>()) return;
+    final currentUser = Get.find<CurrentUserService>();
+    authenticatedUser.value = currentUser.user.value ?? authenticatedUser.value;
+    _currentUserWorker = ever<AuthenticatedUser?>(
+      currentUser.user,
+      (user) => authenticatedUser.value = user,
+    );
   }
 
   Future<void> loadDashboard() async {
@@ -522,6 +539,7 @@ class HomeController extends GetxController {
   void onClose() {
     _notificationCountTimer?.cancel();
     _notificationSubscription?.cancel();
+    _currentUserWorker?.dispose();
     super.onClose();
   }
 }

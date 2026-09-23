@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -130,6 +132,11 @@ class AiFoodView extends GetView<AiFoodController> {
     // Run food detection
     final detected = await controller.detectFood();
 
+    if (!detected && context.mounted) {
+      await _showNoFoodDetectedDialog(context);
+      return;
+    }
+
     // If food was detected, automatically show the amount / portion sheet
     // so the user can adjust portion size before analysing
     if (detected && context.mounted && controller.hasDetectedImage) {
@@ -142,5 +149,113 @@ class AiFoodView extends GetView<AiFoodController> {
         builder: (_) => AiFoodAmountSheet(controller: controller),
       );
     }
+  }
+
+  Future<void> _showNoFoodDetectedDialog(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.20),
+      builder:
+          (dialogContext) => BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
+            child: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 330,
+                  margin: const EdgeInsets.symmetric(horizontal: 28),
+                  padding: const EdgeInsets.fromLTRB(28, 38, 28, 30),
+                  decoration: BoxDecoration(
+                    color: context.appElevatedSurface,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 28,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          color: context.appElevatedSurface,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 14,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.errorCoral,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      Text(
+                        'wellness.no_food_detected_title'.tr,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        controller.errorMessage.value?.trim().isNotEmpty ==
+                                true
+                            ? controller.errorMessage.value!.tr
+                            : 'wellness.no_food_detected_message'.tr,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 14.5,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      SizedBox(
+                        width: 224,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            controller.clearImage();
+                            Navigator.of(dialogContext).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: green,
+                            foregroundColor: Colors.white,
+                            elevation: 3,
+                            shadowColor: green.withValues(alpha: 0.35),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: Text(
+                            'common.ok'.tr,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
   }
 }

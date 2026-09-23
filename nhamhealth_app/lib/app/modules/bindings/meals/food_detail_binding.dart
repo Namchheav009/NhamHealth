@@ -9,24 +9,18 @@ import '../../repositories/meals/meal_repository.dart';
 class FoodDetailBinding extends Bindings {
   @override
   void dependencies() {
-    if (!Get.isRegistered<MealProvider>()) {
-      Get.lazyPut<MealProvider>(
-        () => MealProvider(authService: Get.find<AuthService>()),
+    if (!Get.isRegistered<FoodDetailController>()) {
+      Get.put<FoodDetailController>(
+        FoodDetailController(
+          repository: MealRepository(
+            provider: MealProvider(authService: Get.find<AuthService>()),
+          ),
+          localeService:
+              Get.isRegistered<AppLocaleService>()
+                  ? Get.find<AppLocaleService>()
+                  : null,
+        ),
       );
     }
-    if (!Get.isRegistered<MealRepository>()) {
-      Get.lazyPut<MealRepository>(
-        () => MealRepository(provider: Get.find<MealProvider>()),
-      );
-    }
-    Get.lazyPut<FoodDetailController>(
-      () => FoodDetailController(
-        repository: Get.find<MealRepository>(),
-        localeService:
-            Get.isRegistered<AppLocaleService>()
-                ? Get.find<AppLocaleService>()
-                : null,
-      ),
-    );
   }
 }

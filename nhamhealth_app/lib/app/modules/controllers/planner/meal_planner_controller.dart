@@ -8,10 +8,12 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/services/auth_service.dart';
 import '../../../widgets/app_alert.dart';
+import '../../../routes/app_routes.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
+import '../../repositories/meals/meal_repository.dart';
 
 class MealPlannerController extends GetxController {
   MealPlannerController({
@@ -62,6 +64,7 @@ class MealPlannerController extends GetxController {
   final hasLoadedOnce = false.obs;
   final hasLoadedRecommendationsOnce = false.obs;
   final imageRefreshKey = 0.obs;
+  final unreadNotificationCount = 0.obs;
   final lastAiAutoFillResult = Rxn<AiAutoFillPlanResponse>();
   final hasAnalyzedWeightLoss = false.obs;
   final hasAnalyzedMaintainHealth = false.obs;
@@ -82,9 +85,25 @@ class MealPlannerController extends GetxController {
     selectedDayIndex.value =
         idx >= 0 ? idx : (today.weekday - 1).clamp(0, planDaysCount.value - 1);
     unawaited(initPlanner());
+    unawaited(loadUnreadNotificationCount());
   }
 
   Future<void> initPlanner() => _initPlanner();
+
+  Future<void> loadUnreadNotificationCount() async {
+    if (!Get.isRegistered<MealRepository>()) return;
+    try {
+      unreadNotificationCount.value =
+          await Get.find<MealRepository>().getUnreadNotificationCount();
+    } on Object {
+      // The planner must remain usable if the notification badge cannot load.
+    }
+  }
+
+  Future<void> openNotifications() async {
+    await Get.toNamed<void>(AppRoutes.notifications);
+    await loadUnreadNotificationCount();
+  }
 
   Future<String?> _resolveUserId() async {
     try {

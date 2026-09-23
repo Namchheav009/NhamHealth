@@ -215,6 +215,10 @@ const Map<String, String> wellnessEn = {
   'wellness.hydration_tip': 'Hydration tip',
   'wellness.todays_food_sources': 'Today\'s food sources',
   'wellness.food_not_found': 'Food not found',
+  'wellness.no_food_detected_title': 'No food or drink detected',
+  'wellness.no_food_detected_message':
+      'This image does not appear to contain food or a drink. Please choose a clear photo of food or a drink.',
+  'wellness.try_another_photo': 'Try another photo',
   'wellness.please_select_a_food_source_again':
       'Please select a food source again.',
   'wellness.ai_re_analysis': 'AI Re-analysis',

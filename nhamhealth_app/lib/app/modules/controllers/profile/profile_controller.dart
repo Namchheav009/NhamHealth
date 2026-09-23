@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/app_security_service.dart';
+import '../../../../core/services/current_user_service.dart';
 import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/privacy_auth_dialog.dart';
@@ -342,6 +343,7 @@ class ProfileController extends GetxController {
 
   void _applyUser(AuthenticatedUser user) {
     authenticatedUser.value = user;
+    _publishCurrentUser();
     name.value = user.displayName;
     email.value = user.email;
     errorMessage.value = null;
@@ -393,7 +395,14 @@ class ProfileController extends GetxController {
       profileImageUrl: dashboard.profileImageUrl,
       hasPin: authenticatedUser.value?.hasPin ?? false,
     );
+    _publishCurrentUser();
     errorMessage.value = null;
+  }
+
+  void _publishCurrentUser() {
+    if (Get.isRegistered<CurrentUserService>()) {
+      Get.find<CurrentUserService>().setUser(authenticatedUser.value);
+    }
   }
 
   Future<void> saveProfile({

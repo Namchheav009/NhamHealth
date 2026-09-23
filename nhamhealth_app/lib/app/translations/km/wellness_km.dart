@@ -221,6 +221,10 @@ const Map<String, String> wellnessKm = {
   'wellness.hydration_tip': 'គន្លឹះផឹកទឹក',
   'wellness.todays_food_sources': 'អាហារដែលបានកត់ត្រាថ្ងៃនេះ',
   'wellness.food_not_found': 'រកមិនឃើញអាហារ',
+  'wellness.no_food_detected_title': 'មិនរកឃើញអាហារ ឬភេសជ្ជៈ',
+  'wellness.no_food_detected_message':
+      'រូបភាពនេះមិនមានអាហារ ឬភេសជ្ជៈច្បាស់លាស់ទេ។ សូមជ្រើសរើសរូបថតអាហារ ឬភេសជ្ជៈដែលច្បាស់។',
+  'wellness.try_another_photo': 'សាករូបថតមួយទៀត',
   'wellness.please_select_a_food_source_again': 'សូមជ្រើសប្រភពអាហារម្តងទៀត។',
   'wellness.ai_re_analysis': 'ការវិភាគឡើងវិញដោយ AI',
   'wellness.re_analyzing_your_food_amount':

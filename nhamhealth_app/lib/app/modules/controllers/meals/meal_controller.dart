@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/services/app_locale_service.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/current_user_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/auth/authenticated_user_model.dart';
@@ -39,6 +40,7 @@ class MealController extends GetxController with WidgetsBindingObserver {
   Timer? _slideTimer;
   Timer? _searchTimer;
   Worker? _localeWorker;
+  Worker? _currentUserWorker;
   int _mealRequestVersion = 0;
   bool _refreshInProgress = false;
   Set<int> _favoriteMealIds = const <int>{};
@@ -99,6 +101,7 @@ class MealController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
     _restoreAuthenticatedUser();
+    _bindCurrentUser();
     final arguments = Get.arguments;
     if (arguments is Map && arguments['query'] is String) {
       final query = (arguments['query'] as String).trim();
@@ -249,8 +252,22 @@ class MealController extends GetxController with WidgetsBindingObserver {
 
   Future<void> _restoreAuthenticatedUser() async {
     if (Get.isRegistered<AuthService>()) {
-      authenticatedUser.value = await Get.find<AuthService>().restoreSession();
+      final user = await Get.find<AuthService>().restoreSession();
+      authenticatedUser.value = user;
+      if (Get.isRegistered<CurrentUserService>()) {
+        Get.find<CurrentUserService>().setUser(user);
+      }
     }
+  }
+
+  void _bindCurrentUser() {
+    if (!Get.isRegistered<CurrentUserService>()) return;
+    final currentUser = Get.find<CurrentUserService>();
+    authenticatedUser.value = currentUser.user.value ?? authenticatedUser.value;
+    _currentUserWorker = ever<AuthenticatedUser?>(
+      currentUser.user,
+      (user) => authenticatedUser.value = user,
+    );
   }
 
   void updateSearch(String value) {
@@ -425,6 +442,7 @@ class MealController extends GetxController with WidgetsBindingObserver {
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     _localeWorker?.dispose();
+    _currentUserWorker?.dispose();
     _slideTimer?.cancel();
     _searchTimer?.cancel();
     slideController.dispose();

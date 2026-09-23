@@ -391,7 +391,10 @@ class MealPlannerProvider {
             '${item['name'] ?? ''}'.trim().toLowerCase() == normalizedName,
       );
       final selected = exact.isNotEmpty ? exact.first : candidates.first;
-      return '${selected['imageUrl']}'.trim();
+      final imageUrl = '${selected['imageUrl']}'.trim();
+      return imageUrl.startsWith('/')
+          ? '${ApiConfig.baseUrl}$imageUrl'
+          : imageUrl;
     } catch (_) {
       return null;
     }

@@ -522,6 +522,27 @@ html[data-theme="dark"] .planner-meal-category {
     color: var(--planner-green-dark);
 }
 
+.planner-ingredients-heading span { display:block; margin-top:3px; color:var(--planner-muted); font-size:11px; }
+.planner-ingredient-picker { position:relative; margin:8px 0; }
+.planner-ingredient-picker > input { width:100%; }
+.planner-ingredient-search-results { display:grid; max-height:185px; overflow-y:auto; border:1px solid var(--planner-border); border-radius:10px; background:var(--planner-surface); }
+.planner-ingredient-result { display:grid; gap:2px; padding:10px 12px; border:0; border-bottom:1px solid var(--planner-border); background:transparent; color:var(--planner-text); text-align:left; cursor:pointer; }
+.planner-ingredient-result:hover { background:var(--planner-green-soft); }
+.planner-ingredient-result:disabled { opacity:.55; cursor:default; }
+.planner-ingredient-result span, .planner-ingredient-search-empty { color:var(--planner-muted); font-size:11px; }
+.planner-ingredient-search-empty { margin:0; padding:10px 12px; }
+.selected-planner-ingredients { display:grid; gap:8px; margin-bottom:8px; }
+.no-planner-ingredients { margin:0; padding:12px; border:1px dashed var(--planner-border); border-radius:10px; color:var(--planner-muted); text-align:center; font-size:12px; }
+.selected-planner-ingredient { display:grid; grid-template-columns:repeat(3,minmax(120px,1fr)) auto; gap:8px; align-items:end; padding:10px; border:1px solid var(--planner-border); border-radius:10px; background:var(--planner-surface); }
+.selected-planner-ingredient-name { grid-column:1 / -1; min-width:0; }
+.selected-planner-ingredient strong, .selected-planner-ingredient-name span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.selected-planner-ingredient strong { color:var(--planner-text); font-size:12px; }
+.selected-planner-ingredient-name span { margin-top:3px; color:var(--planner-muted); font-size:10px; }
+.selected-planner-ingredient label { display:grid; gap:4px; color:var(--planner-muted); font-size:10px; font-weight:700; }
+.selected-planner-ingredient input { min-width:0; }
+.planner-remove-ingredient { border:0; background:transparent; color:var(--planner-rose); cursor:pointer; font-size:16px; }
+@media (max-width: 720px) { .selected-planner-ingredient { grid-template-columns:1fr 1fr; } .selected-planner-ingredient strong { grid-column:1 / -1; } }
+
 .planner-card-delete {
     background: var(--planner-surface);
     border: 1px solid var(--planner-border);

@@ -42,6 +42,7 @@ class AiFoodScanContent extends StatelessWidget {
         // (isAnalyzing, selectedImage, errorMessage, analysisStage, etc.)
         return Obx(() {
           final hasImage = controller.selectedImage.value != null;
+          final hasDetectedFood = controller.hasDetectedImage;
           final isAnalyzing = controller.isAnalyzing.value;
 
           return ListView(
@@ -74,7 +75,7 @@ class AiFoodScanContent extends StatelessWidget {
                 _buildLiveAnalysisCard(context),
                 const SizedBox(height: 12),
                 const PageSkeleton.aiFoodAnalysis(),
-              ] else if (hasImage) ...[
+              ] else if (hasImage && hasDetectedFood) ...[
                 // 4. Amount / Portion Card
                 const SizedBox(height: 14),
                 _buildAmountCard(context),

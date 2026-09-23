@@ -456,8 +456,8 @@ public class MealPlannerForecastService {
                     "No meals match the selected dietary restrictions.");
         }
 
-        // 6. Gemini-first synthesis, with the existing clinical engine as a safe
-        // fallback.
+        // 6. Build the plan locally from the admin-curated planner catalog.
+        // Scheduled Planner Meals must never be rewritten or labelled by an AI provider.
         Set<Integer> recentlyUsedMealIds = existingPlans.stream()
                 .map(MealPlan::getPlannerMeal)
                 .filter(java.util.Objects::nonNull)
@@ -465,9 +465,9 @@ public class MealPlannerForecastService {
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
         AutoFillPlanSynthesis synthesis = recentlyUsedMealIds.isEmpty()
-                ? ibmRecommendationService.synthesizeWeeklyPlan(
+                ? ibmRecommendationService.synthesizeClinicalPlan(
                         dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang)
-                : ibmRecommendationService.synthesizeWeeklyPlan(
+                : ibmRecommendationService.synthesizeClinicalPlan(
                         dates, slotsPerDate, candidates, targetDailyCalories, tdee, goal, lang,
                         recentlyUsedMealIds);
 

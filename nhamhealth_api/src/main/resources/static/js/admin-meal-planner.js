@@ -30,6 +30,9 @@
   const mealForm = document.getElementById("plannerMealForm");
   const mealModalTitle = document.getElementById("plannerMealModalTitle");
   const mealSaveButton = document.getElementById("savePlannerMealButton");
+  const ingredientSearchInput = document.getElementById("plannerIngredientSearch");
+  const ingredientSearchResults = document.getElementById("plannerIngredientSearchResults");
+  const selectedPlannerIngredients = document.getElementById("selectedPlannerIngredients");
 
   // DOM Elements - Meal Image Uploader & Preview
   const tabUploadImage = document.getElementById("tabUploadImage");
@@ -47,6 +50,9 @@
 
   let pendingImageFile = null;
   let previewObjectUrl = null;
+  let plannerIngredients = [];
+  let ingredientMatches = [];
+  let ingredientSearchTimer = null;
 
   // CSRF Tokens
   const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
@@ -85,6 +91,61 @@
     const element = document.createElement("span");
     element.textContent = value || "";
     return element.innerHTML;
+  }
+
+  function renderPlannerIngredients() {
+    if (!selectedPlannerIngredients) return;
+    if (!plannerIngredients.length) {
+      selectedPlannerIngredients.innerHTML = '<p class="no-planner-ingredients">No ingredients selected yet.</p>';
+      return;
+    }
+    selectedPlannerIngredients.innerHTML = plannerIngredients.map((ingredient, index) => `
+      <article class="selected-planner-ingredient" data-index="${index}">
+        <div class="selected-planner-ingredient-name"><strong>${escapeHtml(ingredient.name)}</strong><span>Type: ${escapeHtml(ingredient.type || "Ingredient")} · Default unit: ${escapeHtml(ingredient.defaultUnit || "Not set")}</span></div>
+        <label>Quantity<input data-field="quantity" type="number" min="0" step="0.01" value="${escapeHtml(ingredient.quantity)}" placeholder="Optional" aria-label="Quantity for ${escapeHtml(ingredient.name)}" /></label>
+        <label>Measurement unit<input data-field="unit" value="${escapeHtml(ingredient.unit)}" placeholder="Optional" aria-label="Unit for ${escapeHtml(ingredient.name)}" /></label>
+        <label>Ingredient name (ខ្មែរ)<input data-field="nameKm" lang="km" value="${escapeHtml(ingredient.nameKm)}" placeholder="Optional Khmer name" aria-label="Khmer name for ${escapeHtml(ingredient.name)}" /></label>
+        <button type="button" class="planner-remove-ingredient" data-remove-index="${index}" aria-label="Remove ${escapeHtml(ingredient.name)}"><i class="bi bi-trash3"></i></button>
+      </article>`).join("");
+  }
+
+  function parsePlannerIngredients(english = "", khmer = "") {
+    const kmLines = khmer.split(/\r?\n/);
+    return english.split(/\r?\n/).map((line, index) => {
+      const [name = "", quantity = "", unit = "", inlineKm = ""] = line.split("|").map(part => part.trim());
+      const [kmName = ""] = (kmLines[index] || "").split("|").map(part => part.trim());
+      return { name, quantity, unit, nameKm: inlineKm || kmName, type: "", defaultUnit: unit };
+    }).filter(ingredient => ingredient.name);
+  }
+
+  function ingredientTextPayload() {
+    const ingredients = [...selectedPlannerIngredients.querySelectorAll(".selected-planner-ingredient")].map(row => {
+      const item = plannerIngredients[Number(row.dataset.index)];
+      return {
+        ...item,
+        quantity: row.querySelector('[data-field="quantity"]').value.trim(),
+        unit: row.querySelector('[data-field="unit"]').value.trim(),
+        nameKm: row.querySelector('[data-field="nameKm"]').value.trim(),
+      };
+    });
+    return {
+      english: ingredients.map(item => [item.name, item.quantity, item.unit, item.nameKm].join(" | ")).join("\n"),
+      khmer: ingredients.filter(item => item.nameKm).map(item => [item.nameKm, item.quantity, item.unit].join(" | ")).join("\n"),
+    };
+  }
+
+  async function searchPlannerIngredients(query) {
+    const value = query.trim();
+    if (value.length < 1) { ingredientMatches = []; ingredientSearchResults.innerHTML = ""; return; }
+    try {
+      const response = await fetch(`/admin/ingredients/search?q=${encodeURIComponent(value)}`);
+      if (!response.ok) throw new Error();
+      ingredientMatches = await response.json();
+      ingredientSearchResults.innerHTML = ingredientMatches.map(item => {
+        const added = plannerIngredients.some(ingredient => ingredient.id === item.ingredientId);
+        return `<button type="button" class="planner-ingredient-result" data-ingredient-id="${item.ingredientId}" ${added ? "disabled" : ""}><strong>${escapeHtml(item.ingredientName)}</strong><span>${escapeHtml(item.ingredientType || "Ingredient")}${item.defaultUnit ? ` · ${escapeHtml(item.defaultUnit)}` : ""}</span></button>`;
+      }).join("") || '<p class="planner-ingredient-search-empty">No ingredients found.</p>';
+    } catch (_) { ingredientSearchResults.innerHTML = '<p class="planner-ingredient-search-empty">Unable to load ingredients.</p>'; }
   }
 
   // --------------------------------------------------------------------------
@@ -547,6 +608,8 @@
   function openMealCreate() {
     editingMealId = null;
     mealForm.reset();
+    plannerIngredients = [];
+    renderPlannerIngredients();
     setSelectedCategoryIds([]);
     document
       .getElementById("mealCategoryError")
@@ -592,6 +655,8 @@
         mealForm.elements[field].value = card.dataset[attribute] || "";
       }
     });
+    plannerIngredients = parsePlannerIngredients(card.dataset.ingredients || "", card.dataset.ingredientsKm || "");
+    renderPlannerIngredients();
 
     const rawCategoryIds = (
       card.dataset.categoryIds ||
@@ -627,6 +692,8 @@
     setMealModal(false);
     editingMealId = null;
     mealForm.reset();
+    plannerIngredients = [];
+    renderPlannerIngredients();
     setSelectedCategoryIds([]);
     document
       .getElementById("mealCategoryError")
@@ -647,6 +714,13 @@
     }
     if (categoryError) categoryError.style.display = "none";
 
+    const ingredientText = ingredientTextPayload();
+    if (!plannerIngredients.length) {
+      await alerts.error("Add at least one ingredient to this planner meal.");
+      return;
+    }
+    mealForm.elements.ingredientsText.value = ingredientText.english;
+    mealForm.elements.ingredientsTextKm.value = ingredientText.khmer;
     const data = Object.fromEntries(new FormData(mealForm).entries());
     let finalImageUrl = (data.imageUrl || "").trim();
 
@@ -714,6 +788,29 @@
       mealSaveButton.disabled = false;
       mealSaveButton.innerHTML = originalSaveText;
     }
+  });
+
+  ingredientSearchInput?.addEventListener("input", () => {
+    window.clearTimeout(ingredientSearchTimer);
+    ingredientSearchTimer = window.setTimeout(() => searchPlannerIngredients(ingredientSearchInput.value), 200);
+  });
+  ingredientSearchResults?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-ingredient-id]");
+    if (!button) return;
+    const ingredient = ingredientMatches.find(item => String(item.ingredientId) === button.dataset.ingredientId);
+    if (!ingredient || plannerIngredients.some(item => item.id === ingredient.ingredientId)) return;
+    plannerIngredients.push({ id: ingredient.ingredientId, name: ingredient.ingredientName, quantity: "", unit: ingredient.defaultUnit || "", nameKm: ingredient.ingredientNameKm || "", type: ingredient.ingredientType || "", defaultUnit: ingredient.defaultUnit || "" });
+    ingredientSearchInput.value = "";
+    ingredientMatches = [];
+    ingredientSearchResults.innerHTML = "";
+    renderPlannerIngredients();
+    ingredientSearchInput.focus();
+  });
+  selectedPlannerIngredients?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-remove-index]");
+    if (!button) return;
+    plannerIngredients.splice(Number(button.dataset.removeIndex), 1);
+    renderPlannerIngredients();
   });
 
   // --------------------------------------------------------------------------
@@ -895,6 +992,29 @@
   slotFilter?.addEventListener("change", applyTableFilters);
   statusFilter?.addEventListener("change", applyTableFilters);
   clearFiltersBtn?.addEventListener("click", clearTableFilters);
+
+  document.getElementById("backfillPlannerIngredients")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const confirmed = await alerts.confirmDelete({
+      title: "Generate missing ingredients?",
+      text: "Only planner meals without ingredients will be sent to Gemini. NVIDIA is used automatically if Gemini fails.",
+      confirmButtonText: "Generate",
+    });
+    if (!confirmed) return;
+    button.disabled = true;
+    const label = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+    try {
+      const result = await request("/admin/meal-planner/meals/backfill-ingredients", "POST");
+      const failed = result.failed?.length ? ` ${result.failed.length} meals could not be generated.` : "";
+      await alerts.success("Ingredient generation complete", `${result.updatedCount} meals updated; ${result.skipped} already had ingredients.${failed}`);
+      window.location.reload();
+    } catch (error) {
+      await alerts.error(error.message);
+      button.disabled = false;
+      button.innerHTML = label;
+    }
+  });
 
   // Modals Open/Close
   document

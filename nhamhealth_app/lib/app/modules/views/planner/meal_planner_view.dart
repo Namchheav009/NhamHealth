@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/current_user_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_nutrient_theme.dart';
@@ -18,13 +19,80 @@ import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
 import '../../models/auth/authenticated_user_model.dart';
+import '../../models/meals/meal_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
+import '../../controllers/meals/food_detail_controller.dart';
+import '../../providers/planner/meal_planner_provider.dart';
 import 'planner_shared.dart';
 
 String _plannerLabel(String key, String fallback) {
   final translated = key.tr;
   return translated == key ? fallback : translated;
+}
+
+Future<MealModel> _plannerMealAsFoodDetail(PlannedMeal meal) async {
+  final provider = Get.find<MealPlannerProvider>();
+  final ingredientImages = await Future.wait(
+    meal.ingredientDetails.map(
+      (ingredient) => provider.lookupIngredientImageUrl(ingredient.name),
+    ),
+  );
+  return MealModel(
+  id: meal.id,
+  name: meal.name,
+  calories: meal.calories,
+  image: meal.imageUrl,
+  category: meal.category.isEmpty ? 'planner.uncategorized'.tr : meal.category,
+  categoryId: meal.categoryId ?? 0,
+  proteinGrams: meal.proteinGrams,
+  description: meal.description,
+  cookingTimeMinutes: meal.cookingTimeMinutes,
+  totalTimeMinutes: meal.cookingTimeMinutes,
+  difficulty: meal.difficulty,
+  servings: meal.servings.round(),
+  recommendationReason: meal.recommendationNote,
+  ingredients: List.generate(
+    meal.ingredientDetails.length,
+    (index) {
+      final ingredient = meal.ingredientDetails[index];
+      return MealIngredientModel(
+          name: ingredient.name,
+          description: '',
+          image: ingredientImages[index] ?? '',
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+        );
+    },
+    growable: false,
+  ),
+  nutrition: [
+    MealNutritionModel(
+      name: 'common.protein'.tr,
+      amount: meal.proteinGrams,
+      unit: 'g',
+    ),
+    MealNutritionModel(
+      name: 'planner.carbs'.tr,
+      amount: meal.carbsGrams,
+      unit: 'g',
+    ),
+    MealNutritionModel(name: 'common.fat'.tr, amount: meal.fatGrams, unit: 'g'),
+  ],
+  steps: meal.instructions
+      .indexed
+      .map(
+        (entry) => MealStepModel(
+          number: entry.$1 + 1,
+          instruction: entry.$2,
+        ),
+      )
+      .toList(growable: false),
+  tags: meal.tags
+      .indexed
+      .map((entry) => MealLabelModel(id: entry.$1, name: entry.$2))
+      .toList(growable: false),
+  );
 }
 
 class MealPlannerView extends StatefulWidget {
@@ -40,12 +108,14 @@ class _MealPlannerViewState extends State<MealPlannerView>
 
   int _activePlannerTab = 0;
   AuthenticatedUser? _authenticatedUser;
+  Worker? _currentUserWorker;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadUser();
+    _bindCurrentUser();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && !controller.hasLoadedOnce.value) {
         controller.syncToToday();
@@ -56,6 +126,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _currentUserWorker?.dispose();
     super.dispose();
   }
 
@@ -79,7 +150,19 @@ class _MealPlannerViewState extends State<MealPlannerView>
   Future<void> _loadUser() async {
     if (!Get.isRegistered<AuthService>()) return;
     final user = await Get.find<AuthService>().restoreSession();
+    if (Get.isRegistered<CurrentUserService>()) {
+      Get.find<CurrentUserService>().setUser(user);
+    }
     if (mounted) setState(() => _authenticatedUser = user);
+  }
+
+  void _bindCurrentUser() {
+    if (!Get.isRegistered<CurrentUserService>()) return;
+    final currentUser = Get.find<CurrentUserService>();
+    _authenticatedUser = currentUser.user.value ?? _authenticatedUser;
+    _currentUserWorker = ever<AuthenticatedUser?>(currentUser.user, (user) {
+      if (mounted) setState(() => _authenticatedUser = user);
+    });
   }
 
   void _selectBottomMenu(int index) {
@@ -113,16 +196,18 @@ class _MealPlannerViewState extends State<MealPlannerView>
                 constraints: const BoxConstraints(
                   maxWidth: AppSpacing.maxWideContentWidth,
                 ),
-                child: NhamAppBar(
-                  user: _authenticatedUser,
-                  unreadNotificationCount: 0,
-                  onNotifications:
-                      () => Get.toNamed<void>(AppRoutes.notifications),
-                  onProfile:
-                      () => Get.toNamed<void>(
-                        AppRoutes.profile,
-                        arguments: _authenticatedUser,
-                      ),
+                child: Obx(
+                  () => NhamAppBar(
+                    user: _authenticatedUser,
+                    unreadNotificationCount:
+                        controller.unreadNotificationCount.value,
+                    onNotifications: controller.openNotifications,
+                    onProfile:
+                        () => Get.toNamed<void>(
+                          AppRoutes.profile,
+                          arguments: _authenticatedUser,
+                        ),
+                  ),
                 ),
               ),
             ),
@@ -132,6 +217,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   onRefresh: _refreshUnifiedPlanner,
                   color: AppColors.primaryGreen,
                   child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
                     padding: EdgeInsets.fromLTRB(
                       AppSpacing.pageHorizontalFor(context),
                       14,
@@ -145,7 +233,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                             maxWidth: AppSpacing.maxContentWidth,
                           ),
                           child: LoadingContentTransition(
-                            isLoading: !controller.hasLoadedOnce.value,
+                            isLoading:
+                                controller.isLoading.value &&
+                                !controller.hasLoadedOnce.value,
                             loading: const PageSkeleton.mealPlanner(),
                             content: IgnorePointer(
                               ignoring: controller.isAutoFilling.value,
@@ -313,7 +403,10 @@ class _MealPlannerViewState extends State<MealPlannerView>
       showAutoFillConfirmDialog(context, controller);
 
   Future<void> _refreshUnifiedPlanner() async {
-    final futures = <Future<void>>[controller.refreshPlanner(force: true)];
+    final futures = <Future<void>>[
+      controller.refreshPlanner(force: true),
+      controller.loadUnreadNotificationCount(),
+    ];
     if (Get.isRegistered<WeightLossProjectionController>()) {
       futures.add(
         Get.find<WeightLossProjectionController>().loadForecast(
@@ -1898,15 +1991,16 @@ class _MealPlannerViewState extends State<MealPlannerView>
                 sheetAction(
                   Icons.visibility_outlined,
                   'planner.view_details'.tr,
-                  () {
+                  () async {
                     Get.back<void>();
-                    Get.toNamed(
-                      AppRoutes.mealPlannerDetail,
-                      arguments: {
-                        'meal': meal,
-                        'isAlreadyPlanned': true,
-                        'slot': meal.slot,
-                      },
+                    final foodDetail = await _plannerMealAsFoodDetail(meal);
+                    Get.toNamed<void>(
+                      AppRoutes.foodDetail,
+                      arguments: FoodDetailArguments(
+                        meal: foodDetail,
+                        loadRemoteDetail: false,
+                        favoritesEnabled: false,
+                      ),
                     );
                   },
                   context: context,
@@ -1924,15 +2018,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   () {
                     Get.back<void>();
                     move(context, meal);
-                  },
-                  context: context,
-                ),
-                sheetAction(
-                  Icons.restaurant_menu_rounded,
-                  'planner.change_serving'.tr,
-                  () {
-                    Get.back<void>();
-                    serving(context, meal);
                   },
                   context: context,
                 ),
