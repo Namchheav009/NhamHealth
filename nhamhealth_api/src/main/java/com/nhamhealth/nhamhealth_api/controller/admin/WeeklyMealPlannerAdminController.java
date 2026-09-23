@@ -35,6 +35,7 @@ import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
@@ -45,23 +46,27 @@ public class WeeklyMealPlannerAdminController {
     private static final Set<String> SLOTS = Set.of("BREAKFAST", "LUNCH", "DINNER", "SNACK");
     private final WeeklyMealRecommendationRepository recommendations;
     private final PlannerMealRepository plannerMeals;
+    private final MealPlanRepository mealPlans;
     private final MealCategoryRepository mealCategories;
     private final ProfileImageStorageService profileImageStorageService;
 
     public WeeklyMealPlannerAdminController(
             WeeklyMealRecommendationRepository recommendations,
             PlannerMealRepository plannerMeals,
+            MealPlanRepository mealPlans,
             MealCategoryRepository mealCategories,
             ProfileImageStorageService profileImageStorageService) {
         this.recommendations = recommendations;
         this.plannerMeals = plannerMeals;
+        this.mealPlans = mealPlans;
         this.mealCategories = mealCategories;
         this.profileImageStorageService = profileImageStorageService;
     }
 
     @GetMapping("/admin/meal-planner")
-    @Transactional(readOnly = true)
+    @Transactional
     public String page(Authentication authentication, Model model) {
+        removeMalformedUrlNamedMeals();
         List<WeeklyMealRecommendation> rows = recommendations
                 .findAllByOrderBySortOrderAscRecommendationIdAsc()
                 .stream().sorted(scheduleOrder()).toList();
@@ -154,6 +159,43 @@ public class WeeklyMealPlannerAdminController {
         }
     }
 
+    @DeleteMapping("/admin/meal-planner/meals/{id}")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<?> deleteMeal(@PathVariable Integer id) {
+        PlannerMeal meal = plannerMeals.findById(id).orElse(null);
+        if (meal == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        deletePermanently(meal);
+        return ResponseEntity.ok(Map.of(
+                "deleted", true,
+                "archived", false,
+                "message", "Planner meal and its saved plan entries were deleted permanently."));
+    }
+
+    private void removeMalformedUrlNamedMeals() {
+        List<PlannerMeal> malformed = plannerMeals.findAllByOrderByNameEnAsc().stream()
+                .filter(meal -> isUrl(meal.getNameEn()) || isUrl(meal.getNameKm()))
+                .toList();
+        malformed.forEach(this::deletePermanently);
+    }
+
+    private void deletePermanently(PlannerMeal meal) {
+        Integer id = meal.getPlannerMealId();
+        recommendations.deleteAllByPlannerMealPlannerMealId(id);
+        mealPlans.deleteAllByPlannerMealPlannerMealId(id);
+        plannerMeals.delete(meal);
+    }
+
+    private boolean isUrl(String value) {
+        if (value == null)
+            return false;
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        return normalized.startsWith("http://") || normalized.startsWith("https://");
+    }
+
     @PostMapping("/admin/meal-planner/recommendations")
     @ResponseBody
     @Transactional
@@ -165,6 +207,32 @@ public class WeeklyMealPlannerAdminController {
         apply(row, request, validation.meal());
         row.setCreatedAt(LocalDateTime.now());
         return ResponseEntity.ok(toResponse(recommendations.save(row)));
+    }
+
+    @PostMapping("/admin/meal-planner/recommendations/bulk")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<?> createBulk(@RequestBody List<WeeklyMealRecommendationRequest> requests) {
+        if (requests == null || requests.isEmpty())
+            return bad("Select at least one weekday.");
+
+        List<Validation> validations = requests.stream()
+                .map(request -> validate(request, null))
+                .toList();
+        for (Validation validation : validations) {
+            if (validation.error() != null)
+                return bad(validation.error());
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Map<String, Object>> saved = new java.util.ArrayList<>();
+        for (int index = 0; index < requests.size(); index++) {
+            WeeklyMealRecommendation row = new WeeklyMealRecommendation();
+            apply(row, requests.get(index), validations.get(index).meal());
+            row.setCreatedAt(now);
+            saved.add(toResponse(recommendations.save(row)));
+        }
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/admin/meal-planner/recommendations/{id}")
@@ -185,11 +253,15 @@ public class WeeklyMealPlannerAdminController {
     @DeleteMapping("/admin/meal-planner/recommendations/{id}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        if (!recommendations.existsById(id))
+    public ResponseEntity<?> delete(@PathVariable Integer id) {
+        WeeklyMealRecommendation recommendation = recommendations.findById(id).orElse(null);
+        if (recommendation == null)
             return ResponseEntity.notFound().build();
-        recommendations.deleteById(id);
-        return ResponseEntity.noContent().build();
+        PlannerMeal meal = recommendation.getPlannerMeal();
+        deletePermanently(meal);
+        return ResponseEntity.ok(Map.of(
+                "deleted", true,
+                "message", "Planner meal and its saved plan entries were deleted permanently."));
     }
 
     private Validation validate(WeeklyMealRecommendationRequest request, Integer currentId) {

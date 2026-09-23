@@ -522,6 +522,17 @@ html[data-theme="dark"] .planner-meal-category {
     color: var(--planner-green-dark);
 }
 
+.planner-card-delete {
+    background: var(--planner-surface);
+    border: 1px solid var(--planner-border);
+    color: #dc2626;
+}
+
+.planner-card-delete:hover {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.06);
+}
+
 .planner-library-empty {
     grid-column: 1 / -1;
     padding: 48px 24px;
@@ -1234,6 +1245,46 @@ html[data-theme="dark"] .planner-form-section h3 span {
     line-height: 1.4;
 }
 
+.weekday-selector {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.weekday-selector label {
+    cursor: pointer;
+}
+
+.weekday-selector input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.weekday-selector span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    border: 1px solid var(--planner-border);
+    border-radius: 10px;
+    background: var(--planner-surface);
+    color: var(--planner-muted);
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.weekday-selector input:checked + span {
+    border-color: var(--planner-green);
+    background: var(--planner-green-soft);
+    color: var(--planner-green-dark);
+    box-shadow: 0 0 0 2px rgba(8, 174, 97, 0.1);
+}
+
+.weekday-selector input:focus-visible + span {
+    outline: 2px solid var(--planner-green);
+    outline-offset: 2px;
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -1269,6 +1320,10 @@ body.planner-modal-open {
 }
 
 @media (max-width: 768px) {
+    .weekday-selector {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .planner-heading {
         flex-direction: column;
         align-items: stretch;

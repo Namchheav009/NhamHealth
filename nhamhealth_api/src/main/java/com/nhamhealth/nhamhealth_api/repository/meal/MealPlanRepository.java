@@ -17,4 +17,6 @@ public interface MealPlanRepository extends JpaRepository<MealPlan, Integer> {
     Optional<MealPlan> findByUserUserIdAndPlanDateAndMealType(Integer userId, LocalDate date, String mealType);
     @EntityGraph(attributePaths = { "plannerMeal" })
     Optional<MealPlan> findByMealPlanIdAndUserUserId(Integer id, Integer userId);
+
+    void deleteAllByPlannerMealPlannerMealId(Integer plannerMealId);
 }

@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -25,6 +26,7 @@ import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
@@ -41,6 +43,9 @@ class WeeklyMealPlannerAdminControllerTests {
 
     @MockitoBean
     private PlannerMealRepository plannerMeals;
+
+    @MockitoBean
+    private MealPlanRepository mealPlans;
 
     @MockitoBean
     private MealCategoryRepository mealCategories;
@@ -151,5 +156,47 @@ class WeeklyMealPlannerAdminControllerTests {
 
         org.mockito.Mockito.verify(recommendations, org.mockito.Mockito.atLeast(2))
                 .save(org.mockito.ArgumentMatchers.any(WeeklyMealRecommendation.class));
+    }
+
+    @Test
+    void deleteMealPermanentlyRemovesRecommendationsAndSavedPlans() throws Exception {
+        PlannerMeal meal = new PlannerMeal();
+        meal.setPlannerMealId(44);
+        meal.setNameEn("Meal to delete");
+        when(plannerMeals.findById(44)).thenReturn(java.util.Optional.of(meal));
+
+        mockMvc.perform(delete("/admin/meal-planner/meals/44")
+                .with(user("admin").roles("ADMIN"))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.deleted").value(true))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.archived").value(false));
+
+        org.mockito.Mockito.verify(recommendations).deleteAllByPlannerMealPlannerMealId(44);
+        org.mockito.Mockito.verify(mealPlans).deleteAllByPlannerMealPlannerMealId(44);
+        org.mockito.Mockito.verify(plannerMeals).delete(meal);
+    }
+
+    @Test
+    void deleteScheduledRowAlsoDeletesUnderlyingPlannerMeal() throws Exception {
+        PlannerMeal meal = new PlannerMeal();
+        meal.setPlannerMealId(45);
+        meal.setNameEn("Scheduled meal to delete");
+        WeeklyMealRecommendation recommendation = new WeeklyMealRecommendation();
+        recommendation.setPlannerMeal(meal);
+        when(recommendations.findById(77)).thenReturn(java.util.Optional.of(recommendation));
+
+        mockMvc.perform(delete("/admin/meal-planner/recommendations/77")
+                .with(user("admin").roles("ADMIN"))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.deleted").value(true));
+
+        org.mockito.Mockito.verify(recommendations).deleteAllByPlannerMealPlannerMealId(45);
+        org.mockito.Mockito.verify(mealPlans).deleteAllByPlannerMealPlannerMealId(45);
+        org.mockito.Mockito.verify(plannerMeals).delete(meal);
     }
 }

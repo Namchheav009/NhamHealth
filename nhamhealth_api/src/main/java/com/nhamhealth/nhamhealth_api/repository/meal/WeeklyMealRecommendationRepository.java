@@ -33,4 +33,6 @@ public interface WeeklyMealRecommendationRepository
                         String dayOfWeek, String mealSlot, Integer plannerMealId, Integer recommendationId);
 
         long countByActiveTrue();
+
+        void deleteAllByPlannerMealPlannerMealId(Integer plannerMealId);
 }

@@ -11,6 +11,7 @@
   const saveButton = document.getElementById("saveRecommendationButton");
   const plannerCategory = document.getElementById("plannerCategory");
   const plannerMeal = document.getElementById("plannerMeal");
+  const plannerDays = [...document.querySelectorAll(".planner-day")];
 
   // DOM Elements - Table Filters
   const search = document.getElementById("recommendationSearch");
@@ -368,8 +369,10 @@
     editingId = null;
     form.reset();
     filterPlannerMeals();
-    form.elements.dayOfWeek.value =
-      prefillDay || days[(new Date().getDay() + 6) % 7];
+    const selectedDay = prefillDay || days[(new Date().getDay() + 6) % 7];
+    plannerDays.forEach((input) => {
+      input.checked = input.value === selectedDay;
+    });
     form.elements.mealSlot.value = "BREAKFAST";
     form.elements.active.value = "true";
     form.elements.sortOrder.value = "0";
@@ -397,7 +400,9 @@
     form.elements.categoryId.value = row.dataset.categoryId || "";
     filterPlannerMeals(row.dataset.mealId);
     form.elements.plannerMealId.value = row.dataset.mealId;
-    form.elements.dayOfWeek.value = row.dataset.day;
+    plannerDays.forEach((input) => {
+      input.checked = input.value === row.dataset.day;
+    });
     form.elements.mealSlot.value = row.dataset.slot;
     form.elements.note.value = row.dataset.note || "";
     form.elements.active.value = row.dataset.active;
@@ -453,9 +458,19 @@
     event.preventDefault();
     if (!form.checkValidity()) return form.reportValidity();
     const data = Object.fromEntries(new FormData(form).entries());
-    const payload = {
+    const selectedDays = plannerDays
+      .filter((input) => input.checked)
+      .map((input) => input.value);
+    if (selectedDays.length === 0) {
+      await alerts.error("Select at least one weekday.");
+      return;
+    }
+    if (editingId && selectedDays.length !== 1) {
+      await alerts.error("Select one weekday when editing a recommendation.");
+      return;
+    }
+    const basePayload = {
       plannerMealId: Number(data.plannerMealId),
-      dayOfWeek: data.dayOfWeek,
       mealSlot: data.mealSlot,
       note: (data.note || "").trim() || null,
       active: data.active === "true",
@@ -466,17 +481,23 @@
       const wasEditing = Boolean(editingId);
       const mealLabel =
         form.elements.plannerMealId.selectedOptions[0]?.text || "Meal";
-      await request(
-        editingId
-          ? `/admin/meal-planner/recommendations/${editingId}`
-          : "/admin/meal-planner/recommendations",
-        editingId ? "PUT" : "POST",
-        payload,
-      );
+      if (editingId) {
+        await request(
+          `/admin/meal-planner/recommendations/${editingId}`,
+          "PUT",
+          { ...basePayload, dayOfWeek: selectedDays[0] },
+        );
+      } else {
+        await request(
+          "/admin/meal-planner/recommendations/bulk",
+          "POST",
+          selectedDays.map((dayOfWeek) => ({ ...basePayload, dayOfWeek })),
+        );
+      }
       closeModal();
       await alerts.success(
         wasEditing ? "Recommendation updated" : "Recommendation added",
-        `${mealLabel} is saved for the weekly planner.`,
+        `${mealLabel} is saved for ${selectedDays.length} day${selectedDays.length === 1 ? "" : "s"}.`,
       );
       reloadAtScheduledRecommendations();
     } catch (error) {
@@ -712,23 +733,23 @@
     if (button.dataset.action === "edit") return openEdit(row);
 
     const confirmed = await alerts.confirmDelete({
-      title: "Delete recommendation?",
-      text: `"${row.dataset.meal}" will be removed from ${titleCase(row.dataset.day)} ${titleCase(row.dataset.slot)}.`,
+      title: "Delete planner meal?",
+      text: `"${row.dataset.meal}" and all of its saved meal-plan entries will be permanently deleted from the database.`,
       confirmButtonText: "Delete",
     });
     if (!confirmed) return;
 
     button.disabled = true;
     try {
-      await request(
+      const result = await request(
         `/admin/meal-planner/recommendations/${row.dataset.id}`,
         "DELETE",
       );
       await alerts.success(
-        "Recommendation deleted",
-        "The meal was removed from the weekly schedule.",
+        "Planner meal deleted",
+        result.message,
         "Deleted!",
-        `Recommendation for "${row.dataset.meal}" has been removed.`,
+        `"${row.dataset.meal}" has been permanently removed.`,
       );
       reloadAtScheduledRecommendations();
     } catch (error) {
@@ -756,11 +777,36 @@
   });
 
   // Planner Meal Library Card Actions (Edit & Schedule)
-  mealLibrary?.addEventListener("click", (event) => {
+  mealLibrary?.addEventListener("click", async (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
     const card = button.closest(".planner-meal-card");
     if (button.dataset.action === "edit-meal") return openMealEdit(card);
+    if (button.dataset.action === "delete-meal") {
+      const confirmed = await alerts.confirmDelete({
+        title: "Delete planner meal?",
+        text: `"${card.dataset.nameEn}" and its saved meal-plan entries will be permanently deleted from the database.`,
+        confirmButtonText: "Delete",
+      });
+      if (!confirmed) return;
+
+      button.disabled = true;
+      try {
+        const result = await request(
+          `/admin/meal-planner/meals/${card.dataset.id}`,
+          "DELETE",
+        );
+        await alerts.success(
+          "Planner meal deleted",
+          result.message,
+        );
+        window.location.reload();
+      } catch (error) {
+        await alerts.error(error.message);
+        button.disabled = false;
+      }
+      return;
+    }
     if (button.dataset.action === "schedule-meal") {
       openScheduleForMeal({
         id: card.dataset.id,

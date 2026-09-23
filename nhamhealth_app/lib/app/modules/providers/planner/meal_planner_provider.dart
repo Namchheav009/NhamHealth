@@ -297,8 +297,9 @@ class MealPlannerProvider {
                 .put(uri, headers: headers, body: jsonEncode(body))
                 .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw const MealPlannerProviderException(
-        'Unable to update meal planner.',
+      throw MealPlannerProviderException(
+        _errorMessage(response, 'Unable to update meal planner.'),
+        statusCode: response.statusCode,
       );
     }
     return PlannedMeal.fromJson(
@@ -312,6 +313,19 @@ class MealPlannerProvider {
       'Accept': 'application/json',
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
+  }
+
+  String _errorMessage(http.Response response, String fallback) {
+    try {
+      final payload = jsonDecode(response.body);
+      if (payload is Map) {
+        final message = '${payload['message'] ?? payload['detail'] ?? payload['error'] ?? ''}'.trim();
+        if (message.isNotEmpty) return message;
+      }
+    } catch (_) {
+      // The server did not return JSON; use the stable fallback below.
+    }
+    return fallback;
   }
 
   Future<Map<String, dynamic>> analyzeIngredients({

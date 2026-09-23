@@ -61,6 +61,9 @@ app.ai.gemini.rate-limit-cooldown=PT1M
 app.ai.gemini.meal-planner-model=${GEMINI_MEAL_PLANNER_MODEL:${GEMINI_RECOMMENDATION_MODEL:gemini-3.8-flash-lite}}
 app.ai.gemini.meal-planner-fallback-model=${GEMINI_MEAL_PLANNER_FALLBACK_MODEL:${GEMINI_FALLBACK_MODEL:gemini-3.7-flash}}
 
+# Keep false so administrators control the meal-planner catalog. Enable only
+# when the built-in healthy demonstration meals should be recreated at startup.
+
 # IBM watsonx.ai (goal-aware Meal Planner ranking)
 app.ai.ibm.api-key=${IBM_WATSONX_API_KEY:}
 app.ai.ibm.project-id=${IBM_WATSONX_PROJECT_ID:}

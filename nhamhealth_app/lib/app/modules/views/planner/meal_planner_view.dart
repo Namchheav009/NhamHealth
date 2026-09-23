@@ -168,7 +168,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
                                   if (_activePlannerTab == 0) ...[
                                     _dailyOverview(context),
                                     const SizedBox(height: 16),
-                                    _aiAutoFillBanner(context),
                                     _sectionHeading(context),
                                     const SizedBox(height: 12),
                                     LoadingContentTransition(
@@ -1488,155 +1487,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
                 ),
               ),
             ),
-            if (plannedCount > 0) ...[
-              const SizedBox(width: 4),
-              PopupMenuButton<String>(
-                tooltip: 'planner.day_options'.tr,
-                icon: Icon(
-                  Icons.more_vert_rounded,
-                  size: 20,
-                  color: context.appMutedText,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 220),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                color: context.appElevatedSurface,
-                onSelected: (value) async {
-                  if (value == 'reset_day') {
-                    await controller.resetAllMealsToPlanned(
-                      currentDayOnly: true,
-                    );
-                  } else if (value == 'reset_week') {
-                    await controller.resetAllMealsToPlanned(
-                      currentDayOnly: false,
-                    );
-                  } else if (value == 'clear_day') {
-                    final confirmed = await _confirmClearDialog(
-                      context,
-                      title: 'planner.confirm_clear_day_title'.tr,
-                      desc: 'planner.confirm_clear_day_desc'.tr,
-                    );
-                    if (confirmed == true) {
-                      await controller.clearAllMeals(currentDayOnly: true);
-                    }
-                  } else if (value == 'clear_week') {
-                    final confirmed = await _confirmClearDialog(
-                      context,
-                      title: 'planner.confirm_clear_week_title'.tr,
-                      desc: 'planner.confirm_clear_week_desc'.tr,
-                    );
-                    if (confirmed == true) {
-                      await controller.clearAllMeals(currentDayOnly: false);
-                    }
-                  }
-                },
-                itemBuilder:
-                    (ctx) => [
-                      if (controller.selectedMeals.any(
-                        (m) => m.status != MealPlanStatus.planned,
-                      ))
-                        PopupMenuItem(
-                          value: 'reset_day',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.restart_alt_rounded,
-                                size: 18,
-                                color: AppColors.primaryGreen,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'planner.reset_day_to_planned'.tr,
-                                  style: TextStyle(
-                                    color: ctx.appText,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (controller.weekDays.any(
-                        (d) => controller
-                            .mealsFor(d)
-                            .any((m) => m.status != MealPlanStatus.planned),
-                      ))
-                        PopupMenuItem(
-                          value: 'reset_week',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.restore_rounded,
-                                size: 18,
-                                color: AppColors.primaryGreen,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'planner.reset_week_to_planned'.tr,
-                                  style: TextStyle(
-                                    color: ctx.appText,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      PopupMenuItem(
-                        value: 'clear_day',
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete_sweep_outlined,
-                              size: 18,
-                              color: AppColors.errorCoral,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'planner.clear_all_day_meals'.tr,
-                                style: const TextStyle(
-                                  color: AppColors.errorCoral,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'clear_week',
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete_forever_outlined,
-                              size: 18,
-                              color: AppColors.errorCoral,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'planner.clear_all_week_meals'.tr,
-                                style: const TextStyle(
-                                  color: AppColors.errorCoral,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-              ),
-            ],
           ],
         ),
       ],
@@ -1832,71 +1682,18 @@ class _MealPlannerViewState extends State<MealPlannerView>
                     ),
                     const SizedBox(width: 8),
                     if (meal == null)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap:
-                                  () => _recommendAndShowSheet(
-                                    context,
-                                    slot: slot,
-                                  ),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryGreen.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: AppColors.primaryGreen.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.auto_awesome_rounded,
-                                      size: 13,
-                                      color: AppColors.primaryGreen,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'planner.ai_suggest_meal'.tr,
-                                      style: const TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.primaryGreen,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryGreen,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.add_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                        ],
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       )
                     else
                       Column(
@@ -2110,19 +1907,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
                         'isAlreadyPlanned': true,
                         'slot': meal.slot,
                       },
-                    );
-                  },
-                  context: context,
-                ),
-                sheetAction(
-                  Icons.auto_awesome_rounded,
-                  'planner.ai_suggest_swap'.tr,
-                  () {
-                    Get.back<void>();
-                    _recommendAndShowSheet(
-                      context,
-                      slot: meal.slot,
-                      currentMeal: meal,
                     );
                   },
                   context: context,

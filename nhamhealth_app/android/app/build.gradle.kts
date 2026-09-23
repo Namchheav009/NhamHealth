@@ -29,17 +29,9 @@ android {
         versionName = flutter.versionName
     }
 
-    signingConfigs {
-        getByName("debug") {
-            storeFile = file("nhamhealth-test-debug.keystore")
-            storePassword = "android"
-            keyAlias = "nhamhealthdebug"
-            keyPassword = "android"
-        }
-    }
-
     buildTypes {
         getByName("debug") {
+            // Use Android's standard automatically generated debug keystore.
             signingConfig = signingConfigs.getByName("debug")
         }
         release {

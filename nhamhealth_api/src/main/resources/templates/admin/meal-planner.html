@@ -18,7 +18,7 @@
     />
     <link rel="stylesheet" th:href="@{/css/admin-layout.css}" />
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}" />
-    <link rel="stylesheet" th:href="@{/css/admin-meal-planner.css(v=3)}" />
+    <link rel="stylesheet" th:href="@{/css/admin-meal-planner.css(v=5)}" />
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   </head>
@@ -250,6 +250,13 @@
                     </button>
                     <button
                       type="button"
+                      class="btn planner-card-delete"
+                      data-action="delete-meal"
+                    >
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
+                    <button
+                      type="button"
                       class="btn btn-primary planner-card-schedule"
                       data-action="schedule-meal"
                       th:disabled="${!meal.active}"
@@ -448,6 +455,15 @@
                       <div class="action-group">
                         <button
                           class="icon-button small"
+                          data-action="edit"
+                          type="button"
+                          title="Edit schedule"
+                          aria-label="Edit schedule"
+                        >
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button
+                          class="icon-button small"
                           data-action="edit-meal"
                           type="button"
                           title="Edit meal details"
@@ -550,17 +566,18 @@
                 scheduled.</small
               >
             </div>
-            <div class="field">
-              <label for="plannerDay">Weekday <b>*</b></label>
-              <select id="plannerDay" name="dayOfWeek" required>
-                <option value="MONDAY">Monday</option>
-                <option value="TUESDAY">Tuesday</option>
-                <option value="WEDNESDAY">Wednesday</option>
-                <option value="THURSDAY">Thursday</option>
-                <option value="FRIDAY">Friday</option>
-                <option value="SATURDAY">Saturday</option>
-                <option value="SUNDAY">Sunday</option>
-              </select>
+            <div class="field full">
+              <label>Weekdays <b>*</b></label>
+              <div class="weekday-selector" id="plannerDays" role="group" aria-label="Select weekdays">
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="MONDAY" /><span>Mon</span></label>
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="TUESDAY" /><span>Tue</span></label>
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="WEDNESDAY" /><span>Wed</span></label>
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="THURSDAY" /><span>Thu</span></label>
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="FRIDAY" /><span>Fri</span></label>
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="SATURDAY" /><span>Sat</span></label>
+                <label><input class="planner-day" type="checkbox" name="dayOfWeeks" value="SUNDAY" /><span>Sun</span></label>
+              </div>
+              <small>Select one or more days for this meal.</small>
             </div>
             <div class="field">
               <label for="plannerSlot">Meal time <b>*</b></label>
@@ -1004,6 +1021,6 @@
     </div>
 
     <script th:src="@{/js/admin-layout.js}"></script>
-    <script th:src="@{/js/admin-meal-planner.js(v=3)}" defer></script>
+    <script th:src="@{/js/admin-meal-planner.js(v=6)}" defer></script>
   </body>
 </html>
