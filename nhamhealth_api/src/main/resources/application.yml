@@ -17,6 +17,10 @@ spring:
     enabled: ${SPRING_FLYWAY_ENABLED:true}
     baseline-on-migrate: true
     baseline-version: 0
+    # The production database has migrations from the previous versioned
+    # migration set. Allow a later-added corrective migration (for example V6)
+    # to run when a higher version is already recorded in schema history.
+    out-of-order: ${SPRING_FLYWAY_OUT_OF_ORDER:true}
     connect-retries: 5
     connect-retries-interval: 10s
   mail:
