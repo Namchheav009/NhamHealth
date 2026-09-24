@@ -685,7 +685,11 @@ public class IbmMealPlannerRecommendationService {
         int daysCount = Math.max(1, dates.size());
         double avgDailyCalories = totalSlotsFilled > 0 ? (totalPlannedCalories / daysCount) : targetDailyCalories;
         double dailyDeficit = isWeightLoss ? Math.max(0.0, tdee - avgDailyCalories) : tdee - avgDailyCalories;
-        double weeklyPaceKg = isWeightLoss ? (dailyDeficit * 7.0) / 7700.0 : 0.0;
+        double weeklyPaceKg = isWeightLoss
+                ? (dailyDeficit * 7.0) / 7700.0
+                : isWeightGain && dailyDeficit < 0
+                        ? (Math.abs(dailyDeficit) * 7.0) / 7700.0
+                        : 0.0;
 
         String summaryRationale;
         if (isWeightLoss) {

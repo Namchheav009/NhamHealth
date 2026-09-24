@@ -49,6 +49,10 @@ const Map<String, String> plannerKm = {
   'planner.daily_surplus': 'កាឡូរីលើសប្រចាំថ្ងៃ',
   'planner.estimated_daily_surplus': 'កាឡូរីលើសប្រចាំថ្ងៃដែលបានប៉ាន់ស្មាន',
   'planner.daily_balance': 'តុល្យភាពកាឡូរី',
+  'planner.days_gain': 'ឡើងក្នុង @count ថ្ងៃ',
+  'planner.days_loss': 'ស្រកក្នុង @count ថ្ងៃ',
+  'planner.days_change': 'ប្រែប្រួលក្នុង @count ថ្ងៃ',
+  'planner.aligned_with_goal': 'បានភ្ជាប់ជាមួយគោលដៅ @goal',
   'planner.estimated_daily_balance': 'កាឡូរីគោលដៅសម្រាប់រក្សាទម្ងន់',
   'planner.maintenance_forecast': 'ទិដ្ឋភាពការថែរក្សាសុខភាព',
   'planner.forecast_unavailable':
@@ -420,9 +424,19 @@ const Map<String, String> plannerKm = {
   'planner.nutrition_journey_week': 'ដំណើរអាហារូបត្ថម្ភរបស់អ្នកក្នុងសប្ដាហ៍នេះ',
   'planner.update_info': 'កែព័ត៌មាន',
   'planner.weight_goal_analysis': 'ការវិភាគគោលដៅទម្ងន់',
-  'planner.gemini_analysis': 'ការវិភាគដោយ Gemini',
+  'planner.gemini_analysis': 'ព័ត៌មានលម្អិតអំពីផែនការ',
   'planner.gemini_analysis_subtitle':
       'ការពន្យល់ច្បាស់លាស់ផ្អែកលើផែនការដែលបានគណនា',
+  'planner.plan_details': 'ព័ត៌មានលម្អិតអំពីផែនការ',
+  'planner.detail_goal': '១. គោលដៅរបស់អ្នក៖ @goal',
+  'planner.detail_projection':
+      '២. ការប៉ាន់ស្មានទម្ងន់៖ @current គ.ក្រ → @projected គ.ក្រ ក្នុងរយៈពេល @days ថ្ងៃ (@change គ.ក្រ)។',
+  'planner.detail_energy':
+      '៣. តុល្យភាពថាមពល៖ គ្រោងទុក @intake kcal ធៀបនឹងការដុត @burn kcal (@balance)។',
+  'planner.detail_guidance': '៤. អត្ថន័យនៃលទ្ធផល៖ @guidance',
+  'planner.balance_surplus': 'លើស @amount kcal',
+  'planner.balance_deficit': 'ខ្វះ @amount kcal',
+  'planner.balance_even': 'មានតុល្យភាព',
   'planner.forecast_disclaimer':
       'នេះជាការប៉ាន់ស្មានសម្រាប់ការរៀបចំផែនការ មិនមែនជាការធានាទេ។ ការប្រែប្រួលទម្ងន់ពិតអាចខុសគ្នា។',
   'planner.based_on_profile': 'ផ្អែកលើប្រវត្តិរូប និងផែនការបច្ចុប្បន្ន',

@@ -1383,6 +1383,49 @@ class _AiAutoFillResultSheet extends StatelessWidget {
             : planResult.modelName == 'clinical-rule-fallback'
             ? 'planner.clinical_fallback'.tr
             : 'planner.smart_plan_ready'.tr;
+    final normalizedGoal = planResult?.goal.trim().toUpperCase() ?? '';
+    final isGain = normalizedGoal == 'GAIN_WEIGHT';
+    final isLoss = normalizedGoal == 'LOSE_WEIGHT';
+    final balance = planResult?.dailyDeficit ?? 0;
+    final balanceLabel =
+        isGain
+            ? 'planner.daily_surplus'.tr
+            : isLoss
+            ? 'planner.daily_deficit'.tr
+            : 'planner.daily_balance'.tr;
+    final balanceValue =
+        isGain
+            ? balance < 0
+                ? '+${balance.abs().round()} kcal'
+                : '0 kcal'
+            : isLoss
+            ? balance > 0
+                ? '−${balance.round()} kcal'
+                : '0 kcal'
+            : balance > 0
+            ? '−${balance.round()} kcal'
+            : balance < 0
+            ? '+${balance.abs().round()} kcal'
+            : '0 kcal';
+    final projectionLabel =
+        (isGain
+                ? 'planner.days_gain'
+                : isLoss
+                ? 'planner.days_loss'
+                : 'planner.days_change')
+            .trParams({'count': '${planResult?.timeframeDays ?? 28}'});
+    final projectionValue =
+        isGain
+            ? '+${planResult?.totalProjectedLossKg.toStringAsFixed(1) ?? '0.0'} kg'
+            : isLoss
+            ? '−${planResult?.totalProjectedLossKg.toStringAsFixed(1) ?? '0.0'} kg'
+            : '0.0 kg';
+    final goalLabel =
+        isGain
+            ? 'planner.goal_gain_weight'.tr
+            : isLoss
+            ? 'planner.goal_lose_weight'.tr
+            : 'planner.goal_maintain_health'.tr;
 
     return Padding(
       key: const ValueKey('planner-autofill-success-sheet'),
@@ -1454,6 +1497,43 @@ class _AiAutoFillResultSheet extends StatelessWidget {
             'planner.auto_fill_success'.trParams({'count': '$filledCount'}),
             style: TextStyle(color: context.appMutedText, fontSize: 13),
           ),
+          if (planResult != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.22)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isGain
+                          ? Icons.trending_up_rounded
+                          : isLoss
+                          ? Icons.trending_down_rounded
+                          : Icons.trending_flat_rounded,
+                      size: 15,
+                      color: accentColor,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'planner.aligned_with_goal'.trParams({'goal': goalLabel}),
+                      style: const TextStyle(
+                        color: accentColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
 
           if (planResult != null) ...[
@@ -1505,7 +1585,7 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'planner.daily_deficit'.tr,
+                          balanceLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -1516,12 +1596,12 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          planResult.dailyDeficit > 0
-                              ? '−${planResult.dailyDeficit.round()} kcal'
-                              : '${planResult.dailyDeficit.abs().round()} kcal',
+                          balanceValue,
                           style: TextStyle(
                             color:
-                                planResult.dailyDeficit > 0
+                                (isGain && balance < 0) ||
+                                        (isLoss && balance > 0) ||
+                                        (!isGain && !isLoss && balance.abs() <= 100)
                                     ? AppColors.primaryGreen
                                     : Colors.orange.shade700,
                             fontSize: 14,
@@ -1545,7 +1625,7 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${planResult.timeframeDays}d Loss',
+                          projectionLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -1556,7 +1636,7 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '−${planResult.totalProjectedLossKg.toStringAsFixed(1)} kg',
+                          projectionValue,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

@@ -612,22 +612,34 @@ public class GeminiMealPlannerAutoFillService {
                 .mapToDouble(selection -> number(selection.selectedMeal().getCalories()))
                 .sum() / Math.max(1, days);
         boolean isWeightLoss = "LOSE_WEIGHT".equalsIgnoreCase(goal);
+        boolean isWeightGain = "GAIN_WEIGHT".equalsIgnoreCase(goal);
         double dailyDeficit = isWeightLoss
                 ? Math.max(0, tdee - averageCalories)
                 : tdee - averageCalories;
-        double weeklyPace = isWeightLoss ? dailyDeficit * 7 / 7700.0 : 0.0;
+        double weeklyPace = isWeightLoss
+                ? dailyDeficit * 7 / 7700.0
+                : isWeightGain && dailyDeficit < 0
+                        ? Math.abs(dailyDeficit) * 7 / 7700.0
+                        : 0.0;
         boolean khmer = "km".equalsIgnoreCase(lang);
         String summary;
-        if (aiSummary != null && !aiSummary.isBlank()) {
-            summary = aiSummary;
-        } else if (isWeightLoss) {
+        if (isWeightLoss) {
             summary = khmer
                     ? String.format(Locale.ROOT,
-                            "ផែនការសម្រកទម្ងន់មានប្រហែល %.0f kcal/ថ្ងៃ ដោយផ្តោតលើប្រូតេអ៊ីន និងភាពចម្រុះ។",
-                            averageCalories)
+                            "ផែនការនេះមានប្រហែល %.0f kcal/ថ្ងៃ (ឱនភាព %.0f kcal/ថ្ងៃ) និងប៉ាន់ស្មានស្រក %.2f kg/សប្តាហ៍។",
+                            averageCalories, dailyDeficit, weeklyPace)
                     : String.format(Locale.ROOT,
-                            "Your weight-loss plan averages about %.0f kcal/day with protein and variety in mind.",
-                            averageCalories);
+                            "This plan averages %.0f kcal/day (a %.0f kcal daily deficit), projecting about %.2f kg loss per week.",
+                            averageCalories, dailyDeficit, weeklyPace);
+        } else if (isWeightGain) {
+            double dailySurplus = Math.max(0.0, -dailyDeficit);
+            summary = khmer
+                    ? String.format(Locale.ROOT,
+                            "ផែនការនេះមានប្រហែល %.0f kcal/ថ្ងៃ (កាឡូរីលើស %.0f kcal/ថ្ងៃ) និងប៉ាន់ស្មានឡើង %.2f kg/សប្តាហ៍។",
+                            averageCalories, dailySurplus, weeklyPace)
+                    : String.format(Locale.ROOT,
+                            "This plan averages %.0f kcal/day (a %.0f kcal daily surplus), projecting about %.2f kg gain per week.",
+                            averageCalories, dailySurplus, weeklyPace);
         } else {
             summary = khmer
                     ? String.format(Locale.ROOT,

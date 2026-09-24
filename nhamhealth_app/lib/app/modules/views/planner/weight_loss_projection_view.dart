@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
@@ -52,6 +53,25 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                   child: AppBackHeader(
                     title: _pageTitle,
                     onBack: () => Get.back(),
+                    trailing: Obx(() {
+                      final analysis =
+                          controller.forecast.value?.aiAnalysisSummary.trim() ??
+                          '';
+                      if (analysis.isEmpty) return const SizedBox.shrink();
+                      return IconButton(
+                        key: const ValueKey('gemini-analysis-topbar-button'),
+                        tooltip: 'planner.gemini_analysis'.tr,
+                        onPressed:
+                            () => AppAlert.actionInfo(
+                              context: context,
+                              title: 'planner.gemini_analysis',
+                              message:
+                                  '$analysis\n\n${'planner.forecast_disclaimer'.tr}',
+                            ),
+                        icon: const Icon(Icons.auto_awesome_rounded),
+                        color: const Color(0xFF0F62FE),
+                      );
+                    }),
                   ),
                 ),
               ),
@@ -171,12 +191,6 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
         _projectionHeroCard(context, forecast),
         const SizedBox(height: 12),
         _energyBalanceCard(context, forecast),
-        const SizedBox(height: 12),
-        if (forecast.aiAnalysisSummary.trim().isNotEmpty) ...[
-          _geminiAnalysisCard(context, forecast),
-          const SizedBox(height: 12),
-        ],
-        _profileContextCard(context, forecast),
       ],
     );
 
@@ -210,6 +224,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     );
   }
 
+  // Retained for a possible expanded analysis page.
+  // ignore: unused_element
   Widget _geminiAnalysisCard(
     BuildContext context,
     WeightLossForecast forecast,
@@ -719,17 +735,19 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     final isGain = forecast.shouldGainWeight;
     final isMaintain = forecast.shouldMaintainWeight;
     final balanceValue = forecast.dailyDeficitCalories.abs().round();
+    final hasDeficit = forecast.dailyDeficitCalories > 0;
+    final hasSurplus = forecast.dailyDeficitCalories < 0;
     final titleKey =
-        isGain
-            ? 'planner.daily_surplus'
-            : isMaintain
+        isMaintain || (!hasDeficit && !hasSurplus)
             ? 'planner.daily_balance'
+            : hasSurplus
+            ? 'planner.daily_surplus'
             : 'planner.daily_deficit';
     final descriptionKey =
-        isGain
-            ? 'planner.estimated_daily_surplus'
-            : isMaintain
+        isMaintain || (!hasDeficit && !hasSurplus)
             ? 'planner.estimated_daily_balance'
+            : hasSurplus
+            ? 'planner.estimated_daily_surplus'
             : 'planner.estimated_daily_deficit';
     final accent = isGain ? AppColors.accentOrange : AppColors.primaryGreen;
     return Container(
@@ -898,6 +916,8 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     );
   }
 
+  // Retained for a possible dedicated health-context page.
+  // ignore: unused_element
   Widget _profileContextCard(
     BuildContext context,
     WeightLossForecast forecast,

@@ -95,6 +95,20 @@ abstract final class AppAlert {
     context: context,
   );
 
+  /// Presents a branded informational dialog for contextual explanations.
+  static Future<void> actionInfo({
+    required String title,
+    required String message,
+    String confirmText = 'common.ok',
+    BuildContext? context,
+  }) => _showActionDialog(
+    title: title,
+    message: message,
+    tone: _AppActionAlertTone.info,
+    confirmText: confirmText,
+    context: context,
+  );
+
   /// Presents a branded confirmation dialog with Cancel and Confirm buttons.
   static Future<bool> confirmAction({
     required String title,
@@ -385,7 +399,7 @@ abstract final class AppAlert {
 
 enum _AppAlertTone { success }
 
-enum _AppActionAlertTone { success, error }
+enum _AppActionAlertTone { success, error, info }
 
 class _AppActionAlertOverlay extends StatelessWidget {
   const _AppActionAlertOverlay({
@@ -403,8 +417,19 @@ class _AppActionAlertOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSuccess = tone == _AppActionAlertTone.success;
-    final iconColor = isSuccess ? AppColors.primaryGreen : AppColors.errorCoral;
-    final icon = isSuccess ? Icons.check_rounded : Icons.close_rounded;
+    final isInfo = tone == _AppActionAlertTone.info;
+    final iconColor =
+        isInfo
+            ? const Color(0xFF0F62FE)
+            : isSuccess
+            ? AppColors.primaryGreen
+            : AppColors.errorCoral;
+    final icon =
+        isInfo
+            ? Icons.lightbulb_outline_rounded
+            : isSuccess
+            ? Icons.check_rounded
+            : Icons.close_rounded;
     final localizedTitle = title.trOrSelf;
     final localizedMessage = message.trOrSelf;
     final buttonColor = context.appColorScheme.primary;
@@ -429,7 +454,7 @@ class _AppActionAlertOverlay extends StatelessWidget {
                   namesRoute: true,
                   explicitChildNodes: true,
                   label:
-                      '${isSuccess ? 'Success' : 'Error'}: '
+                      '${isInfo ? 'Information' : isSuccess ? 'Success' : 'Error'}: '
                       '$localizedTitle. $localizedMessage',
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 424),
@@ -482,7 +507,8 @@ class _AppActionAlertOverlay extends StatelessWidget {
                             const SizedBox(height: 10),
                             Text(
                               localizedMessage,
-                              textAlign: TextAlign.center,
+                              textAlign:
+                                  isInfo ? TextAlign.start : TextAlign.center,
                               style: TextStyle(
                                 color: context.appMutedText,
                                 fontSize: 14,

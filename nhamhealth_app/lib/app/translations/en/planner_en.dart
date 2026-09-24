@@ -49,6 +49,10 @@ const Map<String, String> plannerEn = {
   'planner.daily_surplus': 'Daily Surplus',
   'planner.estimated_daily_surplus': 'Your estimated daily calorie surplus',
   'planner.daily_balance': 'Calorie Balance',
+  'planner.days_gain': '@count d Gain',
+  'planner.days_loss': '@count d Loss',
+  'planner.days_change': '@count d Change',
+  'planner.aligned_with_goal': 'Connected to @goal',
   'planner.estimated_daily_balance':
       'Your estimated maintenance calorie target',
   'planner.maintenance_forecast': 'Health Maintenance Outlook',
@@ -419,9 +423,19 @@ const Map<String, String> plannerEn = {
   'planner.nutrition_journey_week': 'Your nutrition journey this week',
   'planner.update_info': 'Update info',
   'planner.weight_goal_analysis': 'Weight Goal Analysis',
-  'planner.gemini_analysis': 'Gemini Analysis',
+  'planner.gemini_analysis': 'Plan details',
   'planner.gemini_analysis_subtitle':
       'A clear explanation based on your calculated plan',
+  'planner.plan_details': 'Plan details',
+  'planner.detail_goal': '1. Your goal: @goal',
+  'planner.detail_projection':
+      '2. Weight outlook: @current kg → @projected kg over @days days (@change kg).',
+  'planner.detail_energy':
+      '3. Energy balance: @intake kcal planned vs @burn kcal burned (@balance).',
+  'planner.detail_guidance': '4. What this means: @guidance',
+  'planner.balance_surplus': '@amount kcal surplus',
+  'planner.balance_deficit': '@amount kcal deficit',
+  'planner.balance_even': 'balanced',
   'planner.forecast_disclaimer':
       'This is a planning estimate, not a guarantee. Actual weight change can vary.',
   'planner.based_on_profile': 'Based on your profile and current plan',

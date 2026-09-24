@@ -604,11 +604,13 @@ public class MealPlannerForecastService {
             }
         }
 
-        // 8. Return a weight projection only for the weight-loss goal.
+        // 8. Return a goal-aware projected weight-change magnitude.
         int timeframe = request.targetTimeframeDays() != null ? request.targetTimeframeDays() : 28;
-        double totalLossKg = isWeightLoss
+        double totalWeightChangeKg = isWeightLoss
                 ? Math.max(0.0, (synthesis.dailyDeficit() * timeframe) / KCAL_PER_KG_FAT)
-                : 0.0;
+                : isWeightGain
+                        ? Math.max(0.0, (-synthesis.dailyDeficit() * timeframe) / KCAL_PER_KG_FAT)
+                        : 0.0;
 
         return new AiAutoFillPlanResponse(
                 createdResponses,
@@ -619,7 +621,7 @@ public class MealPlannerForecastService {
                 round(bmr, 0).doubleValue(),
                 round(synthesis.weeklyPaceKg(), 2).doubleValue(),
                 timeframe,
-                round(totalLossKg, 2).doubleValue(),
+                round(totalWeightChangeKg, 2).doubleValue(),
                 synthesis.summaryRationale(),
                 goal,
                 synthesis.modelUsed());
