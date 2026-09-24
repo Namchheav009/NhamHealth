@@ -154,7 +154,9 @@ class _CommunityPersonProfileViewState
         await _repository.toggleFollow('${profile.id}'),
       );
       // Keep compatibility with API versions that only return FOLLOWING/NONE.
-      if (status.isFollowing && profile.followsViewer && !status.followsViewer) {
+      if (status.isFollowing &&
+          profile.followsViewer &&
+          !status.followsViewer) {
         status = CommunityConnectionStatus.fromDirections(
           isFollowing: status.isFollowing,
           followsViewer: true,
@@ -697,8 +699,6 @@ class _CommunityPersonProfileViewState
     );
   }
 
-
-
   Widget _headline(BuildContext context, String headline) => Container(
     key: const ValueKey<String>('other-profile-headline'),
     width: double.infinity,
@@ -872,42 +872,46 @@ class _CommunityPersonProfileViewState
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 42),
       child: Column(
         children: _posts
-            .map(
-              (post) {
-                final sharedAsPost = post.sharedPost?.toPost();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: ProfilePostCard(
-                    post: post,
-                    authorName: _profile?.name,
-                    authorAvatarUrl: _profile?.avatarUrl,
-                    membership: _roleLabel(_profile?.role ?? post.role),
-                    onLike: () => _togglePostLike(post),
-                    onShowLikes:
-                        () => showPostLikers(
-                          context,
-                          post: post,
-                          repository: _repository,
-                        ),
-                    isLiking: _likingPostIds.contains(post.id),
-                    onComment: () => _showComments(post),
-                    onShare: () => _showShare(post),
-                    onOptions: () => _showPostOptions(post),
-                    onSharedPostTap:
-                        sharedAsPost != null ? () => _showComments(sharedAsPost) : null,
-                    onSharedAuthorTap:
-                        (sharedAsPost != null && sharedAsPost.authorId > 0)
-                            ? () => Get.toNamed<void>(
-                                  AppRoutes.communityPersonProfilePath(sharedAsPost.authorId),
-                                  arguments: sharedAsPost,
-                                )
-                            : null,
-                    onSharedOptions:
-                        sharedAsPost != null ? () => _showPostOptions(sharedAsPost) : null,
-                  ),
-                );
-              },
-            )
+            .map((post) {
+              final sharedAsPost = post.sharedPost?.toPost();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: ProfilePostCard(
+                  post: post,
+                  authorName: _profile?.name,
+                  authorAvatarUrl: _profile?.avatarUrl,
+                  membership: _roleLabel(_profile?.role ?? post.role),
+                  onLike: () => _togglePostLike(post),
+                  onShowLikes:
+                      () => showPostLikers(
+                        context,
+                        post: post,
+                        repository: _repository,
+                      ),
+                  isLiking: _likingPostIds.contains(post.id),
+                  onComment: () => _showComments(post),
+                  onShare: () => _showShare(post),
+                  onOptions: () => _showPostOptions(post),
+                  onSharedPostTap:
+                      sharedAsPost != null
+                          ? () => _showComments(sharedAsPost)
+                          : null,
+                  onSharedAuthorTap:
+                      (sharedAsPost != null && sharedAsPost.authorId > 0)
+                          ? () => Get.toNamed<void>(
+                            AppRoutes.communityPersonProfilePath(
+                              sharedAsPost.authorId,
+                            ),
+                            arguments: sharedAsPost,
+                          )
+                          : null,
+                  onSharedOptions:
+                      sharedAsPost != null
+                          ? () => _showPostOptions(sharedAsPost)
+                          : null,
+                ),
+              );
+            })
             .toList(growable: false),
       ),
     );
@@ -962,6 +966,10 @@ class _CommunityPersonProfileViewState
       () => CommunityCommentsPage(
         post: post,
         onPostChanged: () => setState(() {}),
+        onDeletePost:
+            (deletedPost) => setState(
+              () => _posts.removeWhere((p) => p.id == deletedPost.id),
+            ),
         onShareToFeed:
             (message, visibility) => _repository.sharePostToFeed(
               post.id,
@@ -997,9 +1005,10 @@ class _CommunityPersonProfileViewState
   }
 
   Future<void> _togglePostSaved(CommunityPost post) async {
-    final currentUserId = Get.isRegistered<CommunityController>()
-        ? Get.find<CommunityController>().authenticatedUser.value?.id
-        : null;
+    final currentUserId =
+        Get.isRegistered<CommunityController>()
+            ? Get.find<CommunityController>().authenticatedUser.value?.id
+            : null;
     if (currentUserId != null && post.authorId == currentUserId) {
       return;
     }
@@ -1012,7 +1021,10 @@ class _CommunityPersonProfileViewState
       return;
     }
     try {
-      final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
+      final updated = await _repository.toggleSaved(
+        post.id,
+        recipeId: recipeId,
+      );
       if (!mounted) return;
       setState(() {
         final index = _posts.indexWhere((item) => item.id == post.id);
@@ -1304,9 +1316,13 @@ class _PersonPostOptionsSheet extends StatelessWidget {
             ),
             child: Builder(
               builder: (context) {
-                final currentUserId = Get.isRegistered<CommunityController>()
-                    ? Get.find<CommunityController>().authenticatedUser.value?.id
-                    : null;
+                final currentUserId =
+                    Get.isRegistered<CommunityController>()
+                        ? Get.find<CommunityController>()
+                            .authenticatedUser
+                            .value
+                            ?.id
+                        : null;
                 final isOwner =
                     currentUserId != null && post.authorId == currentUserId;
                 return Column(
@@ -1525,7 +1541,6 @@ class _PersonPostOptionTile extends StatelessWidget {
     );
   }
 }
-
 
 class _ProfileMessage extends StatelessWidget {
   const _ProfileMessage({required this.message, this.actionLabel, this.onTap});

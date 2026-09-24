@@ -1604,6 +1604,7 @@ class CommunityPage extends GetView<CommunityController> {
           );
         },
         canEdit: post.authorId == controller.authenticatedUser.value?.id,
+        onDeletePost: (deletedPost) => controller.removePostLocally(deletedPost.id),
         onEditPost:
             (draft) => controller.updatePost(
               post: post,

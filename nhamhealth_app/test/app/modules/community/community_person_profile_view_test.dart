@@ -86,8 +86,6 @@ void main() {
     final followButtonSize = tester.getSize(
       find.byKey(const ValueKey<String>('other-profile-follow-button')),
     );
-    expect(followButtonSize.width, greaterThan(80));
-    expect(followButtonSize.height, 36);
     expect(followButtonSize.width, greaterThan(70));
     expect(followButtonSize.height, 28);
     expect(
@@ -100,9 +98,7 @@ void main() {
     );
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('profile-tab-photos')),
-    );
+    await tester.tap(find.byKey(const ValueKey<String>('profile-tab-photos')));
     await tester.pumpAndSettle();
     expect(find.text('No photos shared yet.'), findsOneWidget);
     expect(tester.takeException(), isNull);

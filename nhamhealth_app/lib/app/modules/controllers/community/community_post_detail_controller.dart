@@ -81,22 +81,64 @@ class CommunityPostDetailController extends GetxController {
     if (current == null || !canEdit) {
       throw const CommunityException('You cannot edit this post.');
     }
+    final fallbackPost = current.sharedPost;
+    final effectiveMealName = draft.mealName.trim().isNotEmpty
+        ? draft.mealName.trim()
+        : (current.mealName.trim().isNotEmpty
+            ? current.mealName.trim()
+            : (fallbackPost?.mealName.trim().isNotEmpty == true
+                ? fallbackPost!.mealName.trim()
+                : 'Shared Post'));
+    final effectiveCookingTime = draft.cookingTimeMinutes > 0
+        ? draft.cookingTimeMinutes
+        : ((current.cookingTimeMinutes != null && current.cookingTimeMinutes! > 0)
+            ? current.cookingTimeMinutes!
+            : (fallbackPost?.cookingTimeMinutes != null &&
+                    fallbackPost!.cookingTimeMinutes! > 0
+                ? fallbackPost.cookingTimeMinutes!
+                : 1));
+    final effectiveServings = draft.servings > 0
+        ? draft.servings
+        : ((current.servings != null && current.servings! > 0)
+            ? current.servings!
+            : (fallbackPost?.servings != null && fallbackPost!.servings! > 0
+                ? fallbackPost.servings!
+                : 1));
+    final effectiveDifficulty = draft.difficulty.trim().isNotEmpty
+        ? draft.difficulty.trim()
+        : (current.difficulty.trim().isNotEmpty
+            ? current.difficulty.trim()
+            : (fallbackPost?.difficulty.trim().isNotEmpty == true
+                ? fallbackPost!.difficulty.trim()
+                : 'EASY'));
+    final effectiveIngredients = draft.ingredients.isNotEmpty
+        ? draft.ingredients
+        : (current.ingredients.isNotEmpty
+            ? current.ingredients
+            : fallbackPost?.ingredients ?? const []);
+    final effectiveSteps = draft.steps.isNotEmpty
+        ? draft.steps
+        : (current.steps.isNotEmpty
+            ? current.steps
+            : fallbackPost?.steps ?? const []);
+    final effectiveCategoryId = draft.categoryId ?? current.categoryId ?? 1;
+
     final updated = await _repository.updatePost(
       postId: current.id,
-      mealName: draft.mealName,
+      mealName: effectiveMealName,
       description: draft.description,
-      cookingTimeMinutes: draft.cookingTimeMinutes,
-      servings: draft.servings,
-      difficulty: draft.difficulty,
-      ingredients: draft.ingredients,
-      steps: draft.steps,
+      cookingTimeMinutes: effectiveCookingTime,
+      servings: effectiveServings,
+      difficulty: effectiveDifficulty,
+      ingredients: effectiveIngredients,
+      steps: effectiveSteps,
       imageBytes: draft.imageBytes,
       visibility: draft.visibility,
       allowComments: draft.allowComments,
       allowReplies: draft.allowReplies,
       removeImage: draft.removeImage,
       tagIds: draft.tagIds,
-      categoryId: draft.categoryId,
+      categoryId: effectiveCategoryId,
     );
     post.value = updated;
     return updated;

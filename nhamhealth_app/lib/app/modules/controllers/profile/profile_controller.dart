@@ -204,22 +204,60 @@ class ProfileController extends GetxController {
     List<int> tagIds = const [],
     int? categoryId,
   }) async {
+    final fallbackPost = post.sharedPost;
+    final effectiveMealName =
+        (mealName ?? post.mealName).trim().isNotEmpty
+            ? (mealName ?? post.mealName).trim()
+            : (fallbackPost?.mealName.trim().isNotEmpty == true
+                ? fallbackPost!.mealName.trim()
+                : 'Shared Post');
+    final effectiveCookingTime =
+        cookingTimeMinutes ??
+        ((post.cookingTimeMinutes != null && post.cookingTimeMinutes! > 0)
+            ? post.cookingTimeMinutes!
+            : (fallbackPost?.cookingTimeMinutes != null &&
+                    fallbackPost!.cookingTimeMinutes! > 0
+                ? fallbackPost.cookingTimeMinutes!
+                : 1));
+    final effectiveServings =
+        servings ??
+        ((post.servings != null && post.servings! > 0)
+            ? post.servings!
+            : (fallbackPost?.servings != null && fallbackPost!.servings! > 0
+                ? fallbackPost.servings!
+                : 1));
+    final effectiveDifficulty =
+        (difficulty ?? post.difficulty).trim().isNotEmpty
+            ? (difficulty ?? post.difficulty).trim()
+            : (fallbackPost?.difficulty.trim().isNotEmpty == true
+                ? fallbackPost!.difficulty.trim()
+                : 'EASY');
+    final effectiveIngredients =
+        ingredients ??
+        (post.ingredients.isNotEmpty
+            ? post.ingredients
+            : fallbackPost?.ingredients ?? const []);
+    final effectiveSteps =
+        steps ??
+        (post.steps.isNotEmpty ? post.steps : fallbackPost?.steps ?? const []);
+    final effectiveCategoryId = categoryId ?? post.categoryId ?? 1;
+
     final updated = await _communityRepository.updatePost(
       postId: post.id,
-      mealName: mealName ?? post.mealName,
+      mealName: effectiveMealName,
       description: description,
-      cookingTimeMinutes: cookingTimeMinutes ?? post.cookingTimeMinutes ?? 0,
-      servings: servings ?? post.servings ?? 0,
-      difficulty: difficulty ?? post.difficulty,
-      ingredients: ingredients ?? post.ingredients,
-      steps: steps ?? post.steps,
+      cookingTimeMinutes: effectiveCookingTime,
+      servings: effectiveServings,
+      difficulty: effectiveDifficulty,
+      ingredients: effectiveIngredients,
+      steps: effectiveSteps,
       imageBytes: imageBytes,
       visibility: visibility,
       allowComments: allowComments,
       allowReplies: allowReplies,
       removeImage: removeImage,
       tagIds: tagIds,
-      categoryId: categoryId,
+      categoryId: effectiveCategoryId,
     );
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;

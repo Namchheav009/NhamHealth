@@ -21,6 +21,10 @@ class CommunityPostDetailPage extends GetView<CommunityPostDetailController> {
         post: post,
         canEdit: controller.canEdit,
         onEditPost: controller.canEdit ? controller.updatePost : null,
+        onDeletePost: (_) {
+          controller.post.value = null;
+          Get.back<void>();
+        },
         titleKey: 'community.post_title',
       );
     }

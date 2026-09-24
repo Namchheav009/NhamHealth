@@ -499,6 +499,10 @@ class ProfileView extends GetView<ProfileController> {
               visibility: visibility,
             ),
         canEdit: true,
+        onDeletePost:
+            (deletedPost) => controller.posts.removeWhere(
+              (item) => item.id == deletedPost.id,
+            ),
         onEditPost:
             (draft) => controller.updatePost(
               post: post,

@@ -31,6 +31,7 @@ class CommunityCommentsPage extends StatefulWidget {
   const CommunityCommentsPage({
     required this.post,
     this.onPostChanged,
+    this.onDeletePost,
     this.canEdit = false,
     this.onEditPost,
     this.onShareToFeed,
@@ -40,6 +41,7 @@ class CommunityCommentsPage extends StatefulWidget {
 
   final CommunityPost post;
   final VoidCallback? onPostChanged;
+  final void Function(CommunityPost post)? onDeletePost;
   final bool canEdit;
   final String titleKey;
   final Future<CommunityPost> Function(CommunityPostDraft draft)? onEditPost;
@@ -489,7 +491,10 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       return;
     }
     try {
-      final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
+      final updated = await _repository.toggleSaved(
+        post.id,
+        recipeId: recipeId,
+      );
       if (!mounted) return;
       setState(() {
         post.isSaved = updated.isSaved;
@@ -563,6 +568,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       }
       await _repository.deletePost(recipeId);
       if (!mounted) return;
+      widget.onDeletePost?.call(_post);
       widget.onPostChanged?.call();
       Get.back<void>();
       await Future<void>.delayed(Duration.zero);
@@ -596,10 +602,11 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
         isEditing: true,
         submitButtonText: 'common.save'.tr,
         onShare: (message, visibility) async {
-          final updated = await _repository.updatePost(
-            postId: _post.id,
+          final draft = CommunityPostDraft(
             mealName: _post.mealName,
             description: message,
+            imageBytes: const [],
+            removeImage: false,
             cookingTimeMinutes: _post.cookingTimeMinutes ?? 0,
             servings: _post.servings ?? 0,
             difficulty: _post.difficulty,
@@ -611,6 +618,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
             tagIds: _post.tagIds,
             categoryId: _post.categoryId,
           );
+          final updated = await submit(draft);
           if (mounted) setState(() => _post = updated.copyWith());
           widget.onPostChanged?.call();
         },
@@ -678,9 +686,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     final isTablet = AppSpacing.isTabletFor(context);
     final horizontalPadding = AppSpacing.pageHorizontalFor(context);
     final contentMaxWidth =
-        isTablet
-            ? AppSpacing.maxWideContentWidth
-            : AppSpacing.maxContentWidth;
+        isTablet ? AppSpacing.maxWideContentWidth : AppSpacing.maxContentWidth;
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -749,8 +755,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                                             ? 'community.comment_count_one'
                                             : 'community.comment_count_many')
                                         .trParams({
-                                      'count': '${_post.comments}',
-                                    }),
+                                          'count': '${_post.comments}',
+                                        }),
                                     style: const TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w800,
@@ -813,25 +819,28 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Widget _postSummary() {
     final sharedAsPost = _post.sharedPost?.toPost();
-    final controller = Get.isRegistered<CommunityController>()
-        ? Get.find<CommunityController>()
-        : null;
+    final controller =
+        Get.isRegistered<CommunityController>()
+            ? Get.find<CommunityController>()
+            : null;
     final currentUserId = controller?.authenticatedUser.value?.id;
     final isOriginalOwner =
         sharedAsPost != null &&
         (sharedAsPost.authorId <= 0 ||
             (currentUserId != null && sharedAsPost.authorId == currentUserId));
-    final status = (controller != null && sharedAsPost != null && !isOriginalOwner)
-        ? controller.connectionStatusFor(sharedAsPost.authorId)
-        : null;
-    final relLabel = isOriginalOwner || sharedAsPost == null
-        ? null
-        : status == CommunityConnectionStatus.friend
+    final status =
+        (controller != null && sharedAsPost != null && !isOriginalOwner)
+            ? controller.connectionStatusFor(sharedAsPost.authorId)
+            : null;
+    final relLabel =
+        isOriginalOwner || sharedAsPost == null
+            ? null
+            : status == CommunityConnectionStatus.friend
             ? 'community.friend'.tr
             : (status == CommunityConnectionStatus.following ||
-                    (status == null && sharedAsPost.isFollowingAuthor))
-                ? 'community.following'.tr
-                : 'community.follow'.tr;
+                (status == null && sharedAsPost.isFollowingAuthor))
+            ? 'community.following'.tr
+            : 'community.follow'.tr;
 
     return Column(
       children: [
@@ -846,20 +855,22 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           onSharedPostTap:
               sharedAsPost != null
                   ? () => Get.to<void>(
-                        () => CommunityCommentsPage(post: sharedAsPost),
-                        transition: Transition.rightToLeft,
-                      )
+                    () => CommunityCommentsPage(post: sharedAsPost),
+                    transition: Transition.rightToLeft,
+                  )
                   : null,
           onSharedAuthorTap:
               sharedAsPost != null
                   ? () {
-                      if (sharedAsPost.authorId > 0) {
-                        Get.toNamed<void>(
-                          AppRoutes.communityPersonProfilePath(sharedAsPost.authorId),
-                          arguments: sharedAsPost,
-                        );
-                      }
+                    if (sharedAsPost.authorId > 0) {
+                      Get.toNamed<void>(
+                        AppRoutes.communityPersonProfilePath(
+                          sharedAsPost.authorId,
+                        ),
+                        arguments: sharedAsPost,
+                      );
                     }
+                  }
                   : null,
           sharedRelationshipLabel: relLabel,
           onSharedRelationshipTap:
@@ -867,7 +878,9 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
                   ? () => controller.togglePostAuthorFollow(sharedAsPost)
                   : null,
           onSharedOptions:
-              sharedAsPost != null ? () => _showPostOptions(sharedAsPost) : null,
+              sharedAsPost != null
+                  ? () => _showPostOptions(sharedAsPost)
+                  : null,
         ),
       ],
     );
@@ -1260,8 +1273,8 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     final horizontalPadding = AppSpacing.pageHorizontalFor(context);
     final composerMaxWidth =
         (isTablet
-                ? AppSpacing.maxWideContentWidth
-                : AppSpacing.maxContentWidth) +
+            ? AppSpacing.maxWideContentWidth
+            : AppSpacing.maxContentWidth) +
         (horizontalPadding * 2);
 
     if (!_post.allowComments) {

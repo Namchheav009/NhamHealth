@@ -73,7 +73,11 @@ void main() {
         difficulty: 'MEDIUM',
         tags: const ['NomBanhChok', 'Yummy'],
         ingredients: const [
-          MealPostIngredient(ingredientName: 'Rice noodles', amount: 200, unit: 'g'),
+          MealPostIngredient(
+            ingredientName: 'Rice noodles',
+            amount: 200,
+            unit: 'g',
+          ),
         ],
         steps: const [
           MealPostStep(stepNumber: 1, instruction: 'Prepare fresh noodles'),
@@ -93,7 +97,7 @@ void main() {
       );
 
       expect(find.text('Smos os trim Bong'), findsOneWidget);
-      expect(find.text('នំបាញ់ឆុក'), findsOneWidget);
+      expect(find.text('Tasty Khmer noodles'), findsOneWidget);
       expect(find.text('45 min'), findsOneWidget);
       expect(find.text('2 servings'), findsOneWidget);
       expect(find.text('MEDIUM'), findsOneWidget);

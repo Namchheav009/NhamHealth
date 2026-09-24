@@ -1,16 +1,16 @@
 package com.nhamhealth.nhamhealth_api.service.recipe;
-import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -18,14 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import jakarta.persistence.EntityManager;
-
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeIngredientRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.RecipeStepRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.RecipeResponse;
 import com.nhamhealth.nhamhealth_api.entity.Meal;
 import com.nhamhealth.nhamhealth_api.entity.MealCategory;
+import com.nhamhealth.nhamhealth_api.entity.ModerationAction;
+import com.nhamhealth.nhamhealth_api.entity.ModerationActionType;
 import com.nhamhealth.nhamhealth_api.entity.Recipe;
 import com.nhamhealth.nhamhealth_api.entity.RecipeIngredient;
 import com.nhamhealth.nhamhealth_api.entity.RecipeStep;
@@ -34,23 +34,23 @@ import com.nhamhealth.nhamhealth_api.entity.SavedRecipe;
 import com.nhamhealth.nhamhealth_api.entity.TagType;
 import com.nhamhealth.nhamhealth_api.entity.User;
 import com.nhamhealth.nhamhealth_api.entity.UserProfile;
-import com.nhamhealth.nhamhealth_api.repository.recipe.AiRecipeReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.catalog.MealCategoryRepository;
-import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
+import com.nhamhealth.nhamhealth_api.repository.community.ModerationActionRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.PostRepository;
+import com.nhamhealth.nhamhealth_api.repository.meal.MealRepository;
+import com.nhamhealth.nhamhealth_api.repository.recipe.AiRecipeReviewRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeIngredientRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeStepRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.RecipeTagRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.SavedRecipeRepository;
-import com.nhamhealth.nhamhealth_api.entity.ModerationAction;
-import com.nhamhealth.nhamhealth_api.entity.ModerationActionType;
-import com.nhamhealth.nhamhealth_api.repository.community.ModerationActionRepository;
-import java.time.format.DateTimeFormatter;
-import com.nhamhealth.nhamhealth_api.repository.catalog.TagTypeRepository;
 import com.nhamhealth.nhamhealth_api.repository.recipe.UserRecipeAiCheckRepository;
-import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
+import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
+
+import jakarta.persistence.EntityManager;
 
 /** The author-owned Community meal-post lifecycle. */
 @Service
@@ -80,17 +80,28 @@ public class RecipeFlowService {
             UserProfileRepository userProfiles,
             ProfileImageStorageService images, EntityManager entityManager,
             ModerationActionRepository moderationActions) {
-        this.recipes = recipes; this.ingredients = ingredients; this.steps = steps; this.recipeTags = recipeTags;
-        this.tags = tags; this.reviews = reviews; this.checks = checks; this.savedRecipes = savedRecipes;
-        this.posts = posts; this.meals = meals; this.categories = categories;
-        this.users = users; this.userProfiles = userProfiles; this.images = images;
+        this.recipes = recipes;
+        this.ingredients = ingredients;
+        this.steps = steps;
+        this.recipeTags = recipeTags;
+        this.tags = tags;
+        this.reviews = reviews;
+        this.checks = checks;
+        this.savedRecipes = savedRecipes;
+        this.posts = posts;
+        this.meals = meals;
+        this.categories = categories;
+        this.users = users;
+        this.userProfiles = userProfiles;
+        this.images = images;
         this.entityManager = entityManager;
         this.moderationActions = moderationActions;
     }
 
     @Transactional(readOnly = true)
     public List<RecipeResponse> mine(Integer userId) {
-        return recipes.findByAuthorUserIdOrderByUpdatedAtDesc(userId).stream().map(recipe -> response(recipe, userId)).toList();
+        return recipes.findByAuthorUserIdOrderByUpdatedAtDesc(userId).stream().map(recipe -> response(recipe, userId))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -122,7 +133,8 @@ public class RecipeFlowService {
         recipe.setAuthor(user(userId));
         recipe.setStatus("DRAFT");
         LocalDateTime now = LocalDateTime.now();
-        recipe.setCreatedAt(now); recipe.setUpdatedAt(now);
+        recipe.setCreatedAt(now);
+        recipe.setUpdatedAt(now);
         apply(recipe, request, image, false);
         return response(recipes.save(recipe), userId);
     }
@@ -135,7 +147,8 @@ public class RecipeFlowService {
         recipe.setAuthor(user(userId));
         recipe.setStatus("DRAFT");
         LocalDateTime now = LocalDateTime.now();
-        recipe.setCreatedAt(now); recipe.setUpdatedAt(now);
+        recipe.setCreatedAt(now);
+        recipe.setUpdatedAt(now);
         apply(recipe, request, null, false);
         recipe = recipes.saveAndFlush(recipe);
         List<String> mediaUrls = replaceRecipeMedia(recipe.getRecipeId(), files);
@@ -174,12 +187,14 @@ public class RecipeFlowService {
     }
 
     private List<MultipartFile> usableImages(List<MultipartFile> uploads) {
-        return uploads == null ? List.of() : uploads.stream()
-                .filter(Objects::nonNull).filter(file -> !file.isEmpty()).toList();
+        return uploads == null ? List.of()
+                : uploads.stream()
+                        .filter(Objects::nonNull).filter(file -> !file.isEmpty()).toList();
     }
 
     private void validateImageCount(int count) {
-        if (count > 5) throw new IllegalArgumentException("A post can contain up to 5 images");
+        if (count > 5)
+            throw new IllegalArgumentException("A post can contain up to 5 images");
     }
 
     private List<String> replaceRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
@@ -189,7 +204,7 @@ public class RecipeFlowService {
 
     private List<String> appendRecipeMedia(Integer recipeId, List<MultipartFile> uploads) {
         Number count = (Number) entityManager.createNativeQuery(
-                        "SELECT COUNT(*) FROM post_media WHERE user_meal_post_id = :postId")
+                "SELECT COUNT(*) FROM post_media WHERE user_meal_post_id = :postId")
                 .setParameter("postId", recipeId)
                 .getSingleResult();
         int existingCount = count.intValue();
@@ -203,8 +218,8 @@ public class RecipeFlowService {
             String imageUrl = images.storePostImage(uploads.get(index));
             storedUrls.add(imageUrl);
             entityManager.createNativeQuery("INSERT INTO post_media "
-                            + "(user_meal_post_id, media_type, media_url, display_order) "
-                            + "VALUES (:postId, 'IMAGE', :mediaUrl, :displayOrder)")
+                    + "(user_meal_post_id, media_type, media_url, display_order) "
+                    + "VALUES (:postId, 'IMAGE', :mediaUrl, :displayOrder)")
                     .setParameter("postId", recipeId)
                     .setParameter("mediaUrl", imageUrl)
                     .setParameter("displayOrder", startIndex + index)
@@ -219,7 +234,9 @@ public class RecipeFlowService {
         Recipe recipe = owned(userId, recipeId);
         if (!"PUBLISHED".equals(recipe.getStatus())) {
             LocalDateTime now = LocalDateTime.now();
-            recipe.setStatus("PUBLISHED"); recipe.setPublishedAt(now); recipe.setUpdatedAt(now);
+            recipe.setStatus("PUBLISHED");
+            recipe.setPublishedAt(now);
+            recipe.setUpdatedAt(now);
             recipes.save(recipe);
         }
         return response(recipe, userId);
@@ -238,7 +255,8 @@ public class RecipeFlowService {
             deleteRecipeDependents(sharedCopy.getRecipeId());
             recipes.delete(sharedCopy);
         }
-        if (!sharedCopies.isEmpty()) recipes.flush();
+        if (!sharedCopies.isEmpty())
+            recipes.flush();
 
         // A promoted catalog meal and the meal post reference each other. Clear
         // the post -> meal reference before deleting the derived catalog meal.
@@ -264,7 +282,7 @@ public class RecipeFlowService {
         // comment likes.
         deleteByMealPostId("post_reports", recipeId);
         entityManager.createNativeQuery("DELETE FROM comment_likes WHERE comment_id IN "
-                        + "(SELECT comment_id FROM post_comments WHERE user_meal_post_id = :postId)")
+                + "(SELECT comment_id FROM post_comments WHERE user_meal_post_id = :postId)")
                 .setParameter("postId", recipeId)
                 .executeUpdate();
         deleteByMealPostId("post_comments", recipeId);
@@ -320,7 +338,8 @@ public class RecipeFlowService {
         Optional<MealCategory> active = existing.stream()
                 .filter(category -> Boolean.TRUE.equals(category.getIsActive()))
                 .findFirst();
-        if (active.isPresent()) return active.get();
+        if (active.isPresent())
+            return active.get();
 
         Optional<MealCategory> fallback = categories.findByCategoryNameIgnoreCase("Community Meals");
         if (fallback.isPresent()) {
@@ -341,10 +360,18 @@ public class RecipeFlowService {
     @Transactional
     public RecipeResponse toggleSaved(Integer userId, Integer recipeId) {
         Recipe recipe = recipe(recipeId);
-        if (!"PUBLISHED".equals(recipe.getStatus())) throw new ResponseStatusException(NOT_FOUND, "Recipe not found");
+        if (!"PUBLISHED".equals(recipe.getStatus()))
+            throw new ResponseStatusException(NOT_FOUND, "Recipe not found");
         Optional<SavedRecipe> existing = savedRecipes.findByUserUserIdAndRecipeRecipeId(userId, recipeId);
-        if (existing.isPresent()) savedRecipes.delete(existing.get());
-        else { SavedRecipe saved = new SavedRecipe(); saved.setUser(user(userId)); saved.setRecipe(recipe); saved.setSavedAt(LocalDateTime.now()); savedRecipes.save(saved); }
+        if (existing.isPresent())
+            savedRecipes.delete(existing.get());
+        else {
+            SavedRecipe saved = new SavedRecipe();
+            saved.setUser(user(userId));
+            saved.setRecipe(recipe);
+            saved.setSavedAt(LocalDateTime.now());
+            savedRecipes.save(saved);
+        }
         return response(recipe, userId);
     }
 
@@ -393,9 +420,16 @@ public class RecipeFlowService {
     }
 
     private void apply(Recipe recipe, RecipeRequest request, MultipartFile image, boolean update) {
-        recipe.setRecipeName(request.recipeName().trim()); recipe.setDescription(clean(request.description()));
-        recipe.setCookingTimeMinutes(request.cookingTimeMinutes()); recipe.setServings(request.servings());
-        recipe.setDifficulty(clean(request.difficulty()) == null ? null : request.difficulty().trim().toUpperCase(Locale.ROOT));
+        if (recipe.getSharedFrom() != null) {
+            recipe.setDescription(clean(request.description()));
+            return;
+        }
+        recipe.setRecipeName(request.recipeName().trim());
+        recipe.setDescription(clean(request.description()));
+        recipe.setCookingTimeMinutes(request.cookingTimeMinutes());
+        recipe.setServings(request.servings());
+        recipe.setDifficulty(
+                clean(request.difficulty()) == null ? null : request.difficulty().trim().toUpperCase(Locale.ROOT));
         if (request.categoryId() != null) {
             MealCategory category = categories.findById(request.categoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Select a valid meal category."));
@@ -404,7 +438,8 @@ public class RecipeFlowService {
             }
             recipe.setCategory(category);
         }
-        if (image != null && !image.isEmpty()) recipe.setMainImageUrl(images.storePostImage(image));
+        if (image != null && !image.isEmpty())
+            recipe.setMainImageUrl(images.storePostImage(image));
         if (update) {
             // An edit replaces the child collections. Flush the deletes before
             // inserting replacement tags: otherwise Hibernate may insert a
@@ -418,41 +453,108 @@ public class RecipeFlowService {
             recipeTags.flush();
         }
         List<RecipeIngredient> ingredientRows = new ArrayList<>();
-        for (int i = 0; i < list(request.ingredients()).size(); i++) { RecipeIngredientRequest item = list(request.ingredients()).get(i); RecipeIngredient row = new RecipeIngredient(); row.setRecipe(recipe); row.setIngredientName(item.name().trim()); row.setAmount(item.amount()); row.setUnit(clean(item.unit())); row.setPreparationNote(clean(item.preparationNote())); row.setDisplayOrder(i); ingredientRows.add(row); }
+        for (int i = 0; i < list(request.ingredients()).size(); i++) {
+            RecipeIngredientRequest item = list(request.ingredients()).get(i);
+            RecipeIngredient row = new RecipeIngredient();
+            row.setRecipe(recipe);
+            row.setIngredientName(item.name().trim());
+            row.setAmount(item.amount());
+            row.setUnit(clean(item.unit()));
+            row.setPreparationNote(clean(item.preparationNote()));
+            row.setDisplayOrder(i);
+            ingredientRows.add(row);
+        }
         List<RecipeStep> stepRows = new ArrayList<>();
-        for (int i = 0; i < list(request.steps()).size(); i++) { RecipeStepRequest item = list(request.steps()).get(i); RecipeStep row = new RecipeStep(); row.setRecipe(recipe); row.setStepNumber(i + 1); row.setStepTitle(clean(item.title())); row.setInstruction(item.instruction().trim()); String stepImage = clean(item.imageUrl()); if (stepImage != null && !images.isStoredRecipeStepImageUrl(stepImage)) throw new IllegalArgumentException("Choose a valid cooking step image"); row.setImageUrl(stepImage); stepRows.add(row); }
-        // Save the parent first for create; for updates the managed parent already has an id.
-        if (recipe.getRecipeId() == null) recipes.save(recipe);
-        ingredients.saveAll(ingredientRows); steps.saveAll(stepRows);
-        for (Integer tagId : Set.copyOf(list(request.tagIds()))) { TagType tag = tags.findById(tagId).orElseThrow(() -> new IllegalArgumentException("One selected tag no longer exists.")); if (!Boolean.TRUE.equals(tag.getIsActive())) throw new IllegalArgumentException("Select active tags only."); RecipeTag row = new RecipeTag(); row.setRecipe(recipe); row.setTag(tag); recipeTags.save(row); }
+        for (int i = 0; i < list(request.steps()).size(); i++) {
+            RecipeStepRequest item = list(request.steps()).get(i);
+            RecipeStep row = new RecipeStep();
+            row.setRecipe(recipe);
+            row.setStepNumber(i + 1);
+            row.setStepTitle(clean(item.title()));
+            row.setInstruction(item.instruction().trim());
+            String stepImage = clean(item.imageUrl());
+            if (stepImage != null && !images.isStoredRecipeStepImageUrl(stepImage))
+                throw new IllegalArgumentException("Choose a valid cooking step image");
+            row.setImageUrl(stepImage);
+            stepRows.add(row);
+        }
+        // Save the parent first for create; for updates the managed parent already has
+        // an id.
+        if (recipe.getRecipeId() == null)
+            recipes.save(recipe);
+        ingredients.saveAll(ingredientRows);
+        steps.saveAll(stepRows);
+        for (Integer tagId : Set.copyOf(list(request.tagIds()))) {
+            TagType tag = tags.findById(tagId)
+                    .orElseThrow(() -> new IllegalArgumentException("One selected tag no longer exists."));
+            if (!Boolean.TRUE.equals(tag.getIsActive()))
+                throw new IllegalArgumentException("Select active tags only.");
+            RecipeTag row = new RecipeTag();
+            row.setRecipe(recipe);
+            row.setTag(tag);
+            recipeTags.save(row);
+        }
     }
 
     private RecipeResponse response(Recipe recipe, Integer viewerId) {
         Integer postId = "PUBLISHED".equals(recipe.getStatus()) ? recipe.getRecipeId() : null;
-        boolean saved = viewerId != null && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent();
+        boolean saved = viewerId != null
+                && savedRecipes.findByUserUserIdAndRecipeRecipeId(viewerId, recipe.getRecipeId()).isPresent();
         UserProfile authorProfile = userProfiles.findByUser_UserId(recipe.getAuthor().getUserId()).orElse(null);
         return new RecipeResponse(recipe.getRecipeId(), authorName(recipe.getAuthor(), authorProfile),
                 authorProfile == null ? "" : value(authorProfile.getProfileImageUrl()),
-                recipe.getRecipeName(), value(recipe.getDescription()), value(recipe.getMainImageUrl()), recipe.getCookingTimeMinutes(), recipe.getServings(), value(recipe.getDifficulty()), recipe.getStatus(), null, "", recipe.getPublishedAt(), recipe.getCreatedAt(), recipe.getUpdatedAt(),
-                recipeTags.findByRecipeRecipeId(recipe.getRecipeId()).stream().map(item -> item.getTag().getTagName()).toList(),
-                ingredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId()).stream().map(item -> new RecipeResponse.RecipeIngredient(item.getIngredientName(), item.getAmount(), value(item.getUnit()), value(item.getPreparationNote()))).toList(),
-                steps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId()).stream().map(item -> new RecipeResponse.RecipeStep(item.getStepNumber(), value(item.getStepTitle()), item.getInstruction(), value(item.getImageUrl()))).toList(),
+                recipe.getRecipeName(), value(recipe.getDescription()), value(recipe.getMainImageUrl()),
+                recipe.getCookingTimeMinutes(), recipe.getServings(), value(recipe.getDifficulty()), recipe.getStatus(),
+                null, "", recipe.getPublishedAt(), recipe.getCreatedAt(), recipe.getUpdatedAt(),
+                recipeTags.findByRecipeRecipeId(recipe.getRecipeId()).stream().map(item -> item.getTag().getTagName())
+                        .toList(),
+                ingredients.findByRecipeRecipeIdOrderByDisplayOrderAsc(recipe.getRecipeId()).stream()
+                        .map(item -> new RecipeResponse.RecipeIngredient(item.getIngredientName(), item.getAmount(),
+                                value(item.getUnit()), value(item.getPreparationNote())))
+                        .toList(),
+                steps.findByRecipeRecipeIdOrderByStepNumberAsc(recipe.getRecipeId()).stream()
+                        .map(item -> new RecipeResponse.RecipeStep(item.getStepNumber(), value(item.getStepTitle()),
+                                item.getInstruction(), value(item.getImageUrl())))
+                        .toList(),
                 null, postId, null, saved);
     }
-    private Recipe recipe(Integer id) { return recipes.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Recipe not found")); }
-    private Recipe owned(Integer userId, Integer recipeId) { Recipe recipe = recipe(recipeId); if (!recipe.getAuthor().getUserId().equals(userId)) throw new ResponseStatusException(FORBIDDEN, "You can only manage your own recipes."); return recipe; }
-    private User user(Integer id) { return users.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found")); }
+
+    private Recipe recipe(Integer id) {
+        return recipes.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Recipe not found"));
+    }
+
+    private Recipe owned(Integer userId, Integer recipeId) {
+        Recipe recipe = recipe(recipeId);
+        if (!recipe.getAuthor().getUserId().equals(userId))
+            throw new ResponseStatusException(FORBIDDEN, "You can only manage your own recipes.");
+        return recipe;
+    }
+
+    private User user(Integer id) {
+        return users.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+    }
+
     private String authorName(User author, UserProfile profile) {
         String profileName = profile == null ? "" : value(profile.getFullName()).trim();
-        if (!profileName.isBlank()) return profileName;
+        if (!profileName.isBlank())
+            return profileName;
 
         String email = value(author.getEmail());
         int at = email.indexOf('@');
         return at > 0 ? email.substring(0, at) : "Community member";
     }
-    private static String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }
-    private static String value(String value) { return value == null ? "" : value; }
-    private static <T> List<T> list(List<T> value) { return value == null ? List.of() : value; }
+
+    private static String clean(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static String value(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static <T> List<T> list(List<T> value) {
+        return value == null ? List.of() : value;
+    }
 
     private void assertNotRestricted(Integer userId, ModerationActionType type, String actionLabel) {
         List<ModerationAction> active = moderationActions.findActiveRestrictions(userId, type,

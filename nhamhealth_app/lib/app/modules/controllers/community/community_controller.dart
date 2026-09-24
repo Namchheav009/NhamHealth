@@ -16,11 +16,11 @@ import '../../models/community/community_person.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_types.dart';
 import '../../models/notifications/notification_item.dart';
+import '../../providers/community/follow_connections_provider.dart';
 import '../../providers/home/home_provider.dart';
 import '../../repositories/community/community_repository.dart';
 import '../../repositories/community/follow_connections_repository.dart';
 import '../../repositories/notifications/notifications_repository.dart';
-import '../../providers/community/follow_connections_provider.dart';
 
 export '../../models/community/community_person.dart';
 export '../../models/community/community_post.dart';
@@ -798,26 +798,63 @@ class CommunityController extends GetxController {
     List<int> tagIds = const [],
     int? categoryId,
   }) async {
+    final fallbackPost = post.sharedPost;
+    final effectiveMealName = (mealName ?? post.mealName).trim().isNotEmpty
+        ? (mealName ?? post.mealName).trim()
+        : (fallbackPost?.mealName.trim().isNotEmpty == true
+            ? fallbackPost!.mealName.trim()
+            : 'Shared Post');
+    final effectiveCookingTime = cookingTimeMinutes ??
+        ((post.cookingTimeMinutes != null && post.cookingTimeMinutes! > 0)
+            ? post.cookingTimeMinutes!
+            : (fallbackPost?.cookingTimeMinutes != null &&
+                    fallbackPost!.cookingTimeMinutes! > 0
+                ? fallbackPost.cookingTimeMinutes!
+                : 1));
+    final effectiveServings = servings ??
+        ((post.servings != null && post.servings! > 0)
+            ? post.servings!
+            : (fallbackPost?.servings != null && fallbackPost!.servings! > 0
+                ? fallbackPost.servings!
+                : 1));
+    final effectiveDifficulty = (difficulty ?? post.difficulty).trim().isNotEmpty
+        ? (difficulty ?? post.difficulty).trim()
+        : (fallbackPost?.difficulty.trim().isNotEmpty == true
+            ? fallbackPost!.difficulty.trim()
+            : 'EASY');
+    final effectiveIngredients = ingredients ??
+        (post.ingredients.isNotEmpty
+            ? post.ingredients
+            : fallbackPost?.ingredients ?? const []);
+    final effectiveSteps = steps ??
+        (post.steps.isNotEmpty ? post.steps : fallbackPost?.steps ?? const []);
+    final effectiveCategoryId = categoryId ?? post.categoryId ?? 1;
+
     final updated = await _repository.updatePost(
       postId: post.id,
-      mealName: mealName ?? post.mealName,
+      mealName: effectiveMealName,
       description: description,
-      cookingTimeMinutes: cookingTimeMinutes ?? post.cookingTimeMinutes ?? 0,
-      servings: servings ?? post.servings ?? 0,
-      difficulty: difficulty ?? post.difficulty,
-      ingredients: ingredients ?? post.ingredients,
-      steps: steps ?? post.steps,
+      cookingTimeMinutes: effectiveCookingTime,
+      servings: effectiveServings,
+      difficulty: effectiveDifficulty,
+      ingredients: effectiveIngredients,
+      steps: effectiveSteps,
       imageBytes: imageBytes,
       visibility: visibility,
       allowComments: allowComments,
       allowReplies: allowReplies,
       removeImage: removeImage,
       tagIds: tagIds,
-      categoryId: categoryId,
+      categoryId: effectiveCategoryId,
     );
     final index = posts.indexWhere((item) => item.id == post.id);
     if (index >= 0) posts[index] = updated;
     return updated;
+  }
+
+  void removePostLocally(String postId) {
+    posts.removeWhere((item) => item.id == postId);
+    _clearPostState(postId);
   }
 
   Future<void> deletePost(CommunityPost post) async {
@@ -828,6 +865,7 @@ class CommunityController extends GetxController {
     await _repository.deletePost(recipeId);
     posts.removeWhere((item) => item.id == post.id);
     _clearPostState(post.id);
+    removePostLocally(post.id);
   }
 
   void _replacePosts(List<CommunityPost> refreshedPosts) {
