@@ -190,7 +190,12 @@ class WeightLossProjectionController extends GetxController {
     isSaving.value = true;
     try {
       final planned = item.toPlannedMeal(slot: slot);
-      final saved = await provider.saveMeal(targetDate, planned, servings);
+      final saved = await provider.saveMeal(
+        targetDate,
+        planned,
+        servings,
+        goal: activeAnalysisGoal.value,
+      );
 
       // Show the saved meal (including its ingredients) immediately, so the
       // integrated grocery list stays in sync while the full plan reloads.

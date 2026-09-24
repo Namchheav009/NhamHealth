@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.nhamhealth.nhamhealth_api.dto.request.MealPlanBulkDeleteRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.MealPlanBulkStatusRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanUpdateRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.MealPlanResponse;
@@ -70,6 +72,22 @@ public class MealPlannerApiController {
             @Valid @RequestBody List<MealPlanRequest> requests,
             @RequestParam(defaultValue = "en") String lang) {
         return planner.bulkAddOrReplace(userId(jwt), requests, lang);
+    }
+
+    @PutMapping("/bulk/status")
+    public List<MealPlanResponse> updateStatusBulk(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody MealPlanBulkStatusRequest request,
+            @RequestParam(defaultValue = "en") String lang) {
+        return planner.updateStatusBulk(userId(jwt), request.planIds(), request.status(), lang);
+    }
+
+    @PostMapping("/bulk/delete")
+    public ResponseEntity<Void> removeBulk(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody MealPlanBulkDeleteRequest request) {
+        planner.removeBulk(userId(jwt), request.planIds());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")

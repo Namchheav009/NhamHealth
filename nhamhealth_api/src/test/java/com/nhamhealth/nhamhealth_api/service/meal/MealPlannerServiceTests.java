@@ -2,17 +2,22 @@ package com.nhamhealth.nhamhealth_api.service.meal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanUpdateRequest;
@@ -72,13 +77,31 @@ class MealPlannerServiceTests {
             return saved;
         });
 
-        MealPlanRequest request = new MealPlanRequest(customDate, "LUNCH", 10, new BigDecimal("1.5"));
+        MealPlanRequest request = new MealPlanRequest(
+                customDate, "LUNCH", 10, new BigDecimal("1.5"), "MAINTAIN_HEALTH");
         var response = service.addOrReplace(1, request, "km");
 
         assertNotNull(response);
         assertEquals(101, response.planId());
         assertEquals("ត្រីសាល់ម៉ុងសុខភាព", response.mealName());
         assertEquals(new BigDecimal("1.5"), response.servings());
+    }
+
+    @Test
+    void addOrReplaceRejectsMealOutsideSelectedWeightGoal() {
+        LocalDate date = LocalDate.of(2026, 9, 23);
+        PlannerMeal meal = sampleMeal(10);
+        meal.setWeightGoals(Set.of("GAIN_WEIGHT"));
+        when(plannerMeals.findById(10)).thenReturn(Optional.of(meal));
+
+        MealPlanRequest request = new MealPlanRequest(
+                date, "LUNCH", 10, BigDecimal.ONE, "LOSE_WEIGHT");
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> service.addOrReplace(1, request, "en"));
+        assertEquals(400, error.getStatusCode().value());
+        verify(plans, never()).save(any());
     }
 
     @Test
@@ -173,8 +196,8 @@ class MealPlannerServiceTests {
         });
 
         List<MealPlanRequest> batch = List.of(
-                new MealPlanRequest(d1, "BREAKFAST", 10, BigDecimal.ONE),
-                new MealPlanRequest(d2, "LUNCH", 20, new BigDecimal("2.0")));
+                new MealPlanRequest(d1, "BREAKFAST", 10, BigDecimal.ONE, "MAINTAIN_HEALTH"),
+                new MealPlanRequest(d2, "LUNCH", 20, new BigDecimal("2.0"), "MAINTAIN_HEALTH"));
 
         var results = service.bulkAddOrReplace(1, batch, "en");
 
@@ -183,5 +206,19 @@ class MealPlannerServiceTests {
         assertEquals("BREAKFAST", results.get(0).mealType());
         assertEquals(d2, results.get(1).planDate());
         assertEquals("LUNCH", results.get(1).mealType());
+    }
+
+    @Test
+    void bulkDeleteValidatesOwnershipBeforeDeletingAnything() {
+        MealPlan owned = new MealPlan();
+        owned.setMealPlanId(10);
+        when(plans.findByMealPlanIdAndUserUserId(10, 1)).thenReturn(Optional.of(owned));
+        when(plans.findByMealPlanIdAndUserUserId(20, 1)).thenReturn(Optional.empty());
+
+        assertThrows(
+                ResponseStatusException.class,
+                () -> service.removeBulk(1, List.of(10, 20)));
+
+        verify(plans, never()).deleteAll(any());
     }
 }

@@ -172,6 +172,10 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
         const SizedBox(height: 12),
         _energyBalanceCard(context, forecast),
         const SizedBox(height: 12),
+        if (forecast.aiAnalysisSummary.trim().isNotEmpty) ...[
+          _geminiAnalysisCard(context, forecast),
+          const SizedBox(height: 12),
+        ],
         _profileContextCard(context, forecast),
       ],
     );
@@ -199,6 +203,89 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                 maxWidth: AppSpacing.maxContentWidth,
               ),
               child: content,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _geminiAnalysisCard(
+    BuildContext context,
+    WeightLossForecast forecast,
+  ) {
+    return Container(
+      key: const ValueKey('gemini-weight-goal-analysis'),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFF0F62FE).withValues(alpha: 0.24),
+        ),
+        boxShadow: context.appTileShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F62FE).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Color(0xFF0F62FE),
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'planner.gemini_analysis'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'planner.gemini_analysis_subtitle'.tr,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          Text(
+            forecast.aiAnalysisSummary.trim(),
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 12.5,
+              height: 1.55,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'planner.forecast_disclaimer'.tr,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 9.5,
+              height: 1.4,
             ),
           ),
         ],

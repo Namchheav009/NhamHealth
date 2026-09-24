@@ -1,6 +1,7 @@
 package com.nhamhealth.nhamhealth_api.service.ai;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -83,6 +84,7 @@ public class GeminiMealPlannerAutoFillService {
 
     private final IbmMealPlannerRecommendationService clinicalEngine;
     private final RestClient client;
+    private final RestClient analysisClient;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String baseUrl;
     private final String apiKey;
@@ -110,6 +112,10 @@ public class GeminiMealPlannerAutoFillService {
         requestFactory.setConnectTimeout(Duration.ofSeconds(8));
         requestFactory.setReadTimeout(Duration.ofSeconds(18));
         this.client = RestClient.builder().requestFactory(requestFactory).build();
+        SimpleClientHttpRequestFactory analysisRequestFactory = new SimpleClientHttpRequestFactory();
+        analysisRequestFactory.setConnectTimeout(Duration.ofSeconds(3));
+        analysisRequestFactory.setReadTimeout(Duration.ofSeconds(7));
+        this.analysisClient = RestClient.builder().requestFactory(analysisRequestFactory).build();
         this.baseUrl = trimSlash(baseUrl);
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model == null || model.isBlank() ? "gemini-3.5-flash-lite" : model.trim();
@@ -195,14 +201,12 @@ public class GeminiMealPlannerAutoFillService {
                                     "temperature", 0.5,
                                     "maxOutputTokens", 1024));
 
-                    byte[] responseBody = client.post()
+                    byte[] responseBody = readResponseBytes(client.post()
                             .uri(baseUrl + "/models/" + targetModel + ":generateContent")
                             .header("x-goog-api-key", apiKey)
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON)
-                            .body(body)
-                            .retrieve()
-                            .body(byte[].class);
+                            .body(body));
 
                     if (responseBody == null || responseBody.length == 0) {
                         continue;
@@ -436,6 +440,71 @@ public class GeminiMealPlannerAutoFillService {
         return !apiKey.isBlank() && !baseUrl.isBlank();
     }
 
+    /**
+     * Explains deterministic forecast metrics in friendly language. Gemini is
+     * never allowed to recalculate or replace the server-side numbers.
+     */
+    public String analyzeWeightGoal(Map<String, Object> metrics, String lang, String fallback) {
+        if (!isConfigured() || !rateLimitGuard.isCallAllowed()) {
+            return fallback;
+        }
+        String language = "km".equalsIgnoreCase(lang) ? "natural Khmer" : "English";
+        try {
+            String prompt = """
+                    You are NhamHealth's supportive nutrition coach. Explain the supplied weight-goal
+                    forecast in 3 short, clear sentences. Use only the supplied numbers; never change,
+                    recalculate, invent, or guarantee them. State whether the projection is weight gain,
+                    weight loss, or maintenance, mention current and projected weight plus the timeframe,
+                    and explain the daily calorie balance. Say that actual results can vary. Do not diagnose
+                    or prescribe. Respond only in %s.
+
+                    Forecast JSON:
+                    %s
+                    """.formatted(language, mapper.writeValueAsString(metrics));
+            // Keep forecast loading responsive. If this call fails, the server's
+            // deterministic explanation remains the source-of-truth fallback.
+            for (String targetModel : distinctModels().stream().limit(1).toList()) {
+                if (!rateLimitGuard.tryAcquire()) {
+                    break;
+                }
+                try {
+                    Map<String, Object> body = Map.of(
+                            "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
+                            "generationConfig", Map.of("temperature", 0.25, "maxOutputTokens", 320));
+                    byte[] responseBody = readResponseBytes(analysisClient.post()
+                            .uri(baseUrl + "/models/" + targetModel + ":generateContent")
+                            .header("x-goog-api-key", apiKey)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .body(body));
+                    if (responseBody == null || responseBody.length == 0) {
+                        continue;
+                    }
+                    JsonNode parts = mapper.readTree(responseBody)
+                            .path("candidates").path(0).path("content").path("parts");
+                    if (parts.isArray()) {
+                        for (JsonNode part : parts) {
+                            String text = part.path("text").asText("").trim();
+                            if (!text.isBlank()) {
+                                return text.length() <= 900 ? text : text.substring(0, 900);
+                            }
+                        }
+                    }
+                } catch (RestClientResponseException error) {
+                    if (error.getStatusCode().value() == 429) {
+                        rateLimitGuard.recordRateLimit();
+                        break;
+                    }
+                } catch (Exception error) {
+                    log.warn("Gemini weight-goal analysis failed for {}: {}", targetModel, concise(error));
+                }
+            }
+        } catch (Exception error) {
+            log.warn("Gemini weight-goal analysis preparation failed: {}", concise(error));
+        }
+        return fallback;
+    }
+
     private record GeminiPlanResult(List<DaySlotSelection> selections, String aiSummary) {
     }
 
@@ -454,14 +523,12 @@ public class GeminiMealPlannerAutoFillService {
                         "temperature", 0.65,
                         "topP", 0.9,
                         "maxOutputTokens", 4096));
-        byte[] responseBody = client.post()
+        byte[] responseBody = readResponseBytes(client.post()
                 .uri(baseUrl + "/models/" + targetModel + ":generateContent")
                 .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(body)
-                .retrieve()
-                .body(byte[].class);
+                .body(body));
         if (responseBody == null || responseBody.length == 0) {
             return null;
         }
@@ -510,6 +577,26 @@ public class GeminiMealPlannerAutoFillService {
         return MealPlanVarietyPolicy.accepts(result, slotsPerDate, candidates, recentlyUsedMealIds)
                 ? new GeminiPlanResult(result, aiSummary)
                 : null;
+    }
+
+    /**
+     * Gemini and some HTTP proxies label JSON as application/octet-stream. Read
+     * the raw stream so a misleading content type cannot break valid responses.
+     */
+    private byte[] readResponseBytes(RestClient.RequestHeadersSpec<?> request) {
+        return request.exchange((clientRequest, response) -> {
+            byte[] body = response.getBody().readAllBytes();
+            if (response.getStatusCode().isError()) {
+                throw new RestClientResponseException(
+                        "Gemini returned HTTP " + response.getStatusCode().value(),
+                        response.getStatusCode().value(),
+                        response.getStatusText(),
+                        response.getHeaders(),
+                        body,
+                        StandardCharsets.UTF_8);
+            }
+            return body;
+        });
     }
 
     private AutoFillPlanSynthesis response(

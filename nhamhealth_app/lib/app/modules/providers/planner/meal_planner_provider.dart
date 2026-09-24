@@ -104,6 +104,8 @@ class MealPlannerProvider {
     required DateTime date,
     required MealPlanSlot slot,
     MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
+    MealPlannerDietaryPreferences preferences =
+        const MealPlannerDietaryPreferences(),
     int? currentMealId,
     String? actionType,
   }) async {
@@ -118,6 +120,7 @@ class MealPlannerProvider {
       'goal': goal.apiValue,
       'currentMealId': currentMealId,
       'actionType': actionType ?? (currentMealId != null ? 'SWAP' : 'ADD'),
+      ...preferences.toJson(),
     };
     final response = await _client
         .post(uri, headers: headers, body: jsonEncode(body))
@@ -191,8 +194,9 @@ class MealPlannerProvider {
   Future<PlannedMeal> saveMeal(
     DateTime date,
     PlannedMeal meal,
-    double servings,
-  ) => _send(
+    double servings, {
+    MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
+  }) => _send(
     'POST',
     Uri.parse(
       '${ApiConfig.baseUrl}/api/v1/meal-plans',
@@ -202,6 +206,7 @@ class MealPlannerProvider {
       'mealType': meal.slot.name.toUpperCase(),
       'plannerMealId': meal.id,
       'servings': servings,
+      'weightGoal': goal.apiValue,
     },
   );
 
@@ -243,6 +248,7 @@ class MealPlannerProvider {
     double? servings,
     MealPlanStatus? status,
     double? actualServings,
+    MealPlannerHealthGoal? goal,
   }) => _send(
     'PUT',
     Uri.parse(
@@ -254,6 +260,7 @@ class MealPlannerProvider {
       if (servings != null) 'servings': servings,
       if (status != null) 'status': status.name.toUpperCase(),
       if (actualServings != null) 'actualServings': actualServings,
+      if (goal != null) 'weightGoal': goal.apiValue,
     },
   );
   Future<void> deleteMeal(int planId) async {
@@ -265,6 +272,59 @@ class MealPlannerProvider {
         .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw const MealPlannerProviderException('Unable to remove meal.');
+    }
+  }
+
+  Future<List<PlannedMeal>> updateMealStatuses(
+    List<int> planIds,
+    MealPlanStatus status,
+  ) async {
+    final headers = await _headers();
+    headers['Content-Type'] = 'application/json';
+    final response = await _client
+        .put(
+          Uri.parse(
+            '${ApiConfig.baseUrl}/api/v1/meal-plans/bulk/status',
+          ).replace(queryParameters: {'lang': _lang}),
+          headers: headers,
+          body: jsonEncode({
+            'planIds': planIds,
+            'status': status.name.toUpperCase(),
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MealPlannerProviderException(
+        _errorMessage(response, 'Unable to update meal planner.'),
+        statusCode: response.statusCode,
+      );
+    }
+    final payload = jsonDecode(response.body);
+    if (payload is! List) {
+      throw const MealPlannerProviderException(
+        'Meal planner bulk status response is incomplete.',
+      );
+    }
+    return payload
+        .map((item) => PlannedMeal.fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
+
+  Future<void> deleteMeals(List<int> planIds) async {
+    final headers = await _headers();
+    headers['Content-Type'] = 'application/json';
+    final response = await _client
+        .post(
+          Uri.parse('${ApiConfig.baseUrl}/api/v1/meal-plans/bulk/delete'),
+          headers: headers,
+          body: jsonEncode({'planIds': planIds}),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MealPlannerProviderException(
+        _errorMessage(response, 'Unable to remove meals.'),
+        statusCode: response.statusCode,
+      );
     }
   }
 

@@ -145,7 +145,7 @@
               <article
                 class="planner-meal-card"
                 th:each="meal : ${plannerMeals}"
-                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category?.categoryId},data-category-ids=${meal.categoryIdsString},data-category-en=${meal.categoryEn},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-ingredients-km=${meal.ingredientsTextKm},data-instructions=${meal.instructionsText},data-instructions-km=${meal.instructionsTextKm},data-tags=${meal.tagsText},data-tags-km=${meal.tagsTextKm},data-active=${meal.active}"
+                th:attr="data-id=${meal.plannerMealId},data-name-en=${meal.nameEn},data-name-km=${meal.nameKm},data-category-id=${meal.category?.categoryId},data-category-ids=${meal.categoryIdsString},data-category-en=${meal.categoryEn},data-weight-goals=${meal.weightGoalsString},data-description-en=${meal.descriptionEn},data-description-km=${meal.descriptionKm},data-image-url=${meal.imageUrl},data-calories=${meal.calories},data-protein=${meal.proteinGrams},data-carbs=${meal.carbsGrams},data-fat=${meal.fatGrams},data-time=${meal.cookingTimeMinutes},data-ingredients=${meal.ingredientsText},data-ingredients-km=${meal.ingredientsTextKm},data-instructions=${meal.instructionsText},data-instructions-km=${meal.instructionsTextKm},data-tags=${meal.tagsText},data-tags-km=${meal.tagsTextKm},data-active=${meal.active}"
               >
                 <div class="planner-meal-card-image">
                   <img
@@ -197,6 +197,14 @@
                     >
                   </div>
                   <h3 th:text="${meal.nameEn}">Meal name</h3>
+                  <div class="planner-card-categories">
+                    <span
+                      th:each="goal : ${meal.weightGoals}"
+                      class="planner-meal-category"
+                      th:text="${goal == 'LOSE_WEIGHT' ? 'Lose weight' : (goal == 'GAIN_WEIGHT' ? 'Gain weight' : 'Maintain health')}"
+                      >Maintain health</span
+                    >
+                  </div>
                   <small
                     class="planner-meal-name-km"
                     th:if="${meal.nameKm != null and !meal.nameKm.isBlank()}"
@@ -730,8 +738,17 @@
                       font-weight: 600;
                       margin-top: 4px;
                     "
-                    >Please select at least one category.</span
+                  >Please select at least one category.</span
                   >
+                </div>
+                <div class="field full meal-categories-field">
+                  <label>Weight goals <b>*</b> <span class="field-hint">(Choose who this meal is suitable for)</span></label>
+                  <div class="category-chip-grid" id="mealWeightGoalsPicker">
+                    <label class="category-pill-label"><input type="checkbox" class="meal-weight-goal-cb" value="LOSE_WEIGHT" checked /><span class="category-pill-badge"><i class="bi bi-arrow-down-circle"></i> Lose weight</span></label>
+                    <label class="category-pill-label"><input type="checkbox" class="meal-weight-goal-cb" value="MAINTAIN_HEALTH" checked /><span class="category-pill-badge"><i class="bi bi-heart-pulse"></i> Maintain health</span></label>
+                    <label class="category-pill-label"><input type="checkbox" class="meal-weight-goal-cb" value="GAIN_WEIGHT" checked /><span class="category-pill-badge"><i class="bi bi-arrow-up-circle"></i> Gain weight</span></label>
+                  </div>
+                  <span id="mealWeightGoalError" class="category-error-text" style="display: none; color: #ef4444; font-size: 11.5px; font-weight: 600; margin-top: 4px;">Please select at least one weight goal.</span>
                 </div>
                 <div class="field full meal-image-field-group">
                   <div class="meal-image-header">

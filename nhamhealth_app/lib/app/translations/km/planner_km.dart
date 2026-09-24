@@ -420,6 +420,11 @@ const Map<String, String> plannerKm = {
   'planner.nutrition_journey_week': 'ដំណើរអាហារូបត្ថម្ភរបស់អ្នកក្នុងសប្ដាហ៍នេះ',
   'planner.update_info': 'កែព័ត៌មាន',
   'planner.weight_goal_analysis': 'ការវិភាគគោលដៅទម្ងន់',
+  'planner.gemini_analysis': 'ការវិភាគដោយ Gemini',
+  'planner.gemini_analysis_subtitle':
+      'ការពន្យល់ច្បាស់លាស់ផ្អែកលើផែនការដែលបានគណនា',
+  'planner.forecast_disclaimer':
+      'នេះជាការប៉ាន់ស្មានសម្រាប់ការរៀបចំផែនការ មិនមែនជាការធានាទេ។ ការប្រែប្រួលទម្ងន់ពិតអាចខុសគ្នា។',
   'planner.based_on_profile': 'ផ្អែកលើប្រវត្តិរូប និងផែនការបច្ចុប្បន្ន',
   'planner.plan_status': 'ស្ថានភាពផែនការ',
   'planner.goal': 'គោលដៅ',

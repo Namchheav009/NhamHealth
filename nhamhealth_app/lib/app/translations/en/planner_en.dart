@@ -419,6 +419,11 @@ const Map<String, String> plannerEn = {
   'planner.nutrition_journey_week': 'Your nutrition journey this week',
   'planner.update_info': 'Update info',
   'planner.weight_goal_analysis': 'Weight Goal Analysis',
+  'planner.gemini_analysis': 'Gemini Analysis',
+  'planner.gemini_analysis_subtitle':
+      'A clear explanation based on your calculated plan',
+  'planner.forecast_disclaimer':
+      'This is a planning estimate, not a guarantee. Actual weight change can vary.',
   'planner.based_on_profile': 'Based on your profile and current plan',
   'planner.plan_status': 'Plan status',
   'planner.goal': 'Goal',

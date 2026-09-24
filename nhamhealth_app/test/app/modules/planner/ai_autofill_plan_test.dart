@@ -159,6 +159,31 @@ void main() {
   });
 
   group('MealPlannerController with AI Auto-Fill', () {
+    test('applyAiAutoFillResult tracks the returned goal', () {
+      final controller = MealPlannerController();
+      const response = AiAutoFillPlanResponse(
+        createdPlans: [],
+        filledCount: 0,
+        dailyPlannedCalories: 1900,
+        dailyDeficit: 0,
+        tdee: 1900,
+        bmr: 1400,
+        projectedWeeklyLossKg: 0,
+        timeframeDays: 28,
+        totalProjectedLossKg: 0,
+        aiRationale: 'Balanced maintenance plan.',
+        goal: 'MAINTAIN_HEALTH',
+        modelName: 'clinical-rule-fallback',
+      );
+
+      controller.applyAiAutoFillResult(response);
+
+      expect(controller.hasAnalyzedMaintainHealth.value, isTrue);
+      expect(controller.hasAnalyzedWeightLoss.value, isFalse);
+      expect(controller.lastMaintainHealthResult.value, same(response));
+      expect(controller.lastWeightLossResult.value, isNull);
+    });
+
     test(
       'autoFillPlan calls provider.aiAutoFillPlan and updates plans and lastAiAutoFillResult',
       () async {

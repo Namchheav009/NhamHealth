@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AiAutoFillPlanRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.MealRecommendationRequest;
 import com.nhamhealth.nhamhealth_api.dto.response.AiAutoFillPlanResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.MealPlanResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.WeightLossForecastResponse;
@@ -35,6 +38,7 @@ import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserProfileRepository;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
+import com.nhamhealth.nhamhealth_api.service.ai.GeminiMealPlannerAutoFillService;
 import com.nhamhealth.nhamhealth_api.service.ai.IbmMealPlannerRecommendationService;
 import com.nhamhealth.nhamhealth_api.service.ai.IbmMealPlannerRecommendationService.AutoFillPlanSynthesis;
 import com.nhamhealth.nhamhealth_api.service.ai.IbmMealPlannerRecommendationService.DaySlotSelection;
@@ -349,7 +353,7 @@ class MealPlannerForecastServiceTests {
                 assertTrue(response.calorieWarning());
                 assertTrue(response.calorieWarningMessage().contains("1200"));
                 assertEquals("MAINTAIN", response.recommendedWeightDirection());
-                assertTrue(response.aiAnalysisSummary().contains("រក្សា"));
+                assertFalse(response.aiAnalysisSummary().contains("រក្សា"));
         }
 
         @Test
@@ -506,6 +510,54 @@ class MealPlannerForecastServiceTests {
                 assertEquals(
                                 List.of("LUNCH", "DINNER", "SNACK"),
                                 slotsCaptor.getValue().get(start));
+        }
+
+        @Test
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        void singleMealRecommendationFiltersDietaryAllergenSynonyms() {
+                LocalDate date = LocalDate.of(2026, 9, 21);
+                PlannerMeal cheesePasta = plannerMeal(10, "Cheese pasta");
+                cheesePasta.setIngredientsText("Pasta | cheese | whey");
+                PlannerMeal riceBowl = plannerMeal(11, "Vegetable rice bowl");
+                riceBowl.setIngredientsText("Rice | vegetables | tofu");
+                when(plannerMealRepository.findAllByOrderByNameEnAsc())
+                                .thenReturn(List.of(cheesePasta, riceBowl));
+
+                GeminiMealPlannerAutoFillService gemini = mock(GeminiMealPlannerAutoFillService.class);
+                MealPlannerForecastService serviceWithGemini = new MealPlannerForecastService(
+                                mealPlanRepository,
+                                wellnessProfileRepository,
+                                userProfileRepository,
+                                plannerMealRepository,
+                                foodNutritionRepository,
+                                mealPlannerService,
+                                ibmRecommendationService,
+                                gemini);
+
+                ArgumentCaptor<List<PlannerMeal>> candidates = ArgumentCaptor.forClass(List.class);
+                when(gemini.recommendMeal(
+                                eq(date), eq("DINNER"), isNull(), candidates.capture(),
+                                anyDouble(), anyDouble(), eq("MAINTAIN_HEALTH"), eq("en"), eq("ADD")))
+                                .thenReturn(new GeminiMealPlannerAutoFillService.SingleMealRecommendationResult(
+                                                riceBowl, List.of(), "Safe match", "ADD", "test-model"));
+
+                serviceWithGemini.recommendMeal(
+                                1,
+                                new MealRecommendationRequest(
+                                                date,
+                                                "DINNER",
+                                                "MAINTAIN_HEALTH",
+                                                null,
+                                                "ADD",
+                                                "BALANCED",
+                                                List.of("milk"),
+                                                List.of(),
+                                                List.of()),
+                                "en");
+
+                assertEquals(List.of(11), candidates.getValue().stream()
+                                .map(PlannerMeal::getPlannerMealId)
+                                .toList());
         }
 
         private static PlannerMeal plannerMeal(int id, String name) {

@@ -305,7 +305,6 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
   final controller = Get.find<MealPlannerController>();
   final search = TextEditingController();
   String filter = 'all';
-  String sortMode = 'goal';
   int? selectedCategoryId;
   late MealPlanSlot selectedSlot;
 
@@ -369,42 +368,18 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
               _ => true,
             };
           }).toList();
-      switch (sortMode) {
-        case 'goal':
-          meals.sort((a, b) {
-            double score(PlannedMeal meal) {
-              final density =
-                  meal.calories > 0
-                      ? meal.proteinGrams * 100 / meal.calories
-                      : 0.0;
-              return density * 7 -
-                  (meal.calories - 550).clamp(0, double.infinity) * 0.12;
-            }
+      meals.sort((a, b) {
+        double score(PlannedMeal meal) {
+          final density =
+              meal.calories > 0
+                  ? meal.proteinGrams * 100 / meal.calories
+                  : 0.0;
+          return density * 7 -
+              (meal.calories - 550).clamp(0, double.infinity) * 0.12;
+        }
 
-            return score(b).compareTo(score(a));
-          });
-        case 'calories':
-          meals.sort((a, b) => a.calories.compareTo(b.calories));
-        case 'protein':
-          meals.sort((a, b) => b.proteinGrams.compareTo(a.proteinGrams));
-        case 'quickest':
-          meals.sort(
-            (a, b) => (a.cookingTimeMinutes ?? 999).compareTo(
-              b.cookingTimeMinutes ?? 999,
-            ),
-          );
-        default:
-          meals.sort((a, b) {
-            final aPopular = a.tags.any(
-              (tag) => tag.toLowerCase().contains('popular'),
-            );
-            final bPopular = b.tags.any(
-              (tag) => tag.toLowerCase().contains('popular'),
-            );
-            if (aPopular != bPopular) return aPopular ? -1 : 1;
-            return a.name.compareTo(b.name);
-          });
-      }
+        return score(b).compareTo(score(a));
+      });
       return meals;
     }
 
@@ -629,7 +604,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                       children: [
                         Flexible(
                           child: Text(
-                            '${'planner.recommended_meals'.tr}  ·  ${meals.length}',
+                            'planner.recommended_meals'.tr,
                             style: TextStyle(
                               color: context.appText,
                               fontSize: 17,
@@ -678,105 +653,6 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    tooltip: 'planner.sort_by'.tr,
-                    initialValue: sortMode,
-                    onSelected: (value) => setState(() => sortMode = value),
-                    position: PopupMenuPosition.under,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    itemBuilder:
-                        (_) =>
-                            [
-                                  (
-                                    'goal',
-                                    'planner.sort_goal_match',
-                                    Icons.track_changes_rounded,
-                                  ),
-                                  (
-                                    'popular',
-                                    'planner.popular',
-                                    Icons.trending_up_rounded,
-                                  ),
-                                  (
-                                    'calories',
-                                    'planner.sort_lowest_calories',
-                                    Icons.local_fire_department_outlined,
-                                  ),
-                                  (
-                                    'protein',
-                                    'planner.sort_highest_protein',
-                                    Icons.fitness_center_rounded,
-                                  ),
-                                  (
-                                    'quickest',
-                                    'planner.sort_quickest',
-                                    Icons.schedule_rounded,
-                                  ),
-                                ]
-                                .map(
-                                  (item) => PopupMenuItem<String>(
-                                    value: item.$1,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          item.$3,
-                                          size: 18,
-                                          color:
-                                              sortMode == item.$1
-                                                  ? AppColors.primaryGreen
-                                                  : context.appMutedText,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          item.$2.tr,
-                                          style: TextStyle(
-                                            fontWeight:
-                                                sortMode == item.$1
-                                                    ? FontWeight.w800
-                                                    : FontWeight.w600,
-                                            color:
-                                                sortMode == item.$1
-                                                    ? AppColors.primaryGreen
-                                                    : context.appText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.appSoftGreen,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${'planner.sort_by'.tr}: ${_plannerSortLabel(sortMode)}',
-                            style: const TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: AppColors.primaryGreen,
-                            size: 18,
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ],
@@ -955,6 +831,7 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                                         : await controller.replaceMeal(
                                           replace,
                                           targetMeal,
+                                          servings: replace.servings,
                                         );
                                 if (!ok) return;
                                 Get.until(
@@ -1133,14 +1010,6 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
   }
 }
 
-String _plannerSortLabel(String value) => switch (value) {
-  'goal' => 'planner.sort_goal_match'.tr,
-  'calories' => 'planner.sort_lowest_calories'.tr,
-  'protein' => 'planner.sort_highest_protein'.tr,
-  'quickest' => 'planner.sort_quickest'.tr,
-  _ => 'planner.popular'.tr,
-};
-
 // =============================================================================
 // SCREEN 4: MEAL DETAIL VIEW
 // =============================================================================
@@ -1183,14 +1052,15 @@ class _PlannerMealDetailViewState extends State<PlannerMealDetailView> {
       resolvedMeal = found;
     }
     final meal = resolvedMeal;
+    final replace = _plannerArgument<PlannedMeal>(args, 'replace');
     if (!_servingsInitialized) {
-      if (meal.servings > 0) {
-        servings = meal.servings;
+      final initialServings = replace?.servings ?? meal.servings;
+      if (initialServings > 0) {
+        servings = initialServings;
       }
       _servingsInitialized = true;
     }
 
-    final replace = _plannerArgument<PlannedMeal>(args, 'replace');
     final isAlreadyPlanned =
         _plannerArgument<bool>(args, 'isAlreadyPlanned') ?? false;
     final targetSlot =
@@ -3481,13 +3351,67 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                       }),
                     ),
                     const SizedBox(height: 18),
-                    Text(
-                      'planner.start_date'.tr,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'planner.start_date'.tr,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        InkWell(
+                          key: const ValueKey(
+                            'planner-flow-form-date-today-button',
+                          ),
+                          onTap: () {
+                            final now = DateTime.now();
+                            setSheetState(
+                              () =>
+                                  selectedStart = DateTime(
+                                    now.year,
+                                    now.month,
+                                    now.day,
+                                  ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGreen.withValues(
+                                alpha: 0.10,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.today_rounded,
+                                  size: 13,
+                                  color: AppColors.primaryGreen,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'planner.today'.tr,
+                                  style: const TextStyle(
+                                    color: AppColors.primaryGreen,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     InkWell(
@@ -3495,7 +3419,11 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                         final now = DateTime.now();
                         final picked = await showDatePicker(
                           context: sheetContext,
-                          initialDate: selectedStart,
+                          initialDate: DateTime(
+                            selectedStart.year,
+                            selectedStart.month,
+                            selectedStart.day,
+                          ),
                           firstDate: DateTime(now.year - 2),
                           lastDate: DateTime(now.year + 2, 12, 31),
                           helpText: 'planner.select_date'.tr,
@@ -3524,7 +3452,14 @@ class _PlannerFlowWeekCard extends StatelessWidget {
                           },
                         );
                         if (picked != null) {
-                          setSheetState(() => selectedStart = picked);
+                          setSheetState(
+                            () =>
+                                selectedStart = DateTime(
+                                  picked.year,
+                                  picked.month,
+                                  picked.day,
+                                ),
+                          );
                         }
                       },
                       borderRadius: BorderRadius.circular(14),

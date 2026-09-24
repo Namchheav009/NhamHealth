@@ -223,6 +223,9 @@ class MealPlannerController extends GetxController {
             await _storage.delete(key: startKey);
           } else {
             customStartDate.value = start;
+            if (today.isBefore(start)) {
+              selectedDayIndex.value = 0;
+            }
           }
         }
       }
@@ -234,15 +237,11 @@ class MealPlannerController extends GetxController {
         _storageAnalyzedMaintainHealthKey,
       );
       final savedAnalyzedLoss = await _storage.read(key: analyzedLossKey);
-      if (savedAnalyzedLoss == 'true') {
-        hasAnalyzedWeightLoss.value = true;
-      }
-      hasAnalyzedMaintainHealth.value = false;
-      try {
-        await _storage.delete(key: analyzedMaintainKey);
-      } catch (_) {
-        // The legacy flag is ignored even if its stored value cannot be cleared.
-      }
+      final savedAnalyzedMaintain = await _storage.read(
+        key: analyzedMaintainKey,
+      );
+      hasAnalyzedWeightLoss.value = savedAnalyzedLoss == 'true';
+      hasAnalyzedMaintainHealth.value = savedAnalyzedMaintain == 'true';
       await _loadGroceryCheckedState();
     } catch (_) {
       // Secure storage read error ignored
@@ -563,7 +562,9 @@ class MealPlannerController extends GetxController {
       );
       if (dayRecs.isNotEmpty) {
         for (final rec in dayRecs) {
-          if (!adminRecommendations.any((m) => m.id == rec.id)) {
+          if (!adminRecommendations.any(
+            (m) => m.id == rec.id && m.slot == rec.slot,
+          )) {
             adminRecommendations.add(rec);
           }
         }
@@ -603,17 +604,34 @@ class MealPlannerController extends GetxController {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     if (customStartDate.value != null) {
-      final end = customStartDate.value!.add(
-        Duration(days: planDaysCount.value - 1),
-      );
+      final start = customStartDate.value!;
+      final end = start.add(Duration(days: planDaysCount.value - 1));
+      final containsToday = !today.isBefore(start) && !today.isAfter(end);
+      // Expired ranges should return to the live week. Future ranges are an
+      // intentional planning choice and must survive app resume/restart.
       if (end.isBefore(today)) {
         customStartDate.value = null;
+        planDaysCount.value = 7;
         unawaited(() async {
           try {
             final startKey = await _userScopedKey(_storageStartDateKey);
+            final daysKey = await _userScopedKey(_storageDaysKey);
             await _storage.delete(key: startKey);
+            await _storage.write(key: daysKey, value: '7');
           } catch (_) {}
         }());
+      } else if (!containsToday) {
+        selectedDayIndex.value = selectedDayIndex.value.clamp(
+          0,
+          planDaysCount.value - 1,
+        );
+        imageRefreshKey.value++;
+        await loadWaterIntake(selectedDate);
+        if (forceRefresh || !hasLoadedOnce.value) {
+          await refreshPlanner(force: true);
+          await loadDayMeals(selectedDate, force: true);
+        }
+        return;
       }
     }
     weekOffset.value = 0;
@@ -631,7 +649,20 @@ class MealPlannerController extends GetxController {
     }
   }
 
-  void goToToday() {
+  void goToToday({bool resetCustomRange = true}) {
+    if (resetCustomRange && customStartDate.value != null) {
+      customStartDate.value = null;
+      planDaysCount.value = 7;
+      unawaited(() async {
+        try {
+          final startKey = await _userScopedKey(_storageStartDateKey);
+          final daysKey = await _userScopedKey(_storageDaysKey);
+          await _storage.delete(key: startKey);
+          await _storage.write(key: daysKey, value: '7');
+        } catch (_) {}
+      }());
+    }
+    weekOffset.value = 0;
     unawaited(syncToToday(forceRefresh: true));
   }
 
@@ -657,11 +688,22 @@ class MealPlannerController extends GetxController {
         unawaited(loadWeek());
       }
     } else {
-      customStartDate.value = normalized;
-      selectedDayIndex.value = 0;
-      unawaited(loadWaterIntake(selectedDate));
-      unawaited(_persistSettings());
-      unawaited(loadWeek());
+      final targetIndex = planDays.indexWhere(
+        (d) =>
+            d.year == normalized.year &&
+            d.month == normalized.month &&
+            d.day == normalized.day,
+      );
+      if (targetIndex >= 0) {
+        selectedDayIndex.value = targetIndex;
+        unawaited(loadWaterIntake(selectedDate));
+      } else {
+        customStartDate.value = normalized;
+        selectedDayIndex.value = 0;
+        unawaited(loadWaterIntake(selectedDate));
+        unawaited(_persistSettings());
+        unawaited(loadWeek());
+      }
     }
   }
 
@@ -716,6 +758,7 @@ class MealPlannerController extends GetxController {
         selectedDate,
         mealWithSlot,
         servings,
+        goal: healthGoal.value,
       );
       _put(key, saved.copyWith(slot: slotToUse));
       return true;
@@ -736,6 +779,7 @@ class MealPlannerController extends GetxController {
     PlannedMeal replacement, {
     double servings = 1,
   }) async {
+    if (isSaving.value) return false;
     final provider = _provider;
     final planId = current.planId;
     final slotToUse = current.slot;
@@ -749,6 +793,7 @@ class MealPlannerController extends GetxController {
         planId,
         mealId: replacement.id,
         servings: servings,
+        goal: healthGoal.value,
       );
       final key = _dateKey(selectedDate);
       final updated = List<PlannedMeal>.from(plans[key] ?? const [])
@@ -784,6 +829,7 @@ class MealPlannerController extends GetxController {
         date: targetDate,
         slot: slot,
         goal: healthGoal.value,
+        preferences: dietaryPreferences.value,
         currentMealId: currentMeal?.id,
         actionType: act,
       );
@@ -800,6 +846,7 @@ class MealPlannerController extends GetxController {
   }
 
   Future<bool> moveMeal(PlannedMeal meal, DateTime target) async {
+    if (isSaving.value) return false;
     final oldKey = _dateKey(meal.planDate ?? selectedDate),
         newKey = _dateKey(target);
     if (oldKey == newKey) return true;
@@ -810,6 +857,7 @@ class MealPlannerController extends GetxController {
     final provider = _provider;
     final planId = meal.planId;
     if (provider == null || planId == null) return true;
+    isSaving.value = true;
     try {
       _put(newKey, await provider.updateMeal(planId, date: target));
       return true;
@@ -817,15 +865,19 @@ class MealPlannerController extends GetxController {
       plans[oldKey] = oldPlans;
       plans[newKey] = targetPlans;
       return false;
+    } finally {
+      isSaving.value = false;
     }
   }
 
   Future<void> changeServing(PlannedMeal meal, double servings) async {
+    if (isSaving.value) return;
     final key = _dateKey(meal.planDate ?? selectedDate);
     _put(key, meal.copyWith(servings: servings));
     final provider = _provider;
     final planId = meal.planId;
     if (provider == null || planId == null) return;
+    isSaving.value = true;
     try {
       _put(key, await provider.updateMeal(planId, servings: servings));
     } catch (_) {
@@ -834,6 +886,8 @@ class MealPlannerController extends GetxController {
         title: 'planner.error'.tr,
         message: 'planner.save_error'.tr,
       );
+    } finally {
+      isSaving.value = false;
     }
   }
 
@@ -887,6 +941,7 @@ class MealPlannerController extends GetxController {
   }
 
   Future<void> removeMeal(MealPlanSlot slot) async {
+    if (isSaving.value) return;
     final key = _dateKey(selectedDate), meal = mealFor(slot);
     if (meal == null) return;
     plans[key] = List<PlannedMeal>.from(plans[key] ?? const [])
@@ -894,6 +949,7 @@ class MealPlannerController extends GetxController {
     final provider = _provider;
     final planId = meal.planId;
     if (provider == null || planId == null) return;
+    isSaving.value = true;
     try {
       await provider.deleteMeal(planId);
     } catch (_) {
@@ -902,6 +958,8 @@ class MealPlannerController extends GetxController {
         title: 'planner.error'.tr,
         message: 'planner.save_error'.tr,
       );
+    } finally {
+      isSaving.value = false;
     }
   }
 
@@ -941,12 +999,20 @@ class MealPlannerController extends GetxController {
     if (provider == null) return;
     isSaving.value = true;
     try {
-      for (final meal in mealsToReset) {
-        if (meal.planId != null) {
-          await provider.updateMeal(
-            meal.planId!,
-            status: MealPlanStatus.planned,
-          );
+      final planIds = mealsToReset
+          .map((meal) => meal.planId)
+          .whereType<int>()
+          .toList(growable: false);
+      if (planIds.isNotEmpty) {
+        final savedMeals = await provider.updateMealStatuses(
+          planIds,
+          MealPlanStatus.planned,
+        );
+        for (final saved in savedMeals) {
+          final date = saved.planDate;
+          if (date != null) {
+            _put(_dateKey(date), saved);
+          }
         }
       }
     } catch (_) {
@@ -993,10 +1059,12 @@ class MealPlannerController extends GetxController {
     if (provider == null) return;
     isSaving.value = true;
     try {
-      for (final meal in mealsToDelete) {
-        if (meal.planId != null) {
-          await provider.deleteMeal(meal.planId!);
-        }
+      final planIds = mealsToDelete
+          .map((meal) => meal.planId)
+          .whereType<int>()
+          .toList(growable: false);
+      if (planIds.isNotEmpty) {
+        await provider.deleteMeals(planIds);
       }
     } catch (_) {
       for (final entry in backup.entries) {
@@ -1248,10 +1316,13 @@ class MealPlannerController extends GetxController {
     bool fillEmptyOnly = true,
   }) {
     lastAiAutoFillResult.value = response;
-    hasAnalyzedWeightLoss.value = true;
-    lastWeightLossResult.value = response;
-    hasAnalyzedMaintainHealth.value = false;
-    lastMaintainHealthResult.value = null;
+    if (response.goal.toUpperCase() == 'LOSE_WEIGHT') {
+      hasAnalyzedWeightLoss.value = true;
+      lastWeightLossResult.value = response;
+    } else {
+      hasAnalyzedMaintainHealth.value = true;
+      lastMaintainHealthResult.value = response;
+    }
     unawaited(_persistAnalyzedGoals());
 
     if (!fillEmptyOnly) {
@@ -1278,7 +1349,10 @@ class MealPlannerController extends GetxController {
         key: lossKey,
         value: hasAnalyzedWeightLoss.value ? 'true' : 'false',
       );
-      await _storage.write(key: maintainKey, value: 'false');
+      await _storage.write(
+        key: maintainKey,
+        value: hasAnalyzedMaintainHealth.value ? 'true' : 'false',
+      );
     } catch (_) {}
   }
 
@@ -1444,6 +1518,7 @@ class MealPlannerController extends GetxController {
           'mealType': entry.slot.name.toUpperCase(),
           'plannerMealId': selectedRec.id,
           'servings': 1.0,
+          'weightGoal': healthGoal.value.apiValue,
         });
         filledCount++;
       }
@@ -1614,12 +1689,56 @@ class MealPlannerController extends GetxController {
         'sausage',
         'processed meat',
       ],
-      ...preferences.allergens,
+      for (final allergen in preferences.allergens)
+        ..._allergenSearchTerms(allergen),
       ...preferences.excludedIngredients,
     ];
     return prohibited
         .map((item) => item.trim().toLowerCase())
         .where((item) => item.isNotEmpty)
         .every((item) => !searchable.contains(item));
+  }
+
+  List<String> _allergenSearchTerms(String allergen) {
+    return switch (allergen.trim().toLowerCase()) {
+      'peanut' => const ['peanut', 'groundnut', 'សណ្តែកដី'],
+      'milk' => const [
+        'milk',
+        'dairy',
+        'cheese',
+        'yogurt',
+        'butter',
+        'cream',
+        'whey',
+        'ទឹកដោះ',
+        'ឈីស',
+        'យ៉ាអួ',
+      ],
+      'egg' => const ['egg', 'ស៊ុត'],
+      'wheat' => const ['wheat', 'flour', 'bread', 'pasta', 'ស្រូវសាលី'],
+      'fish' => const ['fish', 'salmon', 'tuna', 'bass', 'ត្រី'],
+      'shrimp' => const [
+        'shrimp',
+        'prawn',
+        'shellfish',
+        'crab',
+        'lobster',
+        'បង្គា',
+        'ក្តាម',
+      ],
+      'soy' => const ['soy', 'soya', 'tofu', 'សណ្តែកសៀង', 'តៅហ៊ូ'],
+      'tree nuts' => const [
+        'almond',
+        'walnut',
+        'cashew',
+        'pecan',
+        'pistachio',
+        'hazelnut',
+        'macadamia',
+        'tree nut',
+      ],
+      'sesame' => const ['sesame', 'tahini', 'ល្ង'],
+      _ => [allergen],
+    };
   }
 }

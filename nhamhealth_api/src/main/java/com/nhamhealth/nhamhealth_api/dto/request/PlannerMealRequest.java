@@ -26,7 +26,35 @@ public record PlannerMealRequest(
         String instructionsTextKm,
         String tagsText,
         String tagsTextKm,
+        List<String> weightGoals,
         Boolean active) {
+
+    public PlannerMealRequest(
+            String nameEn,
+            String nameKm,
+            Integer categoryId,
+            List<Integer> categoryIds,
+            String descriptionEn,
+            String descriptionKm,
+            String imageUrl,
+            BigDecimal calories,
+            BigDecimal proteinGrams,
+            BigDecimal carbsGrams,
+            BigDecimal fatGrams,
+            Integer cookingTimeMinutes,
+            String ingredientsText,
+            String ingredientsTextKm,
+            String instructionsText,
+            String instructionsTextKm,
+            String tagsText,
+            String tagsTextKm,
+            Boolean active) {
+        this(nameEn, nameKm, categoryId, categoryIds, descriptionEn, descriptionKm, imageUrl,
+                calories, proteinGrams, carbsGrams, fatGrams, cookingTimeMinutes,
+                ingredientsText, ingredientsTextKm, instructionsText, instructionsTextKm,
+                tagsText, tagsTextKm, List.of("LOSE_WEIGHT", "MAINTAIN_HEALTH", "GAIN_WEIGHT"), active);
+    }
+
     public Integer effectiveCategoryId() {
         if (categoryId != null)
             return categoryId;

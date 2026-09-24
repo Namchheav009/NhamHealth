@@ -44,6 +44,8 @@ import jakarta.validation.Valid;
 
 @Controller
 public class WeeklyMealPlannerAdminController {
+    private static final Set<String> WEIGHT_GOALS = Set.of(
+            "LOSE_WEIGHT", "MAINTAIN_HEALTH", "GAIN_WEIGHT");
     private static final Set<String> SLOTS = Set.of("BREAKFAST", "LUNCH", "DINNER", "SNACK");
     private final WeeklyMealRecommendationRepository recommendations;
     private final PlannerMealRepository plannerMeals;
@@ -339,6 +341,11 @@ public class WeeklyMealPlannerAdminController {
             return "Enter non-negative nutrition values.";
         if (request.cookingTimeMinutes() != null && request.cookingTimeMinutes() < 0)
             return "Cooking time cannot be negative.";
+        if (request.weightGoals() != null && request.weightGoals().stream()
+                .map(this::normalize)
+                .anyMatch(goal -> !WEIGHT_GOALS.contains(goal))) {
+            return "Select valid weight goals.";
+        }
         return null;
     }
 
@@ -374,6 +381,13 @@ public class WeeklyMealPlannerAdminController {
         meal.setInstructionsTextKm(clean(request.instructionsTextKm()));
         meal.setTagsText(clean(request.tagsText()));
         meal.setTagsTextKm(clean(request.tagsTextKm()));
+        Set<String> selectedGoals = request.weightGoals() == null || request.weightGoals().isEmpty()
+                ? WEIGHT_GOALS
+                : request.weightGoals().stream()
+                        .map(this::normalize)
+                        .filter(WEIGHT_GOALS::contains)
+                        .collect(Collectors.toSet());
+        meal.setWeightGoals(selectedGoals);
         meal.setActive(request.active() == null || request.active());
     }
 
@@ -432,6 +446,7 @@ public class WeeklyMealPlannerAdminController {
                 "categoryName", meal.getCategory().getCategoryName(),
                 "categoryIds", categoryIds,
                 "categoryNames", categoryNames,
+                "weightGoals", meal.getWeightGoals().stream().sorted().toList(),
                 "calories", meal.getCalories(),
                 "active", Boolean.TRUE.equals(meal.getActive()));
     }

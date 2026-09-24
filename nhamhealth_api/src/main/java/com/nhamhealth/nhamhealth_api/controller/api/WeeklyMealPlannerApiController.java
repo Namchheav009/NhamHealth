@@ -63,7 +63,6 @@ public class WeeklyMealPlannerApiController {
     }
 
     @GetMapping("/weight-loss-forecast")
-    @Transactional(readOnly = true)
     public ResponseEntity<WeightLossForecastResponse> forecast(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "28") Integer days,
@@ -123,9 +122,13 @@ public class WeeklyMealPlannerApiController {
                     .findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc();
         }
 
+        String normalizedGoal = IbmMealPlannerRecommendationService.normalizeGoal(goal);
+        List<WeeklyMealRecommendation> eligible = list.stream()
+                .filter(row -> row.getPlannerMeal().supportsWeightGoal(normalizedGoal))
+                .toList();
         List<WeeklyMealRecommendation> ranked = rankingService == null
-                ? list
-                : rankingService.rank(userId(jwt), goal, list);
+                ? eligible
+                : rankingService.rank(userId(jwt), normalizedGoal, eligible);
         return ResponseEntity.ok(ranked.stream().map(row -> response(row, lang)).toList());
     }
 

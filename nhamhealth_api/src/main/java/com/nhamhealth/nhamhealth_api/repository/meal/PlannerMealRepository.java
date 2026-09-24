@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.nhamhealth.nhamhealth_api.entity.PlannerMeal;
 
 public interface PlannerMealRepository extends JpaRepository<PlannerMeal, Integer> {
-    @EntityGraph(attributePaths = { "category", "categories" })
+    @EntityGraph(attributePaths = { "category", "categories", "weightGoals" })
     List<PlannerMeal> findAllByOrderByNameEnAsc();
 }

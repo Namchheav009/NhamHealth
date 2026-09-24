@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../config/api_config.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
@@ -51,8 +52,13 @@ class PlannerWeekDateStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final monday = selectedDate.subtract(
-      Duration(days: selectedDate.weekday - DateTime.monday),
+    final normalizedSelected = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+    final monday = normalizedSelected.subtract(
+      Duration(days: normalizedSelected.weekday - DateTime.monday),
     );
     const weekdayKeys = [
       'planner.mon',
@@ -64,10 +70,16 @@ class PlannerWeekDateStrip extends StatelessWidget {
       'planner.sun',
     ];
 
+    final now = DateTime.now();
     return Row(
       children: List.generate(7, (index) {
-        final date = monday.add(Duration(days: index));
+        final date = DateTime(
+          monday.year,
+          monday.month,
+          monday.day,
+        ).add(Duration(days: index));
         final selected = DateUtils.isSameDay(date, selectedDate);
+        final isToday = DateUtils.isSameDay(date, now);
         return Expanded(
           child: Padding(
             padding: EdgeInsets.only(right: index == 6 ? 0 : 4),
@@ -88,7 +100,12 @@ class PlannerWeekDateStrip extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color:
-                        selected ? AppColors.primaryGreen : context.appBorder,
+                        selected
+                            ? AppColors.primaryGreen
+                            : (isToday
+                                ? AppColors.primaryGreen.withValues(alpha: 0.5)
+                                : context.appBorder),
+                    width: isToday && !selected ? 1.5 : 1.0,
                   ),
                 ),
                 child: Column(
@@ -97,11 +114,20 @@ class PlannerWeekDateStrip extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        weekdayKeys[index].tr,
+                        isToday && !selected
+                            ? 'planner.today'.tr
+                            : weekdayKeys[index].tr,
                         maxLines: 1,
                         style: TextStyle(
-                          color: selected ? Colors.white : context.appText,
+                          color:
+                              selected
+                                  ? Colors.white
+                                  : (isToday
+                                      ? AppColors.primaryGreen
+                                      : context.appText),
                           fontSize: 10,
+                          fontWeight:
+                              isToday ? FontWeight.w700 : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -117,7 +143,12 @@ class PlannerWeekDateStrip extends StatelessWidget {
                       width: 3,
                       height: 3,
                       decoration: BoxDecoration(
-                        color: selected ? Colors.white : AppColors.primaryGreen,
+                        color:
+                            selected
+                                ? Colors.white
+                                : (isToday
+                                    ? AppColors.primaryGreen
+                                    : Colors.transparent),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -523,23 +554,15 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
       return;
     }
     if (!_fillEmptyOnly && widget.controller.planMealCount > 0) {
-      final replace = await showDialog<bool>(
+      final replace = await AppAlert.confirmAction(
         context: context,
-        builder:
-            (dialogContext) => AlertDialog(
-              title: Text('planner.autofill_replace_title'.tr),
-              content: Text('planner.autofill_replace_message'.tr),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: Text('common.cancel'.tr),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: Text('planner.autofill_replace_confirm'.tr),
-                ),
-              ],
-            ),
+        title: 'planner.autofill_replace_title',
+        message: 'planner.autofill_replace_message',
+        cancelText: 'common.cancel',
+        confirmText: 'planner.autofill_replace_confirm',
+        icon: Icons.autorenew_rounded,
+        iconColor: AppColors.primaryGreen,
+        confirmButtonColor: AppColors.primaryGreen,
       );
       if (replace != true || !mounted) return;
     }

@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -41,6 +43,11 @@ public class PlannerMeal {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "planner_meal_categories", joinColumns = @JoinColumn(name = "planner_meal_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
     private Set<MealCategory> categories = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "planner_meal_weight_goals", joinColumns = @JoinColumn(name = "planner_meal_id"))
+    @Column(name = "weight_goal", nullable = false, length = 30)
+    private Set<String> weightGoals = new HashSet<>();
     @Column(name = "category_en", nullable = false, length = 80)
     private String categoryEn;
     @Column(name = "category_km", length = 80)
@@ -188,6 +195,25 @@ public class PlannerMeal {
         } catch (Exception ignored) {
             return "";
         }
+    }
+
+    public Set<String> getWeightGoals() {
+        return weightGoals == null ? Collections.emptySet() : weightGoals;
+    }
+
+    public void setWeightGoals(Set<String> values) {
+        weightGoals = values != null ? new HashSet<>(values) : new HashSet<>();
+    }
+
+    public String getWeightGoalsString() {
+        return getWeightGoals().stream().sorted().collect(Collectors.joining(","));
+    }
+
+    public boolean supportsWeightGoal(String goal) {
+        if (weightGoals == null || weightGoals.isEmpty()) {
+            return true;
+        }
+        return goal != null && weightGoals.stream().anyMatch(value -> value.equalsIgnoreCase(goal));
     }
 
     public String getDescriptionEn() {

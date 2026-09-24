@@ -11,5 +11,11 @@ public record MealPlanUpdateRequest(
         Integer plannerMealId,
         @DecimalMin("0.25") @DecimalMax("20") BigDecimal servings,
         String status,
-        @DecimalMin("0.25") @DecimalMax("20") BigDecimal actualServings) {
+        @DecimalMin("0.25") @DecimalMax("20") BigDecimal actualServings,
+        String weightGoal) {
+
+    public MealPlanUpdateRequest(LocalDate planDate, Integer plannerMealId, BigDecimal servings,
+            String status, BigDecimal actualServings) {
+        this(planDate, plannerMealId, servings, status, actualServings, null);
+    }
 }

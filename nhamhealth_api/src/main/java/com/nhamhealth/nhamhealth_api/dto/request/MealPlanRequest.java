@@ -12,5 +12,6 @@ public record MealPlanRequest(
         @NotNull LocalDate planDate,
         @NotBlank String mealType,
         @NotNull Integer plannerMealId,
-        @NotNull @DecimalMin("0.25") @DecimalMax("20") BigDecimal servings) {
+        @NotNull @DecimalMin("0.25") @DecimalMax("20") BigDecimal servings,
+        @NotBlank String weightGoal) {
 }

@@ -99,7 +99,6 @@ public class MealPlannerForecastService {
                 ibmRecommendationService, null);
     }
 
-    @Transactional(readOnly = true)
     public WeightLossForecastResponse calculateForecast(
             Integer userId,
             Integer requestedDays,
@@ -174,16 +173,20 @@ public class MealPlannerForecastService {
         String recommendedWeightDirection = currentBmi < 18.5
                 ? "GAIN"
                 : (currentBmi < 25.0 ? "MAINTAIN" : "LOSE");
-        boolean isWeightLoss = "LOSE".equals(recommendedWeightDirection);
-        boolean isWeightGain = "GAIN".equals(recommendedWeightDirection);
-        String effectiveGoal = isWeightLoss
-                ? "LOSE_WEIGHT"
-                : (isWeightGain ? "GAIN_WEIGHT" : "MAINTAIN_HEALTH");
+        // Respect the goal explicitly selected in Planner. Only an unsafe
+        // underweight + weight-loss combination is downgraded to maintenance,
+        // matching the auto-fill and single-meal recommendation flows.
+        String effectiveGoal = "LOSE_WEIGHT".equals(goal) && "GAIN".equals(recommendedWeightDirection)
+                ? "MAINTAIN_HEALTH"
+                : goal;
+        boolean isWeightLoss = "LOSE_WEIGHT".equals(effectiveGoal);
+        boolean isWeightGain = "GAIN_WEIGHT".equals(effectiveGoal);
 
         // 2. Compute Mifflin-St Jeor BMR
         // Men: 10 * weight(kg) + 6.25 * height(cm) - 5 * age + 5
         // Women: 10 * weight(kg) + 6.25 * height(cm) - 5 * age - 161
-        // Unknown sex uses the midpoint of the two constants and is disclosed to the client.
+        // Unknown sex uses the midpoint of the two constants and is disclosed to the
+        // client.
         double sexOffset = isFemale ? -161.0 : (isMale ? 5.0 : -78.0);
         double bmr = (10.0 * weightKg) + (6.25 * heightCm) - (5.0 * age) + sexOffset;
         bmr = Math.max(800.0, bmr);
@@ -229,7 +232,10 @@ public class MealPlannerForecastService {
 
         // 5. Goal-aware energy and projection metrics
         double dailyDeficit = tdee - dailyPlannedCalories;
-        double weeklyPaceKg = isWeightLoss ? (dailyDeficit * 7.0) / KCAL_PER_KG_FAT : 0.0;
+        double weeklyPaceKg = isWeightLoss
+                ? Math.max(0.0, (dailyDeficit * 7.0) / KCAL_PER_KG_FAT)
+                : (isWeightGain ? Math.max(0.0, (Math.abs(Math.min(0.0, dailyDeficit)) * 7.0) / KCAL_PER_KG_FAT)
+                        : 0.0);
         double projectedWeightLossKg = isWeightLoss && dailyDeficit > 0
                 ? (dailyDeficit * timeframeDays) / KCAL_PER_KG_FAT
                 : 0.0;
@@ -314,8 +320,23 @@ public class MealPlannerForecastService {
 
         // 10. Explain whether these figures describe planned meals or a preview target.
         String aiSummary = generateGoalSummary(
-                isKhmer, isWeightLoss, plannedMeals.isEmpty(), timeframeDays,
-                dailyDeficit, projectedWeightLossKg, weeklyPaceKg);
+                isKhmer, isWeightLoss, isWeightGain, plannedMeals.isEmpty(), timeframeDays,
+                dailyDeficit, projectedWeightLossKg, projectedWeightGainKg, weeklyPaceKg);
+        if (geminiAutoFillService != null) {
+            String geminiSummary = geminiAutoFillService.analyzeWeightGoal(Map.of(
+                    "goal", effectiveGoal,
+                    "currentWeightKg", round(weightKg, 1),
+                    "projectedEndWeightKg", round(projectedEndWeightKg, 1),
+                    "projectedChangeKg", round(projectedEndWeightKg - weightKg, 2),
+                    "timeframeDays", timeframeDays,
+                    "estimatedTdeeCalories", round(tdee, 0),
+                    "plannedCaloriesPerDay", round(dailyPlannedCalories, 0),
+                    "dailyCalorieBalance", round(dailyDeficit, 0),
+                    "hasPlannedMeals", !plannedMeals.isEmpty()), lang, aiSummary);
+            if (geminiSummary != null && !geminiSummary.isBlank()) {
+                aiSummary = geminiSummary;
+            }
+        }
 
         boolean hasBiometricProfile = hasBiometricProfile(wellnessOpt, profileOpt);
         BigDecimal bmi = hasBiometricProfile ? round(currentBmi, 1) : null;
@@ -347,7 +368,7 @@ public class MealPlannerForecastService {
                 hasBiometricProfile && (!hasReportedActivityLevel || !hasReportedGender),
                 round(isWeightLoss
                         ? Math.max(35.0, weightKg - (timeframeDays >= 28 ? 3.0 : 1.5))
-                        : weightKg, 1),
+                        : (isWeightGain ? projectedEndWeightKg : weightKg), 1),
                 round(projectedWeightLossKg, 2),
                 round(projectedEndWeightKg, 1),
                 round(bmr, 0),
@@ -429,11 +450,19 @@ public class MealPlannerForecastService {
         }
 
         double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
-        final String goal = hasBiometricProfile(wellnessOpt, profileOpt)
-                ? (currentBmi < 18.5
-                        ? "GAIN_WEIGHT"
-                        : (currentBmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT"))
-                : requestedGoal;
+        final String goal;
+        if (request.goal() != null && !request.goal().isBlank()) {
+            if (hasBiometricProfile(wellnessOpt, profileOpt) && currentBmi < 18.5
+                    && "LOSE_WEIGHT".equals(requestedGoal)) {
+                goal = "MAINTAIN_HEALTH";
+            } else {
+                goal = requestedGoal;
+            }
+        } else {
+            goal = currentBmi < 18.5
+                    ? "GAIN_WEIGHT"
+                    : (currentBmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT");
+        }
         final boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
         final boolean isWeightGain = "GAIN_WEIGHT".equals(goal);
 
@@ -529,7 +558,13 @@ public class MealPlannerForecastService {
         Map<String, PlannerMeal> uniqueCandidates = new LinkedHashMap<>();
         plannerMealRepository.findAllByOrderByNameEnAsc().stream()
                 .filter(m -> Boolean.TRUE.equals(m.getActive()))
-                .filter(m -> matchesDietaryPreferences(m, request))
+                .filter(m -> m.supportsWeightGoal(goal))
+                .filter(m -> matchesDietaryPreferences(
+                        m,
+                        request.diet(),
+                        request.allergens(),
+                        request.excludedIngredients(),
+                        request.medicalFlags()))
                 .forEach(meal -> uniqueCandidates.putIfAbsent(canonicalMealName(meal), meal));
         List<PlannerMeal> candidates = new ArrayList<>(uniqueCandidates.values());
 
@@ -539,7 +574,8 @@ public class MealPlannerForecastService {
         }
 
         // 6. Build the plan locally from the admin-curated planner catalog.
-        // Scheduled Planner Meals must never be rewritten or labelled by an AI provider.
+        // Scheduled Planner Meals must never be rewritten or labelled by an AI
+        // provider.
         Set<Integer> recentlyUsedMealIds = existingPlans.stream()
                 .map(MealPlan::getPlannerMeal)
                 .filter(java.util.Objects::nonNull)
@@ -561,7 +597,8 @@ public class MealPlannerForecastService {
                         sel.date(),
                         sel.slot(),
                         sel.selectedMeal().getPlannerMealId(),
-                        BigDecimal.ONE);
+                        BigDecimal.ONE,
+                        goal);
                 MealPlanResponse created = mealPlannerService.addOrReplace(userId, mealReq, lang);
                 createdResponses.add(created);
             }
@@ -593,7 +630,8 @@ public class MealPlannerForecastService {
             Optional<WellnessProfile> wellnessOpt,
             Optional<UserProfile> profileOpt,
             boolean isKhmer) {
-        if (!isWeightLoss || hasBiometricProfile(wellnessOpt, profileOpt)) return;
+        if (!isWeightLoss || hasBiometricProfile(wellnessOpt, profileOpt))
+            return;
         throw new ResponseStatusException(
                 BAD_REQUEST,
                 isKhmer
@@ -623,16 +661,26 @@ public class MealPlannerForecastService {
     }
 
     private String bmiStatus(int age, BigDecimal bmi) {
-        if (bmi == null) return "UNKNOWN";
-        if (age < 18) return "UNDER_18";
+        if (bmi == null)
+            return "UNKNOWN";
+        if (age < 18)
+            return "UNDER_18";
         double value = bmi.doubleValue();
-        if (value < 18.5) return "UNDERWEIGHT";
-        if (value < 25.0) return "HEALTHY";
-        if (value < 30.0) return "OVERWEIGHT";
+        if (value < 18.5)
+            return "UNDERWEIGHT";
+        if (value < 25.0)
+            return "HEALTHY";
+        if (value < 30.0)
+            return "OVERWEIGHT";
         return "OBESITY";
     }
 
-    private boolean matchesDietaryPreferences(PlannerMeal meal, AiAutoFillPlanRequest request) {
+    private boolean matchesDietaryPreferences(
+            PlannerMeal meal,
+            String requestedDiet,
+            List<String> allergens,
+            List<String> excludedIngredients,
+            List<String> medicalFlags) {
         String searchable = String.join(" ",
                 safeText(meal.getNameEn()),
                 safeText(meal.getNameKm()),
@@ -645,7 +693,10 @@ public class MealPlannerForecastService {
                 safeText(meal.getTagsText()),
                 safeText(meal.getTagsTextKm())).toLowerCase(Locale.ROOT);
 
-        String diet = request.diet() == null ? "BALANCED" : request.diet().trim().toUpperCase(Locale.ROOT);
+        String diet = requestedDiet == null ? "BALANCED" : requestedDiet.trim().toUpperCase(Locale.ROOT);
+        List<String> safeAllergens = allergens == null ? List.of() : allergens;
+        List<String> safeExcludedIngredients = excludedIngredients == null ? List.of() : excludedIngredients;
+        List<String> safeMedicalFlags = medicalFlags == null ? List.of() : medicalFlags;
         List<String> prohibited = new ArrayList<>();
         if ("VEGETARIAN".equals(diet) || "VEGAN".equals(diet)) {
             prohibited.addAll(List.of("beef", "pork", "chicken", "fish", "shrimp", "prawn", "meat",
@@ -655,14 +706,14 @@ public class MealPlannerForecastService {
             prohibited.addAll(List.of("egg", "milk", "cheese", "yogurt", "butter", "cream", "honey",
                     "ស៊ុត", "ទឹកដោះ", "ឈីស", "យ៉ាអួ"));
         }
-        if (request.medicalFlags().stream().anyMatch(flag -> "DIABETES".equalsIgnoreCase(flag))) {
+        if (safeMedicalFlags.stream().anyMatch(flag -> "DIABETES".equalsIgnoreCase(flag))) {
             prohibited.addAll(List.of("sugary drink", "sweetened", "syrup", "soda", "soft drink"));
         }
-        if (request.medicalFlags().stream().anyMatch(flag -> "HYPERTENSION".equalsIgnoreCase(flag))) {
+        if (safeMedicalFlags.stream().anyMatch(flag -> "HYPERTENSION".equalsIgnoreCase(flag))) {
             prohibited.addAll(List.of("high sodium", "salty", "bacon", "sausage", "processed meat"));
         }
-        request.allergens().forEach(allergen -> prohibited.addAll(allergenSearchTerms(allergen)));
-        prohibited.addAll(request.excludedIngredients());
+        safeAllergens.forEach(allergen -> prohibited.addAll(allergenSearchTerms(allergen)));
+        prohibited.addAll(safeExcludedIngredients);
 
         return prohibited.stream()
                 .filter(value -> value != null && !value.isBlank())
@@ -721,6 +772,7 @@ public class MealPlannerForecastService {
 
         return allMeals.stream()
                 .filter(m -> m.getActive() != null && m.getActive())
+                .filter(m -> m.supportsWeightGoal(goal))
                 .filter(m -> !excludedPlannerMealIds.contains(m.getPlannerMealId()))
                 .sorted(Comparator
                         .comparingDouble((PlannerMeal m) -> forecastFoodScore(m, isWeightLoss)).reversed()
@@ -904,9 +956,14 @@ public class MealPlannerForecastService {
                         calories, sugar);
     }
 
-    private static String generateGoalSummary(boolean isKhmer, boolean isWeightLoss, boolean isPreview,
-            int days, double deficit, double weightLossKg, double paceKg) {
+    private static String generateGoalSummary(boolean isKhmer, boolean isWeightLoss, boolean isWeightGain,
+            boolean isPreview, int days, double deficit, double weightLossKg, double weightGainKg, double paceKg) {
         if (isPreview) {
+            if (isWeightGain) {
+                return isKhmer
+                        ? "នេះជាការប៉ាន់ស្មានឡើងទម្ងន់តាមថាមពលប្រចាំថ្ងៃ។ បន្ថែមអាហារក្នុងផែនការដើម្បីឃើញការប្រៀបធៀបជាក់ស្តែង។"
+                        : "This is a weight-gain preview based on estimated daily energy needs. Add meals to compare your actual plan.";
+            }
             if (!isWeightLoss) {
                 return isKhmer
                         ? "នេះជាការបង្ហាញសាកល្បងតាមតម្រូវការថាមពលប៉ាន់ស្មានរបស់អ្នក។ បន្ថែមអាហារក្នុងផែនការដើម្បីប្រៀបធៀបជាក់ស្តែង។"
@@ -915,6 +972,20 @@ public class MealPlannerForecastService {
             return isKhmer
                     ? "នេះជាការបង្ហាញសាកល្បងតាមគោលដៅកាឡូរីប៉ាន់ស្មាន មិនមែនលទ្ធផលពីអាហារដែលអ្នកបានគ្រោងទុកទេ។ បន្ថែមអាហារដើម្បីឱ្យការប៉ាន់ស្មានមានន័យ។"
                     : "This is a preview based on an estimated calorie target, not meals you have planned. Add meals for a meaningful estimate.";
+        }
+        if (isWeightGain) {
+            if (deficit >= 0) {
+                return isKhmer
+                        ? "ផែនការបច្ចុប្បន្នមិនទាន់មានកាឡូរីលើសសម្រាប់ឡើងទម្ងន់ទេ។ បន្ថែមអាហារមានតុល្យភាព និងប្រូតេអ៊ីនសមស្រប។"
+                        : "Your current plan does not yet provide a calorie surplus for weight gain. Add balanced meals and adequate protein.";
+            }
+            return isKhmer
+                    ? String.format(Locale.ROOT,
+                            "តាមកាឡូរីដែលបានគ្រោង កាឡូរីលើសប្រហែល %.0f kcal/ថ្ងៃ អាចស្មើនឹងការឡើងប្រហែល %.1f គ.ក្រ ក្នុង %d ថ្ងៃ (%.2f គ.ក្រ/សប្តាហ៍)។ លទ្ធផលពិតអាចខុសគ្នា។",
+                            Math.abs(deficit), weightGainKg, days, paceKg)
+                    : String.format(Locale.ROOT,
+                            "Based on a planned surplus of about %.0f kcal/day, the estimate is a gain of %.1f kg over %d days (~%.2f kg/week). Actual results can vary.",
+                            Math.abs(deficit), weightGainKg, days, paceKg);
         }
         if (!isWeightLoss) {
             double gap = Math.abs(deficit);
@@ -1044,12 +1115,27 @@ public class MealPlannerForecastService {
             }
         }
 
-        String goal = requestedGoal;
-        if (hasBiometricProfile(wellnessOpt, profileOpt) && age >= 18) {
-            double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
-            goal = currentBmi < 18.5
-                    ? "GAIN_WEIGHT"
-                    : (currentBmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT");
+        String goal;
+        if (request.goal() != null && !request.goal().isBlank()) {
+            if (hasBiometricProfile(wellnessOpt, profileOpt) && age >= 18) {
+                double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
+                if (currentBmi < 18.5 && "LOSE_WEIGHT".equals(requestedGoal)) {
+                    goal = "MAINTAIN_HEALTH";
+                } else {
+                    goal = requestedGoal;
+                }
+            } else {
+                goal = requestedGoal;
+            }
+        } else {
+            if (hasBiometricProfile(wellnessOpt, profileOpt) && age >= 18) {
+                double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
+                goal = currentBmi < 18.5
+                        ? "GAIN_WEIGHT"
+                        : (currentBmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT");
+            } else {
+                goal = requestedGoal;
+            }
         }
 
         boolean isFemale = gender.contains("FEMALE") || gender.contains("WOMAN") || gender.equalsIgnoreCase("F");
@@ -1082,6 +1168,13 @@ public class MealPlannerForecastService {
         // 3. Resolve Candidate Meals from Admin
         List<PlannerMeal> allActive = plannerMealRepository.findAllByOrderByNameEnAsc().stream()
                 .filter(m -> Boolean.TRUE.equals(m.getActive()))
+                .filter(m -> m.supportsWeightGoal(goal))
+                .filter(m -> matchesDietaryPreferences(
+                        m,
+                        request.diet(),
+                        request.allergens(),
+                        request.excludedIngredients(),
+                        request.medicalFlags()))
                 .toList();
 
         List<PlannerMeal> slotCandidates = allActive.stream().filter(m -> {
@@ -1102,7 +1195,8 @@ public class MealPlannerForecastService {
         List<PlannerMeal> candidates = slotCandidates.size() >= 3 ? slotCandidates : allActive;
 
         if (candidates.isEmpty()) {
-            throw new ResponseStatusException(BAD_REQUEST, "No candidate meals available in catalog.");
+            throw new ResponseStatusException(BAD_REQUEST,
+                    "No meals match the selected dietary restrictions.");
         }
 
         var result = geminiAutoFillService != null

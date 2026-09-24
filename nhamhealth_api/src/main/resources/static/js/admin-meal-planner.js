@@ -594,6 +594,21 @@
     }
   }
 
+  const allWeightGoals = ["LOSE_WEIGHT", "MAINTAIN_HEALTH", "GAIN_WEIGHT"];
+
+  function getSelectedWeightGoals() {
+    return [...mealForm.querySelectorAll(".meal-weight-goal-cb:checked")].map(
+      (cb) => cb.value,
+    );
+  }
+
+  function setSelectedWeightGoals(goals = allWeightGoals) {
+    const selected = new Set(goals.length ? goals : allWeightGoals);
+    mealForm.querySelectorAll(".meal-weight-goal-cb").forEach((cb) => {
+      cb.checked = selected.has(cb.value);
+    });
+  }
+
   mealForm?.querySelectorAll(".meal-category-cb").forEach((cb) => {
     cb.addEventListener("change", () => {
       const selected = getSelectedCategoryIds();
@@ -605,12 +620,23 @@
     });
   });
 
+  mealForm?.querySelectorAll(".meal-weight-goal-cb").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      if (getSelectedWeightGoals().length > 0) {
+        document
+          .getElementById("mealWeightGoalError")
+          ?.style?.setProperty("display", "none");
+      }
+    });
+  });
+
   function openMealCreate() {
     editingMealId = null;
     mealForm.reset();
     plannerIngredients = [];
     renderPlannerIngredients();
     setSelectedCategoryIds([]);
+    setSelectedWeightGoals();
     document
       .getElementById("mealCategoryError")
       ?.style?.setProperty("display", "none");
@@ -667,6 +693,11 @@
       .map((s) => s.trim())
       .filter(Boolean);
     setSelectedCategoryIds(rawCategoryIds);
+    const rawWeightGoals = (card.dataset.weightGoals || "")
+      .split(",")
+      .map((goal) => goal.trim())
+      .filter(Boolean);
+    setSelectedWeightGoals(rawWeightGoals);
     document
       .getElementById("mealCategoryError")
       ?.style?.setProperty("display", "none");
@@ -695,6 +726,7 @@
     plannerIngredients = [];
     renderPlannerIngredients();
     setSelectedCategoryIds([]);
+    setSelectedWeightGoals();
     document
       .getElementById("mealCategoryError")
       ?.style?.setProperty("display", "none");
@@ -713,6 +745,15 @@
       return;
     }
     if (categoryError) categoryError.style.display = "none";
+
+    const selectedWeightGoals = getSelectedWeightGoals();
+    const weightGoalError = document.getElementById("mealWeightGoalError");
+    if (selectedWeightGoals.length === 0) {
+      if (weightGoalError) weightGoalError.style.display = "block";
+      weightGoalError?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    if (weightGoalError) weightGoalError.style.display = "none";
 
     const ingredientText = ingredientTextPayload();
     if (!plannerIngredients.length) {
@@ -743,6 +784,7 @@
         nameKm: (data.nameKm || "").trim(),
         categoryId: selectedCategoryIds[0],
         categoryIds: selectedCategoryIds,
+        weightGoals: selectedWeightGoals,
         descriptionEn: (data.descriptionEn || "").trim(),
         descriptionKm: (data.descriptionKm || "").trim(),
         imageUrl: finalImageUrl || null,

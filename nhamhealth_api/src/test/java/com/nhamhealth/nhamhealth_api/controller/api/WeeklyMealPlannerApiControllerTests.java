@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -91,6 +92,44 @@ class WeeklyMealPlannerApiControllerTests {
                 assertEquals(1, response.getBody().size());
                 assertEquals(99, response.getBody().getFirst().plannerMealId());
                 assertEquals("Chicken Salad", response.getBody().getFirst().mealName());
+        }
+
+        @Test
+        void filtersRecommendationsByUserWeightGoal() {
+                WeeklyMealRecommendationRepository repository = mock(WeeklyMealRecommendationRepository.class);
+                PlannerMeal loseWeightMeal = plannerMeal(201, "Light chicken salad", Set.of("LOSE_WEIGHT"));
+                PlannerMeal gainWeightMeal = plannerMeal(202, "High calorie rice bowl", Set.of("GAIN_WEIGHT"));
+
+                WeeklyMealRecommendation loseWeightRecommendation = new WeeklyMealRecommendation();
+                loseWeightRecommendation.setPlannerMeal(loseWeightMeal);
+                loseWeightRecommendation.setDayOfWeek("ALL");
+                loseWeightRecommendation.setMealSlot("LUNCH");
+                WeeklyMealRecommendation gainWeightRecommendation = new WeeklyMealRecommendation();
+                gainWeightRecommendation.setPlannerMeal(gainWeightMeal);
+                gainWeightRecommendation.setDayOfWeek("ALL");
+                gainWeightRecommendation.setMealSlot("LUNCH");
+
+                when(repository.findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc())
+                                .thenReturn(List.of(loseWeightRecommendation, gainWeightRecommendation));
+
+                var response = new WeeklyMealPlannerApiController(repository)
+                                .recommendations(null, null, null, "en", "LOSE_WEIGHT");
+
+                assertEquals(1, response.getBody().size());
+                assertEquals(201, response.getBody().getFirst().plannerMealId());
+        }
+
+        private static PlannerMeal plannerMeal(int id, String name, Set<String> goals) {
+                PlannerMeal meal = new PlannerMeal();
+                meal.setPlannerMealId(id);
+                meal.setNameEn(name);
+                meal.setCategoryEn("Lunch");
+                meal.setCalories(new BigDecimal("400"));
+                meal.setProteinGrams(new BigDecimal("25"));
+                meal.setCarbsGrams(new BigDecimal("40"));
+                meal.setFatGrams(new BigDecimal("12"));
+                meal.setWeightGoals(goals);
+                return meal;
         }
 
         @Test

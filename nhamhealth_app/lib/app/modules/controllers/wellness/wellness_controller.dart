@@ -191,15 +191,25 @@ class WellnessController extends GetxController {
       // Allow future dates too
       lastDate: DateTime.now().add(const Duration(days: 365)),
 
-      helpText: 'Select Date',
-      cancelText: 'common.cancel',
-      confirmText: 'Select',
+      helpText: 'planner.select_date'.tr,
+      cancelText: 'common.cancel'.tr,
+      confirmText: 'planner.select'.tr,
     );
 
     if (pickedDate != null) {
-      selectedDate.value = pickedDate;
+      selectedDate.value = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+      );
       await loadDailyWellness();
     }
+  }
+
+  Future<void> goToToday() async {
+    final now = DateTime.now();
+    selectedDate.value = DateTime(now.year, now.month, now.day);
+    await loadDailyWellness();
   }
 
   // Check if selected date is today
@@ -215,7 +225,7 @@ class WellnessController extends GetxController {
   // Text displayed in the button
   String get selectedDateText {
     if (isToday) {
-      return 'Today';
+      return 'common.today'.tr;
     }
 
     final DateTime date = selectedDate.value;
