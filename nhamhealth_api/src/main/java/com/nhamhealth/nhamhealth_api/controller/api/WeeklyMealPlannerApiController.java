@@ -27,6 +27,7 @@ import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.service.meal.MealPlannerForecastService;
 import com.nhamhealth.nhamhealth_api.service.meal.PlannerMealContent;
+import com.nhamhealth.nhamhealth_api.service.ai.IbmMealPlannerRecommendationService;
 
 import jakarta.validation.Valid;
 
@@ -35,13 +36,16 @@ import jakarta.validation.Valid;
 public class WeeklyMealPlannerApiController {
     private final WeeklyMealRecommendationRepository recommendations;
     private final MealPlannerForecastService forecastService;
+    private final IbmMealPlannerRecommendationService rankingService;
 
     @Autowired
     public WeeklyMealPlannerApiController(
             WeeklyMealRecommendationRepository recommendations,
-            MealPlannerForecastService forecastService) {
+            MealPlannerForecastService forecastService,
+            IbmMealPlannerRecommendationService rankingService) {
         this.recommendations = recommendations;
         this.forecastService = forecastService;
+        this.rankingService = rankingService;
     }
 
     /** Compatibility constructor for existing unit tests. The former ranking
@@ -50,11 +54,12 @@ public class WeeklyMealPlannerApiController {
             WeeklyMealRecommendationRepository recommendations,
             Object ignoredRankingDependency,
             MealPlannerForecastService forecastService) {
-        this(recommendations, forecastService);
+        this(recommendations, forecastService,
+                ignoredRankingDependency instanceof IbmMealPlannerRecommendationService service ? service : null);
     }
 
     public WeeklyMealPlannerApiController(WeeklyMealRecommendationRepository recommendations) {
-        this(recommendations, null);
+        this(recommendations, (MealPlannerForecastService) null, (IbmMealPlannerRecommendationService) null);
     }
 
     @GetMapping("/weight-loss-forecast")
@@ -118,7 +123,10 @@ public class WeeklyMealPlannerApiController {
                     .findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc();
         }
 
-        return ResponseEntity.ok(list.stream().map(row -> response(row, lang)).toList());
+        List<WeeklyMealRecommendation> ranked = rankingService == null
+                ? list
+                : rankingService.rank(userId(jwt), goal, list);
+        return ResponseEntity.ok(ranked.stream().map(row -> response(row, lang)).toList());
     }
 
     public ResponseEntity<List<WeeklyMealRecommendationResponse>> recommendations(

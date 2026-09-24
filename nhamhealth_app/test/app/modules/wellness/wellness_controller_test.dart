@@ -30,15 +30,20 @@ void main() {
 
       expect(controller.isToday, isTrue);
       expect(controller.nutrients.map((item) => item.current), [
+        '3',
         '840',
         '30',
         '90',
         '20',
-        '3',
         '8',
         '12',
       ]);
-      expect(controller.nutrients.first.percentage, 42);
+      expect(
+        controller.nutrients
+            .firstWhere((item) => item.name == 'Calories')
+            .percentage,
+        42,
+      );
     },
   );
 
@@ -54,7 +59,12 @@ void main() {
       );
       await loading;
 
-      expect(controller.nutrients.first.current, '840');
+      expect(
+        controller.nutrients
+            .firstWhere((item) => item.name == 'Calories')
+            .current,
+        '840',
+      );
       expect(controller.isLoading.value, isFalse);
     },
   );

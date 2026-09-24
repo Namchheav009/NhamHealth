@@ -660,7 +660,14 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'planner.goal_lose_weight'.tr,
+                                switch (controller.healthGoal.value) {
+                                  MealPlannerHealthGoal.gainWeight =>
+                                    'planner.goal_gain_weight'.tr,
+                                  MealPlannerHealthGoal.maintainHealth =>
+                                    'planner.goal_maintain_health'.tr,
+                                  MealPlannerHealthGoal.loseWeight =>
+                                    'planner.goal_lose_weight'.tr,
+                                },
                                 style: const TextStyle(
                                   color: Color(0xFF0F62FE),
                                   fontSize: 10,
@@ -2242,6 +2249,9 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
       final totalItems = items.length;
       final checkedCount =
           items.where((item) => checked.contains(item.key)).length;
+      items
+          .where((item) => controller.checkedGroceryKeys.contains(item.key))
+          .length;
 
       return _PlannerScaffold(
         header: PlannerPageHeader(
@@ -2257,6 +2267,10 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                           checked.addAll(items.map((i) => i.key));
                         }
                       });
+                      controller.setAllGroceryChecked(
+                        items.map((i) => i.key),
+                        checkedCount != totalItems,
+                      );
                     },
                     child: Text(
                       checkedCount == totalItems
@@ -2305,7 +2319,7 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                           final lines = items
                               .map(
                                 (i) =>
-                                    '${checked.contains(i.key) ? '☑' : '☐'} ${i.name.tr}${i.quantityLabel.isEmpty ? '' : ' — ${i.quantityLabel}'}',
+                                    '${controller.checkedGroceryKeys.contains(i.key) ? '☑' : '☐'} ${i.name.tr}${i.quantityLabel.isEmpty ? '' : ' — ${i.quantityLabel}'}',
                               )
                               .join('\n');
                           await SharePlus.instance.share(
@@ -2448,7 +2462,9 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
 
                             // Items in this category
                             ...group.value.map((item) {
-                              final isItemChecked = checked.contains(item.key);
+                              final isItemChecked = controller
+                                  .checkedGroceryKeys
+                                  .contains(item.key);
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Container(
@@ -2562,16 +2578,10 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
                                             visualDensity:
                                                 VisualDensity.compact,
                                             onChanged:
-                                                (value) => setState(
-                                                  () =>
-                                                      value == true
-                                                          ? checked.add(
-                                                            item.key,
-                                                          )
-                                                          : checked.remove(
-                                                            item.key,
-                                                          ),
-                                                ),
+                                                (_) => controller
+                                                    .toggleGroceryItemChecked(
+                                                      item.key,
+                                                    ),
                                           ),
                                         ],
                                       ),
@@ -2659,7 +2669,7 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
     GroceryItem item,
   ) async {
     final sourceMeals = _sourceMealsFor(item);
-    final isChecked = checked.contains(item.key);
+    final isChecked = controller.checkedGroceryKeys.contains(item.key);
     final ingredientImageUrl = controller.lookupIngredientImageUrl(item.name);
     final shouldCheck = await showModalBottomSheet<bool>(
       context: context,
@@ -2985,6 +2995,9 @@ class _PlannerGroceryViewState extends State<PlannerGroceryView> {
         checked.remove(item.key);
       }
     });
+    if (shouldCheck != controller.checkedGroceryKeys.contains(item.key)) {
+      await controller.toggleGroceryItemChecked(item.key);
+    }
   }
 
   Widget _scopeButton(

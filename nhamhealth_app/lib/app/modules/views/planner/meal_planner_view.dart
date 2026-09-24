@@ -16,13 +16,15 @@ import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/loading_content_transition.dart';
 import '../../../widgets/nham_app_bar.dart';
 import '../../../widgets/page_skeleton.dart';
+import '../../../widgets/scroll_aware_scaffold.dart';
+import '../../controllers/meals/food_detail_controller.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/meals/meal_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
-import '../../controllers/meals/food_detail_controller.dart';
+import '../../models/planner/weight_loss_forecast_model.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 import 'planner_shared.dart';
 
@@ -39,59 +41,55 @@ Future<MealModel> _plannerMealAsFoodDetail(PlannedMeal meal) async {
     ),
   );
   return MealModel(
-  id: meal.id,
-  name: meal.name,
-  calories: meal.calories,
-  image: meal.imageUrl,
-  category: meal.category.isEmpty ? 'planner.uncategorized'.tr : meal.category,
-  categoryId: meal.categoryId ?? 0,
-  proteinGrams: meal.proteinGrams,
-  description: meal.description,
-  cookingTimeMinutes: meal.cookingTimeMinutes,
-  totalTimeMinutes: meal.cookingTimeMinutes,
-  difficulty: meal.difficulty,
-  servings: meal.servings.round(),
-  recommendationReason: meal.recommendationNote,
-  ingredients: List.generate(
-    meal.ingredientDetails.length,
-    (index) {
+    id: meal.id,
+    name: meal.name,
+    calories: meal.calories,
+    image: meal.imageUrl,
+    category:
+        meal.category.isEmpty ? 'planner.uncategorized'.tr : meal.category,
+    categoryId: meal.categoryId ?? 0,
+    proteinGrams: meal.proteinGrams,
+    description: meal.description,
+    cookingTimeMinutes: meal.cookingTimeMinutes,
+    totalTimeMinutes: meal.cookingTimeMinutes,
+    difficulty: meal.difficulty,
+    servings: meal.servings.round(),
+    recommendationReason: meal.recommendationNote,
+    ingredients: List.generate(meal.ingredientDetails.length, (index) {
       final ingredient = meal.ingredientDetails[index];
       return MealIngredientModel(
-          name: ingredient.name,
-          description: '',
-          image: ingredientImages[index] ?? '',
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
-        );
-    },
-    growable: false,
-  ),
-  nutrition: [
-    MealNutritionModel(
-      name: 'common.protein'.tr,
-      amount: meal.proteinGrams,
-      unit: 'g',
-    ),
-    MealNutritionModel(
-      name: 'planner.carbs'.tr,
-      amount: meal.carbsGrams,
-      unit: 'g',
-    ),
-    MealNutritionModel(name: 'common.fat'.tr, amount: meal.fatGrams, unit: 'g'),
-  ],
-  steps: meal.instructions
-      .indexed
-      .map(
-        (entry) => MealStepModel(
-          number: entry.$1 + 1,
-          instruction: entry.$2,
-        ),
-      )
-      .toList(growable: false),
-  tags: meal.tags
-      .indexed
-      .map((entry) => MealLabelModel(id: entry.$1, name: entry.$2))
-      .toList(growable: false),
+        name: ingredient.name,
+        description: '',
+        image: ingredientImages[index] ?? '',
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+      );
+    }, growable: false),
+    nutrition: [
+      MealNutritionModel(
+        name: 'common.protein'.tr,
+        amount: meal.proteinGrams,
+        unit: 'g',
+      ),
+      MealNutritionModel(
+        name: 'planner.carbs'.tr,
+        amount: meal.carbsGrams,
+        unit: 'g',
+      ),
+      MealNutritionModel(
+        name: 'common.fat'.tr,
+        amount: meal.fatGrams,
+        unit: 'g',
+      ),
+    ],
+    steps: meal.instructions.indexed
+        .map(
+          (entry) => MealStepModel(number: entry.$1 + 1, instruction: entry.$2),
+        )
+        .toList(growable: false),
+    tags: meal.tags.indexed
+        .map((entry) => MealLabelModel(id: entry.$1, name: entry.$2))
+        .toList(growable: false),
   );
 }
 
@@ -177,7 +175,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ScrollAwareScaffold(
     backgroundColor: context.appBackground,
     extendBody: true,
     body: AppBackground(
@@ -217,12 +215,15 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   onRefresh: _refreshUnifiedPlanner,
                   color: AppColors.primaryGreen,
                   child: ListView(
+                    primary: true,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics(),
                     ),
                     padding: EdgeInsets.fromLTRB(
                       AppSpacing.pageHorizontalFor(context),
-                      14,
+                      18,
                       AppSpacing.pageHorizontalFor(context),
                       AppSpacing.pagePaddingWithNavigationFor(context).bottom,
                     ),
@@ -252,44 +253,16 @@ class _MealPlannerViewState extends State<MealPlannerView>
                                           .value
                                           .isNotEmpty)
                                     _error(context),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 10),
                                   _tabSelector(context),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 12),
                                   if (_activePlannerTab == 0) ...[
-                                    _dailyOverview(context),
-                                    const SizedBox(height: 16),
-                                    _sectionHeading(context),
+                                    _goalStatusRow(context),
                                     const SizedBox(height: 12),
-                                    LoadingContentTransition(
-                                      isLoading:
-                                          controller.isAutoFilling.value ||
-                                          controller.isLoadingDay.value,
-                                      loading:
-                                          controller.isAutoFilling.value
-                                              ? _autoFillLoadingView(context)
-                                              : const PageSkeleton.plannerSlots(),
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children:
-                                            MealPlanSlot.values
-                                                .map(
-                                                  (slot) => Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          bottom: 12,
-                                                        ),
-                                                    child: _slotCard(
-                                                      context,
-                                                      slot,
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
+                                    _dailyOverview(context),
+                                    const SizedBox(height: 12),
+                                    _mealTimelineCard(context),
+                                    const SizedBox(height: 12),
                                     _groceryListButton(context),
                                   ] else ...[
                                     _forecastAndWeekTab(context),
@@ -330,8 +303,8 @@ class _MealPlannerViewState extends State<MealPlannerView>
   Widget _groceryListButton(BuildContext context) => Obx(
     () => PlannerPrimaryButton(
       label: 'planner.generate_grocery_list'.tr,
-      icon: Icons.shopping_bag_outlined,
-      trailingIcon: Icons.arrow_forward_rounded,
+      icon: Icons.shopping_cart_outlined,
+      trailingIcon: Icons.chevron_right_rounded,
       onPressed:
           controller.isAutoFilling.value ? null : () => _generate(context),
     ),
@@ -418,117 +391,98 @@ class _MealPlannerViewState extends State<MealPlannerView>
   }
 
   Widget _dateCard(BuildContext context) {
-    final start = controller.weekStart;
-    final end = controller.weekDays.last;
+    final selectedDate = controller.selectedDate;
 
     return Container(
       key: const ValueKey('planner-week-card'),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.appBorder.withValues(alpha: 0.65)),
-        boxShadow: context.appTileShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Row(
-            children: [
-              _weekArrowButton(
-                icon: Icons.chevron_left_rounded,
-                onTap: () => controller.changeWeek(-1),
-                context: context,
-              ),
-              Expanded(
-                child: TextButton(
-                  key: const ValueKey('planner-week-picker-button'),
-                  onPressed: () => _pickWeekDate(context),
-                  style: TextButton.styleFrom(
-                    foregroundColor: context.appText,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size(0, 48),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'planner.selected_week'.tr,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.calendar_month_rounded,
-                              size: 14,
-                              color: AppColors.primaryGreen,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              '${DateFormat('d MMM').format(start)} – ${DateFormat('d MMM yyyy').format(end)}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: context.appText,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_drop_down_rounded,
-                              size: 18,
-                              color: context.appMutedText,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+          _weekArrowButton(
+            icon: Icons.chevron_left_rounded,
+            onTap:
+                () => controller.goToDate(
+                  selectedDate.subtract(const Duration(days: 1)),
                 ),
+            context: context,
+          ),
+          Expanded(
+            child: TextButton(
+              key: const ValueKey('planner-week-picker-button'),
+              onPressed: () => _pickWeekDate(context),
+              style: TextButton.styleFrom(
+                foregroundColor: context.appText,
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
               ),
-              _weekArrowButton(
-                icon: Icons.chevron_right_rounded,
-                onTap: () => controller.changeWeek(1),
-                context: context,
-              ),
-              const SizedBox(width: 6),
-              InkWell(
-                key: const ValueKey('planner-week-today-button'),
-                onTap: () => controller.goToToday(),
-                borderRadius: BorderRadius.circular(9),
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 36),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 7),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Text(
-                    'planner.today'.tr,
-                    style: const TextStyle(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_month_rounded,
+                      size: 17,
                       color: AppColors.primaryGreen,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat('EEE, d MMM yyyy').format(selectedDate),
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.arrow_drop_down_rounded,
+                      size: 18,
+                      color: context.appMutedText,
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
+          ),
+          _weekArrowButton(
+            icon: Icons.chevron_right_rounded,
+            onTap:
+                () => controller.goToDate(
+                  selectedDate.add(const Duration(days: 1)),
+                ),
+            context: context,
+          ),
+          const SizedBox(width: 6),
+          InkWell(
+            key: const ValueKey('planner-week-today-button'),
+            onTap: controller.goToToday,
+            borderRadius: BorderRadius.circular(99),
+            child: Container(
+              height: 36,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Text(
+                'planner.today'.tr,
+                style: const TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -745,14 +699,13 @@ class _MealPlannerViewState extends State<MealPlannerView>
     onTap: onTap,
     borderRadius: BorderRadius.circular(99),
     child: Container(
-      width: 40,
-      height: 40,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
-        color: context.appBackground,
+        color: Colors.transparent,
         shape: BoxShape.circle,
-        border: Border.all(color: context.appBorder.withValues(alpha: 0.55)),
       ),
-      child: Center(child: Icon(icon, size: 20, color: context.appText)),
+      child: Center(child: Icon(icon, size: 19, color: context.appMutedText)),
     ),
   );
 
@@ -831,7 +784,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
 
   Widget _tabSelector(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: context.appSurfaceLow,
         borderRadius: BorderRadius.circular(16),
@@ -885,14 +838,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
           decoration: BoxDecoration(
-            color:
-                isSelected
-                    ? (context.appIsDark
-                        ? const Color(0xFF1E293B)
-                        : Colors.white)
-                    : Colors.transparent,
+            color: isSelected ? AppColors.primaryGreen : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow:
                 isSelected
@@ -911,8 +859,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
               Icon(
                 icon,
                 size: 15,
-                color:
-                    isSelected ? AppColors.primaryGreen : context.appMutedText,
+                color: isSelected ? Colors.white : context.appMutedText,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -921,7 +868,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isSelected ? context.appText : context.appMutedText,
+                    color: isSelected ? Colors.white : context.appMutedText,
                     fontSize: 12.5,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   ),
@@ -1095,74 +1042,139 @@ class _MealPlannerViewState extends State<MealPlannerView>
   }
 
   Widget _forecastAndWeekTab(BuildContext context) {
+    final projection =
+        Get.isRegistered<WeightLossProjectionController>()
+            ? Get.find<WeightLossProjectionController>()
+            : null;
+    if (projection == null) return _forecastDashboard(context, null);
+    return Obx(() => _forecastDashboard(context, projection.forecast.value));
+  }
+
+  Widget _forecastDashboard(
+    BuildContext context,
+    WeightLossForecast? forecast,
+  ) {
+    final planned = controller.weeklyMealCount;
+    final total = controller.planDaysCount.value * controller.dailyMealGoal;
+    final progress =
+        total == 0 ? 0.0 : (planned / total).clamp(0.0, 1.0).toDouble();
+    final days = forecast?.timeframeDays ?? 7;
+    final goal = controller.healthGoal.value;
+    final goalLabel = switch (goal) {
+      MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
+      MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
+      MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
+    };
+    final goalIcon = switch (goal) {
+      MealPlannerHealthGoal.gainWeight => Icons.trending_up_rounded,
+      MealPlannerHealthGoal.maintainHealth => Icons.trending_flat_rounded,
+      MealPlannerHealthGoal.loseWeight => Icons.trending_down_rounded,
+    };
+    final weightChange =
+        forecast == null
+            ? 0.0
+            : forecast.projectedEndWeightKg - forecast.currentWeightKg;
+    final projectedChange =
+        weightChange.abs() < 0.05
+            ? '0.0'
+            : '${weightChange > 0 ? '+' : '−'}${weightChange.abs().toStringAsFixed(1)}';
+    final calorieGap = forecast?.dailyDeficitCalories.abs().round() ?? 0;
+    final pace = forecast?.paceDescription.trim();
+    final paceLabel =
+        pace?.isNotEmpty == true
+            ? pace!
+            : _plannerLabel('planner.steady_healthy', 'Steady & healthy');
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          key: const ValueKey('planner-weekly-progress-card'),
+          padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
           decoration: BoxDecoration(
-            color: context.appSurfaceLow,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: context.appBorder.withValues(alpha: 0.6)),
+            color: context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: context.appBorder.withValues(alpha: 0.8)),
           ),
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.calendar_month_rounded,
-                  color: AppColors.primaryGreen,
-                  size: 22,
+              SizedBox(
+                width: 80,
+                height: 80,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox.expand(
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 8,
+                        strokeCap: StrokeCap.round,
+                        color: AppColors.primaryGreen,
+                        backgroundColor: context.appSoftGreen,
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$planned/$total',
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          _plannerLabel('planner.meals_short', 'meals'),
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 10.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'planner.weekly_progress'.tr,
+                      _plannerLabel(
+                        'planner.weekly_progress',
+                        'Weekly Progress',
+                      ),
                       style: TextStyle(
                         color: context.appText,
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 5),
                     Text(
-                      'planner.meals_planned'.trParams({
-                        'count': '${controller.selectedMeals.length}',
-                        'total': '4',
-                      }),
+                      _plannerLabel(
+                        'planner.nutrition_journey_week',
+                        'Your nutrition journey this week',
+                      ),
                       style: TextStyle(
                         color: context.appMutedText,
-                        fontSize: 11.5,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: () => Get.toNamed(AppRoutes.mealPlannerWeek),
-                icon: const Icon(Icons.open_in_new_rounded, size: 14),
-                label: Text('planner.view_week'.tr),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 34),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  side: BorderSide(
-                    color: context.appBorder.withValues(alpha: 0.8),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
+              InkWell(
+                onTap: () => Get.toNamed(AppRoutes.mealPlannerWeek),
+                borderRadius: BorderRadius.circular(10),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.primaryGreen,
                   ),
                 ),
               ),
@@ -1170,8 +1182,322 @@ class _MealPlannerViewState extends State<MealPlannerView>
           ),
         ),
         const SizedBox(height: 16),
-        _analysisPageCards(context),
+        Container(
+          key: const ValueKey('planner-goal-analysis-card'),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.appBorder.withValues(alpha: 0.8)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.track_changes_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 23,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      _plannerLabel('planner.analysis_center', 'Goal Analysis'),
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Get.toNamed<void>(AppRoutes.profile),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size(0, 34),
+                    ),
+                    child: Text(
+                      _plannerLabel('planner.update_info', 'Update info'),
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _plannerLabel(
+                            'planner.weight_goal_analysis',
+                            'Weight Goal Analysis',
+                          ),
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _plannerLabel(
+                            'planner.based_on_profile',
+                            'Based on your profile and current plan',
+                          ),
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 11,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      forecast?.paceStatusKey.tr ??
+                          _plannerLabel('planner.ready', 'Ready'),
+                      style: const TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _goalInsightGrid(
+                context,
+                children: [
+                  _goalInsightTile(
+                    context,
+                    Icons.emoji_events_outlined,
+                    _plannerLabel('planner.goal', 'Goal'),
+                    goalLabel,
+                    const Color(0xFFE9FAEE),
+                    AppColors.primaryGreen,
+                  ),
+                  _goalInsightTile(
+                    context,
+                    goalIcon,
+                    _plannerLabel(
+                      'planner.projected_change',
+                      'Projected change',
+                    ),
+                    '$projectedChange kg\n$days days',
+                    const Color(0xFFFFEDEE),
+                    const Color(0xFFFF5364),
+                  ),
+                  _goalInsightTile(
+                    context,
+                    Icons.schedule_rounded,
+                    _plannerLabel('planner.target_pace', 'Target pace'),
+                    paceLabel,
+                    const Color(0xFFFFF5DC),
+                    const Color(0xFFF5A000),
+                  ),
+                  _goalInsightTile(
+                    context,
+                    Icons.restaurant_rounded,
+                    _plannerLabel('planner.meal_strategy', 'Meal strategy'),
+                    _plannerLabel(
+                      'planner.high_protein_balanced',
+                      'High-protein balanced meals',
+                    ),
+                    const Color(0xFFEAF6FF),
+                    const Color(0xFF2C8DDB),
+                  ),
+                  _goalInsightTile(
+                    context,
+                    Icons.directions_run_rounded,
+                    _plannerLabel('planner.activity_focus', 'Activity focus'),
+                    _plannerLabel(
+                      'planner.light_daily_movement',
+                      'Light daily movement',
+                    ),
+                    const Color(0xFFF2EAFE),
+                    const Color(0xFF8B4CE8),
+                  ),
+                  _goalInsightTile(
+                    context,
+                    Icons.bar_chart_rounded,
+                    _plannerLabel(
+                      'planner.calories_approach',
+                      'Calories approach',
+                    ),
+                    '${goal == MealPlannerHealthGoal.gainWeight
+                        ? 'planner.daily_surplus'.tr
+                        : goal == MealPlannerHealthGoal.maintainHealth
+                        ? 'planner.daily_balance'.tr
+                        : _plannerLabel('planner.moderate_deficit', 'Moderate deficit')}\n$calorieGap kcal/day',
+                    const Color(0xFFE9FAEE),
+                    AppColors.primaryGreen,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 46,
+                child: FilledButton.icon(
+                  key: const ValueKey('open-weight-loss-analysis'),
+                  onPressed:
+                      () => Get.toNamed<void>(
+                        AppRoutes.mealPlannerWeightLossAnalysis,
+                      ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.insights_rounded, size: 18),
+                  label: Text(
+                    'planner.view_weight_loss_analysis'.tr,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: context.appElevatedSurface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.eco_rounded,
+                        color: AppColors.primaryGreen,
+                        size: 17,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _plannerLabel(
+                          'planner.recommended_current_plan',
+                          'Recommended for your current goal. Built to support steady, healthy progress.',
+                        ),
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 10,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _goalInsightTile(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+    Color background,
+    Color accent,
+  ) => Container(
+    padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+    decoration: BoxDecoration(
+      color: context.appIsDark ? context.appSurfaceLow : background,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: accent, size: 22),
+        const Spacer(),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: context.appMutedText,
+            fontSize: 10,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: context.appText,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            height: 1.25,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _goalInsightGrid(
+    BuildContext context, {
+    required List<Widget> children,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = AppSpacing.isTabletFor(context) ? 3 : 2;
+        const spacing = 10.0;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final height = AppSpacing.isTabletFor(context) ? 108.0 : 116.0;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children:
+              children
+                  .map(
+                    (child) =>
+                        SizedBox(width: width, height: height, child: child),
+                  )
+                  .toList(),
+        );
+      },
     );
   }
 
@@ -1309,16 +1635,137 @@ class _MealPlannerViewState extends State<MealPlannerView>
     );
   }
 
-  Widget _dailyOverview(BuildContext context) {
-    final progress = controller.adherenceProgress.clamp(0.0, 1.0);
-    final hasMeals = controller.selectedMeals.isNotEmpty;
+  Widget _goalStatusRow(BuildContext context) {
+    final projectionController =
+        Get.isRegistered<WeightLossProjectionController>()
+            ? Get.find<WeightLossProjectionController>()
+            : null;
+    final forecast = projectionController?.forecast.value;
+    final loss = forecast?.projectedWeightLossKg.toStringAsFixed(1);
+    final weeks = ((forecast?.timeframeDays ?? 28) / 7).ceil();
+    final goal = controller.healthGoal.value;
+    final goalLabel = switch (goal) {
+      MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
+      MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
+      MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
+    };
+    final goalIcon = switch (goal) {
+      MealPlannerHealthGoal.gainWeight => Icons.trending_up_rounded,
+      MealPlannerHealthGoal.maintainHealth => Icons.balance_rounded,
+      MealPlannerHealthGoal.loseWeight => Icons.trending_down_rounded,
+    };
 
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 66),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+            decoration: BoxDecoration(
+              color: context.appElevatedSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: context.appBorder.withValues(alpha: 0.7),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(goalIcon, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _plannerLabel('planner.your_goal', 'Your Goal'),
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 9.5,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        goalLabel,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (loss != null &&
+                          goal == MealPlannerHealthGoal.loseWeight)
+                        Text(
+                          '${_plannerLabel('planner.lose', 'Lose')} $loss kg · '
+                          '$weeks ${_plannerLabel('planner.weeks_left', 'weeks left')}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 8.5,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 66),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${_plannerLabel('planner.on_track', "You're on track!")} ✨",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'planner.keep_going_on_track'.tr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.appMutedText, fontSize: 8.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _dailyOverview(BuildContext context) {
     return Container(
       key: const ValueKey('planner-daily-overview'),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 15),
       decoration: BoxDecoration(
         color: context.appElevatedSurface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
       ),
       child: Column(
@@ -1326,131 +1773,128 @@ class _MealPlannerViewState extends State<MealPlannerView>
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 21,
-                backgroundColor: context.appSoftGreen,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  shape: BoxShape.circle,
+                ),
                 child: const Icon(
-                  Icons.eco_rounded,
+                  Icons.track_changes_rounded,
                   color: AppColors.primaryGreen,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 9),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'planner.daily_overview'.tr,
+                      _plannerLabel(
+                        'planner.todays_nutrition',
+                        "Today's Nutrition",
+                      ),
                       style: TextStyle(
                         color: context.appText,
-                        fontSize: 17,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      hasMeals
-                          ? controller.dailyGoalComplete
-                              ? 'planner.all_meals_eaten'.tr
-                              : 'planner.mark_meals_eaten'.tr
-                          : _plannerLabel(
-                            'planner.start_planning_day',
-                            'Start planning your day',
-                          ),
+                      _plannerLabel(
+                        'planner.daily_target_subtitle',
+                        'Based on your daily target',
+                      ),
                       style: TextStyle(
                         color: context.appMutedText,
-                        fontSize: 12.5,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              _macroCard(
-                context,
-                icon: AppNutrientTheme.caloriesIcon,
-                iconColor: AppNutrientTheme.caloriesColor,
-                value: '${controller.selectedCalories}',
-                label: 'planner.kcal'.tr,
-              ),
-              _macroDivider(context),
-              _macroCard(
-                context,
-                icon: AppNutrientTheme.proteinIcon,
-                iconColor: AppNutrientTheme.proteinColor,
-                value: '${controller.selectedProtein.toStringAsFixed(0)}g',
-                label: 'planner.protein'.tr,
-              ),
-              _macroDivider(context),
-              _macroCard(
-                context,
-                icon: AppNutrientTheme.carbsIcon,
-                iconColor: AppNutrientTheme.carbsColor,
-                value: '${controller.selectedCarbs.toStringAsFixed(0)}g',
-                label: 'planner.carbs'.tr,
-              ),
-              _macroDivider(context),
-              _macroCard(
-                context,
-                icon: AppNutrientTheme.fatIcon,
-                iconColor: AppNutrientTheme.fatColor,
-                value: '${controller.selectedFat.toStringAsFixed(0)}g',
-                label: 'planner.fat'.tr,
+              Text(
+                '${controller.eatenMeals}/${controller.dailyMealGoal} '
+                '${_plannerLabel('planner.meals_short', 'meals')}',
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: SizedBox(
-              height: 12,
-              child: Stack(
-                children: [
-                  LinearProgressIndicator(
-                    key: const ValueKey('planner-daily-progress'),
-                    value: progress,
-                    minHeight: 12,
-                    backgroundColor: context.appSoftGreen,
-                    color: AppColors.primaryGreen,
-                  ),
-                  Positioned.fill(
-                    child: Row(
-                      children: List.generate(
-                        controller.dailyMealGoal,
-                        (index) => Expanded(
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child:
-                                index == controller.dailyMealGoal - 1
-                                    ? const SizedBox.shrink()
-                                    : Container(
-                                      width: 1.5,
-                                      color: context.appElevatedSurface,
-                                    ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '${controller.eatenMeals}/${controller.dailyMealGoal} ${'planner.meals_eaten_short'.tr}'
-            '${controller.skippedMeals == 0 ? '' : '  •  ${controller.skippedMeals} ${'planner.skipped'.tr}'}',
-            style: TextStyle(
-              color: context.appMutedText,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              height: 1.3,
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            key: const ValueKey('planner-nutrition-scroll'),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _macroCard(
+                  context,
+                  key: const ValueKey('planner-water-nutrient'),
+                  icon: AppNutrientTheme.waterIcon,
+                  iconColor: AppNutrientTheme.waterColor,
+                  value: '${controller.dailyWaterGlasses.value}',
+                  target: '${MealPlannerController.dailyWaterGoalGlasses}',
+                  label: 'common.water'.tr,
+                  unit: 'common.glasses'.tr,
+                  progress:
+                      controller.dailyWaterGlasses.value /
+                      MealPlannerController.dailyWaterGoalGlasses,
+                  onTap: controller.openWaterTracker,
+                ),
+                const SizedBox(width: 16),
+                _macroCard(
+                  context,
+                  icon: AppNutrientTheme.caloriesIcon,
+                  iconColor: AppNutrientTheme.caloriesColor,
+                  value: '${controller.selectedCalories}',
+                  target: '2000',
+                  label: 'planner.kcal'.tr,
+                  unit: 'planner.kcal'.tr,
+                  progress: controller.selectedCalories / 2000,
+                  progressKey: const ValueKey('planner-daily-progress'),
+                ),
+                const SizedBox(width: 16),
+                _macroCard(
+                  context,
+                  icon: AppNutrientTheme.proteinIcon,
+                  iconColor: AppNutrientTheme.proteinColor,
+                  value: controller.selectedProtein.toStringAsFixed(0),
+                  target: '120',
+                  label: 'planner.protein'.tr,
+                  unit: 'g',
+                  progress: controller.selectedProtein / 120,
+                ),
+                const SizedBox(width: 16),
+                _macroCard(
+                  context,
+                  icon: AppNutrientTheme.carbsIcon,
+                  iconColor: AppNutrientTheme.carbsColor,
+                  value: controller.selectedCarbs.toStringAsFixed(0),
+                  target: '250',
+                  label: 'planner.carbs'.tr,
+                  unit: 'g',
+                  progress: controller.selectedCarbs / 250,
+                ),
+                const SizedBox(width: 16),
+                _macroCard(
+                  context,
+                  icon: AppNutrientTheme.fatIcon,
+                  iconColor: AppNutrientTheme.fatColor,
+                  value: controller.selectedFat.toStringAsFixed(0),
+                  target: '78',
+                  label: 'planner.fat'.tr,
+                  unit: 'g',
+                  progress: controller.selectedFat / 78,
+                ),
+              ],
             ),
           ),
         ],
@@ -1458,48 +1902,348 @@ class _MealPlannerViewState extends State<MealPlannerView>
     );
   }
 
-  Widget _macroDivider(BuildContext context) => Container(
-    width: 1,
-    height: 28,
-    color: context.appBorder.withValues(alpha: 0.7),
-  );
-
   Widget _macroCard(
     BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String value,
+    required String target,
     required String label,
-  }) => Expanded(
-    child: Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: iconColor),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+    required String unit,
+    required double progress,
+    Key? key,
+    Key? progressKey,
+    VoidCallback? onTap,
+  }) => InkWell(
+    key: key,
+    borderRadius: BorderRadius.circular(10),
+    onTap: onTap,
+    child: SizedBox(
+      width: 96,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: onTap == null ? context.appMutedText : iconColor,
+                    fontSize: 11,
+                    fontWeight:
+                        onTap == null ? FontWeight.w600 : FontWeight.w800,
+                  ),
                 ),
+              ),
+              if (onTap != null)
+                Icon(Icons.add_circle_rounded, size: 13, color: iconColor),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Text(
+            '$value / $target',
+            style: TextStyle(
+              color: context.appText,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            unit,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              key: progressKey,
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 4,
+              color: onTap == null ? AppColors.primaryGreen : iconColor,
+              backgroundColor:
+                  onTap == null
+                      ? context.appSoftGreen
+                      : iconColor.withValues(alpha: 0.12),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  // Kept temporarily for backward-compatible widget snapshots; the live
+  // planner uses the compact, tappable Water nutrient above.
+  // ignore: unused_element
+  Widget _waterTrackerCard(BuildContext context) {
+    const waterBlue = Color(0xFF0284C7);
+    final count = controller.dailyWaterGlasses.value;
+    final total = MealPlannerController.dailyWaterGoalGlasses;
+    final progress = (count / total).clamp(0.0, 1.0);
+    final isGoalReached = count >= total;
+
+    return Container(
+      key: const ValueKey('planner-water-tracker-card'),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color:
+              isGoalReached
+                  ? waterBlue.withValues(alpha: 0.6)
+                  : context.appBorder.withValues(alpha: 0.7),
+        ),
+        boxShadow: context.appTileShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: waterBlue.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.water_drop_rounded,
+                  color: waterBlue,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'planner.water_tracker_title'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'planner.water_tap_to_log'.tr,
+                      style: TextStyle(
+                        color: waterBlue,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: waterBlue,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        '/$total',
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${count * 250} ml',
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Interactive 8 glasses
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(total, (index) {
+              final isFilled = index < count;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index == total - 1 ? 0 : 4),
+                  child: InkWell(
+                    key: ValueKey('planner-water-glass-$index'),
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: controller.openWaterTracker,
+                    child: Container(
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color:
+                            isFilled
+                                ? waterBlue.withValues(alpha: 0.16)
+                                : context.appSurfaceLow,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color:
+                              isFilled
+                                  ? waterBlue.withValues(alpha: 0.5)
+                                  : context.appBorder.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Icon(
+                        isFilled
+                            ? Icons.water_drop_rounded
+                            : Icons.water_drop_outlined,
+                        size: 18,
+                        color:
+                            isFilled
+                                ? waterBlue
+                                : context.appMutedText.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: context.appBorder.withValues(alpha: 0.4),
+                    valueColor: const AlwaysStoppedAnimation<Color>(waterBlue),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                key: const ValueKey('planner-water-minus-btn'),
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints.tightFor(
+                  width: 32,
+                  height: 32,
+                ),
+                padding: EdgeInsets.zero,
+                tooltip: 'planner.water_tap_to_log'.tr,
+                onPressed: controller.openWaterTracker,
+                icon: const Icon(Icons.edit_rounded, size: 17),
+                style: IconButton.styleFrom(
+                  backgroundColor: context.appSurfaceLow,
+                  foregroundColor: context.appText,
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                key: const ValueKey('planner-water-plus-btn'),
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints.tightFor(
+                  width: 32,
+                  height: 32,
+                ),
+                padding: EdgeInsets.zero,
+                tooltip: 'planner.water_tap_to_log'.tr,
+                onPressed: controller.openWaterTracker,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: waterBlue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          if (isGoalReached) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: waterBlue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: waterBlue,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'planner.water_goal_reached'.tr,
+                      style: const TextStyle(
+                        color: waterBlue,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            color: context.appMutedText,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            height: 1.3,
+        ],
+      ),
+    );
+  }
+
+  Widget _mealTimelineCard(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(12, 14, 12, 5),
+    decoration: BoxDecoration(
+      color: context.appElevatedSurface,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _sectionHeading(context),
+        const SizedBox(height: 12),
+        LoadingContentTransition(
+          isLoading:
+              controller.isAutoFilling.value || controller.isLoadingDay.value,
+          loading:
+              controller.isAutoFilling.value
+                  ? _autoFillLoadingView(context)
+                  : const PageSkeleton.plannerSlots(),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children:
+                MealPlanSlot.values
+                    .map(
+                      (slot) => Padding(
+                        padding: const EdgeInsets.only(bottom: 9),
+                        child: _timelineSlotRow(context, slot),
+                      ),
+                    )
+                    .toList(),
           ),
         ),
       ],
@@ -1507,84 +2251,499 @@ class _MealPlannerViewState extends State<MealPlannerView>
   );
 
   Widget _sectionHeading(BuildContext context) {
-    final plannedCount =
-        MealPlanSlot.values
-            .where((slot) => controller.mealFor(slot) != null)
-            .length;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 38,
-          height: 38,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: AppColors.primaryGreen.withValues(alpha: 0.11),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
-            Icons.restaurant_menu_rounded,
+            Icons.restaurant_rounded,
             size: 19,
             color: AppColors.primaryGreen,
           ),
         ),
-        const SizedBox(width: 11),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'planner.meals_for_date'.trParams({
-                  'date': DateFormat(
-                    'EEE, d MMM',
-                  ).format(controller.selectedDate),
-                }),
+                _plannerLabel('planner.meal_for_today', 'Meal for Today'),
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: context.appText,
-                  fontSize: 17,
+                  fontSize: 15.5,
                   fontWeight: FontWeight.w800,
                   height: 1.3,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
-                'planner.tap_slot_to_choose'.tr,
+                _plannerLabel(
+                  'planner.plan_meals_consistent',
+                  'Plan your meals and stay consistent',
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: context.appMutedText,
-                  fontSize: 11.5,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                'planner.planned_count_short'.trParams({
-                  'count': '$plannedCount',
-                }),
-                style: const TextStyle(
-                  color: AppColors.primaryGreen,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
+        PopupMenuButton<String>(
+          key: const ValueKey('planner-day-actions-menu'),
+          icon: Icon(
+            Icons.more_horiz_rounded,
+            color: context.appMutedText,
+            size: 20,
+          ),
+          tooltip: 'planner.day_options'.tr,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: context.appElevatedSurface,
+          onSelected: (value) async {
+            switch (value) {
+              case 'copy_yesterday':
+                await controller.copyAllFromYesterday();
+                break;
+              case 'reset_planned':
+                await controller.resetAllMealsToPlanned(currentDayOnly: true);
+                break;
+              case 'clear_meals':
+                await controller.clearAllMeals(currentDayOnly: true);
+                break;
+            }
+          },
+          itemBuilder:
+              (context) => [
+                if (controller.yesterdayMeals.isNotEmpty)
+                  PopupMenuItem(
+                    value: 'copy_yesterday',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.copy_all_rounded,
+                          size: 18,
+                          color: AppColors.primaryGreen,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'planner.copy_all_from_yesterday'.tr,
+                            style: TextStyle(
+                              color: context.appText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (controller.selectedMeals.any(
+                  (m) => m.status != MealPlanStatus.planned,
+                ))
+                  PopupMenuItem(
+                    value: 'reset_planned',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.restart_alt_rounded,
+                          size: 18,
+                          color: context.appMutedText,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'planner.reset_all_to_planned'.tr,
+                            style: TextStyle(
+                              color: context.appText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (controller.selectedMeals.isNotEmpty)
+                  PopupMenuItem(
+                    value: 'clear_meals',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 18,
+                          color: AppColors.favoriteRed,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'planner.clear_all_day_meals'.tr,
+                            style: const TextStyle(
+                              color: AppColors.favoriteRed,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
         ),
       ],
     );
   }
+
+  Widget _timelineSlotRow(BuildContext context, MealPlanSlot slot) {
+    final meal = controller.mealFor(slot);
+    final theme = PlannerSlotTheme.of(slot);
+    final index = MealPlanSlot.values.indexOf(slot);
+    final time = switch (slot) {
+      MealPlanSlot.breakfast => '7:00 AM',
+      MealPlanSlot.lunch => '12:00 PM',
+      MealPlanSlot.dinner => '6:00 PM',
+      MealPlanSlot.snack => '3:00 PM',
+    };
+
+    return IntrinsicHeight(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          if (index < MealPlanSlot.values.length - 1)
+            Positioned(
+              left: 4,
+              top: 34,
+              bottom: -12,
+              child: Container(
+                width: 1,
+                color: context.appBorder.withValues(alpha: 0.8),
+              ),
+            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: theme.accent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.appElevatedSurface),
+                ),
+              ),
+              const SizedBox(width: 5),
+              SizedBox(
+                width: 72,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: theme.soft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(theme.icon, color: theme.accent, size: 17),
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            slot.labelKey.tr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: context.appText,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            time,
+                            style: TextStyle(
+                              color: context.appMutedText,
+                              fontSize: 8.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: ValueKey('planner-slot-${slot.name}'),
+                    onTap:
+                        meal == null
+                            ? () => _openSlot(slot)
+                            : () => _showMealOptionsSheet(context, meal),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      key: ValueKey('planner-meal-card-${slot.name}'),
+                      constraints: const BoxConstraints(minHeight: 60),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.appElevatedSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: context.appBorder.withValues(alpha: 0.8),
+                        ),
+                      ),
+                      child:
+                          meal == null
+                              ? _emptyTimelineSlot(context, slot)
+                              : _filledTimelineSlot(context, meal),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyTimelineSlot(BuildContext context, MealPlanSlot slot) {
+    final fallbackSlot =
+        slot == MealPlanSlot.lunch ? MealPlanSlot.dinner : null;
+    final yesterdayMeal = controller.yesterdayMealFor(
+      slot,
+      fallbackSlot: fallbackSlot,
+    );
+    final isDinnerLeftover =
+        fallbackSlot != null &&
+        yesterdayMeal != null &&
+        yesterdayMeal.slot == MealPlanSlot.dinner;
+
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: context.appMutedText),
+          ),
+          child: Icon(Icons.add_rounded, color: context.appMutedText, size: 20),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_plannerLabel('planner.add_your', 'Add your')} '
+                '${slot.labelKey.tr.toLowerCase()}',
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              if (yesterdayMeal != null)
+                Text(
+                  isDinnerLeftover
+                      ? 'planner.leftover_from_dinner'.tr
+                      : 'planner.copy_yesterday'.tr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              else
+                Text(
+                  _plannerLabel(
+                    'planner.find_healthy_meals',
+                    'Find healthy and tasty meals',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.appMutedText, fontSize: 8.5),
+                ),
+            ],
+          ),
+        ),
+        if (yesterdayMeal != null) ...[
+          const SizedBox(width: 4),
+          InkWell(
+            key: ValueKey('planner-copy-yesterday-${slot.name}'),
+            borderRadius: BorderRadius.circular(8),
+            onTap:
+                () => controller.copyFromYesterday(
+                  slot,
+                  fromSlot: isDinnerLeftover ? MealPlanSlot.dinner : slot,
+                ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.history_rounded,
+                    size: 13,
+                    color: AppColors.primaryGreen,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    isDinnerLeftover
+                        ? 'planner.leftover_from_yesterday'.tr
+                        : 'planner.copy_yesterday'.tr,
+                    style: const TextStyle(
+                      color: AppColors.primaryGreen,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(width: 6),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: const BoxDecoration(
+            color: AppColors.primaryGreen,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 21),
+        ),
+      ],
+    );
+  }
+
+  Widget _filledTimelineSlot(BuildContext context, PlannedMeal meal) => Row(
+    children: [
+      PlannerMealImage(meal: meal, width: 44, height: 44, radius: 10),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              plannerMealName(meal),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              '${(meal.calories * meal.servings).round()} ${'planner.kcal'.tr} · '
+              '${(meal.proteinGrams * meal.servings).toStringAsFixed(0)}g '
+              '${'planner.protein'.tr}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: context.appMutedText, fontSize: 8.5),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 4),
+      Semantics(
+        button: true,
+        toggled: meal.status == MealPlanStatus.eaten,
+        label:
+            meal.status == MealPlanStatus.eaten
+                ? 'planner.reset_to_planned'.tr
+                : 'planner.mark_as_eaten'.tr,
+        child: IconButton(
+          key: ValueKey('planner-mark-eaten-${meal.slot.name}'),
+          tooltip:
+              meal.status == MealPlanStatus.eaten
+                  ? 'planner.reset_to_planned'.tr
+                  : 'planner.mark_as_eaten'.tr,
+          onPressed:
+              controller.isSaving.value
+                  ? null
+                  : () => controller.changeStatus(
+                    meal,
+                    meal.status == MealPlanStatus.eaten
+                        ? MealPlanStatus.planned
+                        : MealPlanStatus.eaten,
+                  ),
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 30, height: 30),
+          padding: EdgeInsets.zero,
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            switchInCurve: Curves.easeOutBack,
+            child: Icon(
+              meal.status == MealPlanStatus.eaten
+                  ? Icons.check_rounded
+                  : Icons.check_circle_outline_rounded,
+              key: ValueKey(meal.status == MealPlanStatus.eaten),
+              size: meal.status == MealPlanStatus.eaten ? 18 : 20,
+              color:
+                  meal.status == MealPlanStatus.eaten
+                      ? Colors.white
+                      : AppColors.primaryGreen,
+            ),
+          ),
+          style: IconButton.styleFrom(
+            backgroundColor:
+                meal.status == MealPlanStatus.eaten
+                    ? AppColors.primaryGreen
+                    : context.appSoftGreen,
+            disabledBackgroundColor: context.appSoftGreen,
+          ),
+        ),
+      ),
+      IconButton(
+        onPressed: () => _showMealOptionsSheet(context, meal),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints.tightFor(width: 22, height: 30),
+        padding: EdgeInsets.zero,
+        icon: Icon(
+          Icons.more_vert_rounded,
+          size: 17,
+          color: context.appMutedText,
+        ),
+      ),
+    ],
+  );
 
   Widget _slotCard(BuildContext context, MealPlanSlot slot) {
     final meal = controller.mealFor(slot);
@@ -1595,11 +2754,11 @@ class _MealPlannerViewState extends State<MealPlannerView>
       children: [
         Container(
           key: ValueKey('planner-meal-card-${slot.name}'),
-          constraints: const BoxConstraints(minHeight: 128),
+          constraints: const BoxConstraints(minHeight: 92),
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: context.appElevatedSurface,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
             boxShadow: [
               BoxShadow(
@@ -1620,15 +2779,15 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       : () => _showMealOptionsSheet(context, meal),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
+                  horizontal: 10,
+                  vertical: 9,
                 ),
                 child: Row(
                   children: [
                     if (meal == null)
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
                           color:
                               context.appIsDark
@@ -1641,9 +2800,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                     else
                       PlannerMealImage(
                         meal: meal,
-                        width: 68,
-                        height: 68,
-                        radius: 16,
+                        width: 58,
+                        height: 58,
+                        radius: 13,
                       ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2013,15 +3172,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   );
                 }, context: context),
                 sheetAction(
-                  Icons.calendar_month_outlined,
-                  'planner.move_meal'.tr,
-                  () {
-                    Get.back<void>();
-                    move(context, meal);
-                  },
-                  context: context,
-                ),
-                sheetAction(
                   Icons.delete_outline_rounded,
                   'planner.remove_meal'.tr,
                   () {
@@ -2031,24 +3181,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   danger: true,
                   context: context,
                 ),
-                if (controller.selectedMeals.length > 1)
-                  sheetAction(
-                    Icons.delete_sweep_outlined,
-                    'planner.clear_all_day_meals'.tr,
-                    () async {
-                      Get.back<void>();
-                      final confirmed = await _confirmClearDialog(
-                        context,
-                        title: 'planner.confirm_clear_day_title'.tr,
-                        desc: 'planner.confirm_clear_day_desc'.tr,
-                      );
-                      if (confirmed == true) {
-                        await controller.clearAllMeals(currentDayOnly: true);
-                      }
-                    },
-                    danger: true,
-                    context: context,
-                  ),
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
@@ -2165,114 +3297,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
       ),
     ),
     onTap: tap,
-  );
-
-  Future<void> move(
-    BuildContext context,
-    PlannedMeal meal,
-  ) => showModalBottomSheet<void>(
-    context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    backgroundColor: context.appSurfaceLow,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder:
-        (sheet) => Padding(
-          padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 48,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: context.appBorder,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              Text(
-                'planner.move_title'.trParams({'meal': plannerMealName(meal)}),
-                style: TextStyle(
-                  color: context.appText,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: context.appBorder),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children:
-                      controller.weekDays.indexed.map((entry) {
-                        final index = entry.$1;
-                        final day = entry.$2;
-                        final occupied = controller
-                            .mealsFor(day)
-                            .any((m) => m.slot == meal.slot);
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                              ),
-                              leading: const Icon(
-                                Icons.calendar_today_outlined,
-                                color: AppColors.primaryGreen,
-                                size: 21,
-                              ),
-                              title: Text(
-                                DateFormat('EEEE, d MMM').format(day),
-                                style: TextStyle(
-                                  color: context.appText,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              trailing:
-                                  occupied
-                                      ? const Icon(
-                                        Icons.swap_horiz_rounded,
-                                        color: Colors.orange,
-                                      )
-                                      : Icon(
-                                        Icons.chevron_right_rounded,
-                                        color: context.appMutedText,
-                                      ),
-                              onTap: () async {
-                                Navigator.pop(sheet);
-                                final ok = await controller.moveMeal(meal, day);
-                                if (!ok) {
-                                  await AppAlert.actionError(
-                                    title: 'planner.error'.tr,
-                                    message: 'planner.save_error'.tr,
-                                  );
-                                }
-                              },
-                            ),
-                            if (index < controller.weekDays.length - 1)
-                              Divider(
-                                height: 1,
-                                indent: 58,
-                                color: context.appBorder,
-                              ),
-                          ],
-                        );
-                      }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
   );
 
   Future<void> serving(BuildContext context, PlannedMeal meal) async {
@@ -2568,173 +3592,6 @@ class _MealPlannerViewState extends State<MealPlannerView>
         ) ??
         false;
     if (remove) await controller.removeMeal(meal.slot);
-  }
-
-  Future<bool?> _confirmClearDialog(
-    BuildContext context, {
-    required String title,
-    required String desc,
-  }) async {
-    return showGeneralDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'common.alert_dialog'.tr,
-      barrierColor: Colors.black.withValues(alpha: 0.48),
-      transitionDuration: const Duration(milliseconds: 260),
-      pageBuilder:
-          (dialog, animation, secondaryAnimation) => Material(
-            type: MaterialType.transparency,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: const SizedBox.expand(),
-                ),
-                SafeArea(
-                  minimum: const EdgeInsets.all(22),
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
-                          decoration: BoxDecoration(
-                            color: dialog.appElevatedSurface,
-                            borderRadius: BorderRadius.circular(26),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.22),
-                                blurRadius: 32,
-                                offset: const Offset(0, 16),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 58,
-                                height: 58,
-                                decoration: BoxDecoration(
-                                  color: dialog.appElevatedSurface,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.16,
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.delete_sweep_rounded,
-                                  color: AppColors.errorCoral,
-                                  size: 32,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                title,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: dialog.appText,
-                                  fontSize: 20,
-                                  height: 1.2,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                desc,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: dialog.appMutedText,
-                                  fontSize: 14,
-                                  height: 1.4,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 26),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 52,
-                                      child: OutlinedButton(
-                                        onPressed:
-                                            () => Navigator.pop(dialog, false),
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(
-                                            color: dialog.appBorder,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              21,
-                                            ),
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        child: Text('planner.cancel'.tr),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 52,
-                                      child: FilledButton(
-                                        onPressed:
-                                            () => Navigator.pop(dialog, true),
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: AppColors.errorCoral,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              21,
-                                            ),
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        child: Text('planner.remove'.tr),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutBack,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.9, end: 1.0).animate(curved),
-            child: child,
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _generate(BuildContext context) async {

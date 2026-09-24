@@ -18,6 +18,11 @@ class DailySummaryCard extends GetView<HomeController> {
       if (summary == null) return const SizedBox.shrink();
       final nutrients = [
         (
+          summary.water,
+          AppNutrientTheme.waterIcon,
+          AppNutrientTheme.waterColor,
+        ),
+        (
           summary.calories,
           AppNutrientTheme.caloriesIcon,
           AppNutrientTheme.caloriesColor,
@@ -26,11 +31,6 @@ class DailySummaryCard extends GetView<HomeController> {
           summary.protein,
           AppNutrientTheme.proteinIcon,
           AppNutrientTheme.proteinColor,
-        ),
-        (
-          summary.water,
-          AppNutrientTheme.waterIcon,
-          AppNutrientTheme.waterColor,
         ),
       ];
 
@@ -203,8 +203,10 @@ class DailySummaryCard extends GetView<HomeController> {
                             data: nutrients[index].$1,
                             icon: nutrients[index].$2,
                             iconColor: nutrients[index].$3,
+                            showActionIndicator:
+                                nutrients[index].$1.title == 'common.water',
                             onTap:
-                                index == 2
+                                nutrients[index].$1.title == 'common.water'
                                     ? controller.openWaterDetails
                                     : controller.openWellnessDetails,
                           ),

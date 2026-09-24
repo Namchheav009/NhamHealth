@@ -13,6 +13,7 @@ const Map<String, String> notificationsKm = {
   'notifications.reply': 'ឆ្លើយតប',
   'notifications.share': 'ចែករំលែក',
   'notifications.new_follower': 'អ្នកតាមដានថ្មី',
+  'notifications.food_scan': 'ស្កេនអាហារ',
   'notifications.for_you': 'សម្រាប់អ្នក',
   'notifications.wellness': 'សុខភាពប្រចាំថ្ងៃ',
   'notifications.new': 'ថ្មី',

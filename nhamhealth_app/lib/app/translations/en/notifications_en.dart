@@ -13,6 +13,7 @@ const Map<String, String> notificationsEn = {
   'notifications.reply': 'Reply',
   'notifications.share': 'Share',
   'notifications.new_follower': 'New follower',
+  'notifications.food_scan': 'Food scan',
   'notifications.for_you': 'For you',
   'notifications.wellness': 'Wellness',
   'notifications.new': 'New',

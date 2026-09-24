@@ -36,57 +36,136 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
   Widget build(BuildContext context) {
     final pagePadding = AppSpacing.pageHorizontalFor(context);
     return Scaffold(
-      key: const ValueKey('weight-loss-analysis-page'),
+      key: const ValueKey('weight-goal-analysis-page'),
       backgroundColor: context.appBackground,
-      body: AppBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(pagePadding, 8, pagePadding, 0),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AppSpacing.maxContentWidth,
-                  ),
-                  child: AppBackHeader(
-                    title: 'planner.view_weight_loss_analysis'.tr,
-                    onBack: () => Get.back(),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  color: _accent,
-                  onRefresh:
-                      () => _controller.showAnalysisGoal(forceRefresh: true),
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      pagePadding,
-                      12,
-                      pagePadding,
-                      32,
-                    ),
-                    children: [
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: AppSpacing.maxContentWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _analysisHero(context),
-                              const SizedBox(height: 22),
-                              const WeightLossProjectionView(embedded: true),
-                            ],
-                          ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: AppBackground(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        pagePadding,
+                        8,
+                        pagePadding,
+                        0,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: AppSpacing.maxContentWidth,
+                        ),
+                        child: AppBackHeader(
+                          title: 'planner.weight_goal_analysis'.tr,
+                          onBack: () => Get.back(),
                         ),
                       ),
-                    ],
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        color: _accent,
+                        onRefresh:
+                            () => _controller.showAnalysisGoal(
+                              forceRefresh: true,
+                            ),
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(
+                            pagePadding,
+                            12,
+                            pagePadding,
+                            104,
+                          ),
+                          children: [
+                            Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: AppSpacing.maxContentWidth,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _analysisHero(context),
+                                    const SizedBox(height: 14),
+                                    const WeightLossProjectionView(
+                                      embedded: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _fixedBottomAction(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fixedBottomAction(BuildContext context) {
+    final pagePadding = AppSpacing.pageHorizontalFor(context);
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(pagePadding, 10, pagePadding, 12),
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          border: Border(
+            top: BorderSide(color: context.appBorder.withValues(alpha: 0.8)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 18,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.maxContentWidth,
+            ),
+            child: Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  key: const ValueKey('continue-with-weight-goal'),
+                  onPressed:
+                      _controller.forecast.value == null
+                          ? null
+                          : () => Get.back(),
+                  icon: const Icon(Icons.restaurant_menu_rounded, size: 19),
+                  label: Text(
+                    'planner.continue_to_meal_planner'.tr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -95,41 +174,68 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
 
   Widget _analysisHero(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      key: const ValueKey('weight-goal-analysis-hero'),
+      padding: const EdgeInsets.fromLTRB(20, 16, 18, 18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.darkGreen, _accent],
+        gradient: LinearGradient(
+          colors:
+              context.appIsDark
+                  ? [context.appElevatedSurface, context.appSoftGreen]
+                  : const [Color(0xFFE9FFF2), Color(0xFFF5FFF2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.16),
+        ),
         boxShadow: [
           BoxShadow(
-            color: _accent.withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: _accent.withValues(alpha: context.appIsDark ? 0.08 : 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(17),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
-            ),
-            child: const Icon(
-              Icons.trending_down_rounded,
-              color: Colors.white,
-              size: 28,
+          Positioned(
+            right: -4,
+            bottom: -18,
+            child: Container(
+              width: 150,
+              height: 68,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: 0.07),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.elliptical(110, 60),
+                  topRight: Radius.elliptical(85, 50),
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 15),
-          Expanded(
+          Positioned(
+            right: 4,
+            bottom: -4,
+            child: SizedBox(
+              width: 132,
+              height: 94,
+              child: Image.asset(
+                'assets/images/planner/analysis.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                errorBuilder:
+                    (_, _, _) => const Icon(
+                      Icons.eco_rounded,
+                      size: 55,
+                      color: AppColors.primaryGreen,
+                    ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 104),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -139,7 +245,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Row(
@@ -147,7 +253,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                     children: [
                       const Icon(
                         Icons.auto_awesome_rounded,
-                        color: Colors.white,
+                        color: AppColors.primaryGreen,
                         size: 13,
                       ),
                       const SizedBox(width: 5),
@@ -160,7 +266,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                                 ? 'planner.analysis_ready'.tr
                                 : 'planner.analysis_preview'.tr,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.darkGreen,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -170,7 +276,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                         Text(
                           'planner.analysis_preview'.tr,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.darkGreen,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
                           ),
@@ -180,23 +286,32 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'planner.view_weight_loss_analysis'.tr,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
+                  'planner.weight_goal_analysis'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 21,
                     height: 1.15,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 7),
-                Text(
-                  'planner.analysis_loss_page_desc'.tr,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.90),
-                    fontSize: 12.5,
-                    height: 1.4,
-                  ),
-                ),
+                Obx(() {
+                  final forecast = _controller.forecast.value;
+                  final descriptionKey =
+                      forecast?.shouldGainWeight == true
+                          ? 'planner.analysis_gain_page_desc'
+                          : forecast?.shouldMaintainWeight == true
+                          ? 'planner.analysis_maintain_weight_page_desc'
+                          : 'planner.analysis_loss_page_desc';
+                  return Text(
+                    descriptionKey.tr,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                  );
+                }),
               ],
             ),
           ),

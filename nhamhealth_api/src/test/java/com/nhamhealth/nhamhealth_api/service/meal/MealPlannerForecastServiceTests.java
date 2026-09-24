@@ -121,6 +121,17 @@ class MealPlannerForecastServiceTests {
 
                 assertNotNull(response);
                 assertEquals(new BigDecimal("80.0"), response.currentWeightKg());
+                assertEquals(30, response.age());
+                assertEquals(new BigDecimal("175.0"), response.heightCm());
+                assertEquals(new BigDecimal("26.1"), response.bmi());
+                assertEquals(new BigDecimal("25.3"), response.projectedBmi());
+                assertEquals(new BigDecimal("56.7"), response.healthyWeightMinKg());
+                assertEquals(new BigDecimal("76.3"), response.healthyWeightMaxKg());
+                assertEquals("OVERWEIGHT", response.bmiStatus());
+                assertEquals("LOSE", response.recommendedWeightDirection());
+                assertEquals("MODERATE", response.activityLevel());
+                assertTrue(response.hasBiometricProfile());
+                assertFalse(response.energyEstimateUsesDefaults());
                 assertEquals(28, response.timeframeDays());
                 assertEquals(new BigDecimal("1749"), response.bmrCalories());
                 assertEquals(new BigDecimal("2711"), response.tdeeCalories());
@@ -142,9 +153,82 @@ class MealPlannerForecastServiceTests {
         }
 
         @Test
+        void rejectsWeightLossForecastForUsersUnder18() {
+                Integer userId = 106;
+                WellnessProfile profile = new WellnessProfile();
+                profile.setAgeCached((short) 17);
+                profile.setHeightCm(new BigDecimal("170"));
+                profile.setWeightKg(new BigDecimal("65"));
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+
+                ResponseStatusException error = assertThrows(
+                                ResponseStatusException.class,
+                                () -> forecastService.calculateForecast(
+                                                userId, 28, LocalDate.of(2026, 9, 21), "en", "LOSE_WEIGHT"));
+
+                assertEquals(400, error.getStatusCode().value());
+        }
+
+        @Test
+        void recommendsWeightGainBelowGeneralAdultBmiRange() {
+                Integer userId = 109;
+                WellnessProfile profile = new WellnessProfile();
+                profile.setAgeCached((short) 25);
+                profile.setHeightCm(new BigDecimal("175"));
+                profile.setWeightKg(new BigDecimal("52"));
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+
+                WeightLossForecastResponse response = forecastService.calculateForecast(
+                                userId, 28, LocalDate.of(2026, 9, 21), "en", "LOSE_WEIGHT");
+
+                assertEquals("GAIN", response.recommendedWeightDirection());
+                assertEquals(new BigDecimal("0.00"), response.projectedWeightLossKg());
+                assertEquals(response.currentWeightKg(), response.projectedEndWeightKg());
+        }
+
+        @Test
+        void rejectsWeightLossAutoFillForUsersUnder18() {
+                Integer userId = 107;
+                WellnessProfile profile = new WellnessProfile();
+                profile.setAgeCached((short) 16);
+                profile.setHeightCm(new BigDecimal("165"));
+                profile.setWeightKg(new BigDecimal("55"));
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+
+                AiAutoFillPlanRequest request = new AiAutoFillPlanRequest(
+                                LocalDate.of(2026, 9, 21), 7, "LOSE_WEIGHT", 28, true, true);
+
+                ResponseStatusException error = assertThrows(
+                                ResponseStatusException.class,
+                                () -> forecastService.generateAiAutoFillPlan(userId, request, "en"));
+
+                assertEquals(400, error.getStatusCode().value());
+        }
+
+        @Test
+        void rejectsWeightLossForecastWhenRequiredProfileDataIsMissing() {
+                Integer userId = 108;
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.empty());
+                when(userProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.empty());
+
+                ResponseStatusException error = assertThrows(
+                                ResponseStatusException.class,
+                                () -> forecastService.calculateForecast(
+                                                userId, 28, LocalDate.of(2026, 9, 21), "en", "LOSE_WEIGHT"));
+
+                assertEquals(400, error.getStatusCode().value());
+                assertTrue(error.getReason().contains("date of birth, height and weight"));
+        }
+
+        @Test
         void maintenanceGoalChangesForecastAndRecommendationRanking() {
                 Integer userId = 105;
                 LocalDate start = LocalDate.of(2026, 9, 21);
+                WellnessProfile profile = new WellnessProfile();
+                profile.setWeightKg(new BigDecimal("75"));
+                profile.setHeightCm(new BigDecimal("170"));
+                profile.setAgeCached((short) 28);
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
                 when(mealPlanRepository.findAllByUserUserIdAndPlanDateBetweenOrderByPlanDateAscMealTypeAsc(
                                 eq(userId), eq(start), any())).thenReturn(List.of());
 
@@ -185,6 +269,7 @@ class MealPlannerForecastServiceTests {
                                 userId, 28, start, "en", "MAINTAIN_HEALTH");
 
                 assertEquals("Lean Protein Plate", loss.recommendedFoods().getFirst().name());
+                assertEquals("LOSE", loss.recommendedWeightDirection());
                 assertEquals("Balanced Grain Bowl", maintain.recommendedFoods().getFirst().name());
                 assertEquals("Water", loss.recommendedBeverages().getFirst().name());
                 assertEquals("Unsweetened Milk Tea", maintain.recommendedBeverages().getFirst().name());
@@ -194,7 +279,10 @@ class MealPlannerForecastServiceTests {
                 assertEquals(new BigDecimal("0"), maintain.dailyDeficitCalories());
                 assertEquals(new BigDecimal("0.00"), maintain.projectedWeightLossKg());
                 assertEquals("BALANCED", maintain.paceStatus());
+                assertEquals("LOSE", maintain.recommendedWeightDirection());
                 assertFalse(maintain.hasPlannedMeals());
+                assertEquals("MODERATE_ESTIMATE", maintain.activityLevel());
+                assertTrue(maintain.energyEstimateUsesDefaults());
                 assertTrue(loss.aiAnalysisSummary().contains("preview"));
                 assertTrue(maintain.aiAnalysisSummary().contains("preview"));
                 assertTrue(maintain.recommendedFoods().getFirst().rationale().contains("Maintenance match"));
@@ -205,6 +293,11 @@ class MealPlannerForecastServiceTests {
         void skippedMealsDoNotUnlockWeightEstimate() {
                 Integer userId = 106;
                 LocalDate start = LocalDate.of(2026, 9, 21);
+                WellnessProfile profile = new WellnessProfile();
+                profile.setWeightKg(new BigDecimal("70"));
+                profile.setHeightCm(new BigDecimal("170"));
+                profile.setAgeCached((short) 28);
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
                 MealPlan skipped = new MealPlan();
                 skipped.setPlanDate(start);
                 skipped.setStatus("SKIPPED");
@@ -255,7 +348,8 @@ class MealPlannerForecastServiceTests {
                 assertNotNull(response);
                 assertTrue(response.calorieWarning());
                 assertTrue(response.calorieWarningMessage().contains("1200"));
-                assertTrue(response.aiAnalysisSummary().contains("គ.ក្រ"));
+                assertEquals("MAINTAIN", response.recommendedWeightDirection());
+                assertTrue(response.aiAnalysisSummary().contains("រក្សា"));
         }
 
         @Test
@@ -264,7 +358,7 @@ class MealPlannerForecastServiceTests {
                 LocalDate today = LocalDate.of(2026, 9, 21);
 
                 WellnessProfile wp = new WellnessProfile();
-                wp.setWeightKg(new BigDecimal("70.0"));
+                wp.setWeightKg(new BigDecimal("80.0"));
                 wp.setHeightCm(new BigDecimal("170.0"));
                 wp.setAgeCached((short) 35);
                 wp.setActivityLevel("SEDENTARY");
@@ -332,7 +426,7 @@ class MealPlannerForecastServiceTests {
                                 0.47,
                                 "ibm/granite-3-3-8b-instruct");
 
-                when(ibmRecommendationService.synthesizeWeeklyPlan(any(), any(), any(), any(Double.class),
+                when(ibmRecommendationService.synthesizeClinicalPlan(any(), any(), any(), any(Double.class),
                                 any(Double.class), eq("LOSE_WEIGHT"), eq("en")))
                                 .thenReturn(synthesis);
 
@@ -397,7 +491,7 @@ class MealPlannerForecastServiceTests {
                                 plannerMeal(13, "Fresh snack")));
 
                 ArgumentCaptor<Map<LocalDate, List<String>>> slotsCaptor = ArgumentCaptor.forClass(Map.class);
-                when(ibmRecommendationService.synthesizeWeeklyPlan(
+                when(ibmRecommendationService.synthesizeClinicalPlan(
                                 any(), slotsCaptor.capture(), any(), any(Double.class), any(Double.class),
                                 any(), any(), any()))
                                 .thenReturn(new AutoFillPlanSynthesis(

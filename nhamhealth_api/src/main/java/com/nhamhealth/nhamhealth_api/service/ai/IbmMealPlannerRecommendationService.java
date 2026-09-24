@@ -142,13 +142,25 @@ public class IbmMealPlannerRecommendationService {
         if (candidates == null || candidates.size() < 2)
             return candidates == null ? List.of() : candidates;
         String goal = normalizeGoal(requestedGoal);
+        AiUserHealthProfile profile = null;
+        if (userId != null) {
+            try {
+                profile = healthProfileService.load(userId);
+                if (profile.bmi() != null) {
+                    double bmi = profile.bmi().doubleValue();
+                    goal = bmi < 18.5 ? "GAIN_WEIGHT" : (bmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT");
+                }
+            } catch (Exception error) {
+                log.debug("BMI profile unavailable for meal ranking: {}", error.getMessage());
+            }
+        }
         List<WeeklyMealRecommendation> fallback = deterministicRank(candidates, goal);
         enrichGoalNotes(fallback, goal);
         if (!isConfigured() || userId == null)
             return fallback;
 
         try {
-            AiUserHealthProfile profile = healthProfileService.load(userId);
+            if (profile == null) profile = healthProfileService.load(userId);
             String input = PROMPT + "\nInput JSON:\n" + mapper.writeValueAsString(Map.of(
                     "goal", goal,
                     "profile", profileContext(profile),
@@ -194,7 +206,9 @@ public class IbmMealPlannerRecommendationService {
     }
 
     public static String normalizeGoal(String value) {
-        return "LOSE_WEIGHT".equalsIgnoreCase(value) ? "LOSE_WEIGHT" : "MAINTAIN_HEALTH";
+        if ("LOSE_WEIGHT".equalsIgnoreCase(value)) return "LOSE_WEIGHT";
+        if ("GAIN_WEIGHT".equalsIgnoreCase(value)) return "GAIN_WEIGHT";
+        return "MAINTAIN_HEALTH";
     }
 
     /**
@@ -205,11 +219,19 @@ public class IbmMealPlannerRecommendationService {
      */
     public static List<WeeklyMealRecommendation> deterministicRank(
             List<WeeklyMealRecommendation> candidates, String goal) {
-        if ("LOSE_WEIGHT".equals(normalizeGoal(goal))) {
+        String normalizedGoal = normalizeGoal(goal);
+        if ("LOSE_WEIGHT".equals(normalizedGoal)) {
             return candidates.stream()
                     .sorted(Comparator
                             .comparingDouble(IbmMealPlannerRecommendationService::weightLossScore).reversed()
                             .thenComparing(row -> calories(row.getPlannerMeal()))
+                            .thenComparing(WeeklyMealRecommendation::getSortOrder,
+                                    Comparator.nullsLast(Integer::compareTo)))
+                    .toList();
+        } else if ("GAIN_WEIGHT".equals(normalizedGoal)) {
+            return candidates.stream()
+                    .sorted(Comparator
+                            .comparingDouble(IbmMealPlannerRecommendationService::weightGainScore).reversed()
                             .thenComparing(WeeklyMealRecommendation::getSortOrder,
                                     Comparator.nullsLast(Integer::compareTo)))
                     .toList();
@@ -223,6 +245,18 @@ public class IbmMealPlannerRecommendationService {
                                     Comparator.reverseOrder()))
                     .toList();
         }
+    }
+
+    private static double weightGainScore(WeeklyMealRecommendation row) {
+        PlannerMeal meal = row.getPlannerMeal();
+        if (meal == null) return 0.0;
+        double calories = calories(meal).doubleValue();
+        double protein = protein(meal).doubleValue();
+        double fat = value(meal.getFatGrams()).doubleValue();
+        double usefulEnergy = Math.max(0.0, 100.0 - Math.abs(calories - 600.0) * 0.16);
+        double proteinAdequacy = Math.min(protein, 40.0) * 2.2;
+        double healthyFatAdequacy = Math.min(fat, 25.0) * 0.8;
+        return usefulEnergy + proteinAdequacy + healthyFatAdequacy;
     }
 
     /**
@@ -282,6 +316,7 @@ public class IbmMealPlannerRecommendationService {
      */
     private static void enrichGoalNotes(List<WeeklyMealRecommendation> list, String goal) {
         boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
+        boolean isWeightGain = "GAIN_WEIGHT".equals(goal);
         for (WeeklyMealRecommendation row : list) {
             PlannerMeal meal = row.getPlannerMeal();
             String tags = meal != null && meal.getTagsText() != null ? meal.getTagsText() : "";
@@ -311,6 +346,11 @@ public class IbmMealPlannerRecommendationService {
                     } else {
                         note = "Weight-loss match" + source + " • Lean nutrition with portion awareness";
                     }
+                } else if (isWeightGain) {
+                    double p = protein(meal).doubleValue();
+                    double c = calories(meal).doubleValue();
+                    note = "Weight-gain match" + source + " • Nutrient-dense " + (int) c
+                            + " kcal with " + (int) p + "g protein for steady progress";
                 } else {
                     note = "Maintenance match" + source + " • Balanced macros for steady energy and wellness";
                 }
@@ -485,6 +525,7 @@ public class IbmMealPlannerRecommendationService {
         final boolean isKhmer = "km".equalsIgnoreCase(lang);
         final String normalizedGoal = normalizeGoal(goal);
         final boolean isWeightLoss = "LOSE_WEIGHT".equals(normalizedGoal);
+        final boolean isWeightGain = "GAIN_WEIGHT".equals(normalizedGoal);
 
         // Group candidates by slot
         Map<String, List<PlannerMeal>> bySlot = new LinkedHashMap<>();
@@ -579,7 +620,7 @@ public class IbmMealPlannerRecommendationService {
 
                 // Score candidate based on goal
                 PlannerMeal best = eligible.stream()
-                        .max(Comparator.comparingDouble(m -> scoreMealForSlot(m, slotTarget, isWeightLoss)))
+                        .max(Comparator.comparingDouble(m -> scoreMealForSlot(m, slotTarget, normalizedGoal)))
                         .orElse(eligible.get(0));
 
                 lastSelectedPerSlot.put(normalizedSlot, best);
@@ -598,6 +639,14 @@ public class IbmMealPlannerRecommendationService {
                                     normalizedSlot, mealCals, protein(best).doubleValue())
                             : String.format(Locale.ROOT,
                                     "Weight-loss choice for %s (~%.0f kcal, %.0fg protein)",
+                                    normalizedSlot, mealCals, protein(best).doubleValue());
+                } else if (isWeightGain) {
+                    mealRationale = isKhmer
+                            ? String.format(Locale.ROOT,
+                                    "ជម្រើសឡើងទម្ងន់សម្រាប់ %s (~%.0f kcal, ប្រូតេអ៊ីន %.0fg) ដែលផ្តល់ថាមពល និងសារធាតុចិញ្ចឹមសមរម្យ",
+                                    normalizedSlot, mealCals, protein(best).doubleValue())
+                            : String.format(Locale.ROOT,
+                                    "Nutrient-dense weight-gain choice for %s (~%.0f kcal, %.0fg protein)",
                                     normalizedSlot, mealCals, protein(best).doubleValue());
                 } else {
                     mealRationale = isKhmer
@@ -647,6 +696,15 @@ public class IbmMealPlannerRecommendationService {
                     : String.format(Locale.ROOT,
                             "This plan averages ~%.0f kcal/day (~%.0f kcal daily deficit), targeting ~%.2f kg/week while prioritizing protein and variety.",
                             avgDailyCalories, dailyDeficit, weeklyPaceKg);
+        } else if (isWeightGain) {
+            double dailySurplus = Math.max(0.0, avgDailyCalories - tdee);
+            summaryRationale = isKhmer
+                    ? String.format(Locale.ROOT,
+                            "ផែនការនេះមានកាឡូរីជាមធ្យម ~%.0f kcal/ថ្ងៃ (លើសប្រហែល %.0f kcal/ថ្ងៃ) ដោយផ្តោតលើប្រូតេអ៊ីន និងអាហារសម្បូរសារធាតុចិញ្ចឹម។",
+                            avgDailyCalories, dailySurplus)
+                    : String.format(Locale.ROOT,
+                            "This plan averages ~%.0f kcal/day (~%.0f kcal daily surplus), prioritizing protein and nutrient-dense foods for steady weight gain.",
+                            avgDailyCalories, dailySurplus);
         } else {
             summaryRationale = isKhmer
                     ? String.format(Locale.ROOT,
@@ -779,15 +837,20 @@ public class IbmMealPlannerRecommendationService {
         return filtered.isEmpty() ? candidates : filtered;
     }
 
-    private double scoreMealForSlot(PlannerMeal meal, double targetCalories, boolean isWeightLoss) {
+    private double scoreMealForSlot(PlannerMeal meal, double targetCalories, String goal) {
         double cal = calories(meal).doubleValue();
         double pro = protein(meal).doubleValue();
         double calDiff = Math.abs(cal - targetCalories);
         double calCloseness = Math.max(0.0, 100.0 - (calDiff * 0.2));
 
-        if (isWeightLoss) {
+        if ("LOSE_WEIGHT".equals(goal)) {
             double proDensity = cal > 0 ? (pro / cal) * 100.0 : 0.0;
             return (proDensity * 4.0) + calCloseness;
+        } else if ("GAIN_WEIGHT".equals(goal)) {
+            double fat = value(meal.getFatGrams()).doubleValue();
+            double proteinAdequacy = Math.min(pro, 40.0) * 1.5;
+            double healthyFatAdequacy = Math.min(fat, 25.0) * 0.6;
+            return calCloseness + proteinAdequacy + healthyFatAdequacy;
         } else {
             double carbs = value(meal.getCarbsGrams()).doubleValue();
             double fat = value(meal.getFatGrams()).doubleValue();

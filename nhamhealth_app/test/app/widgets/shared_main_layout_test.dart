@@ -396,8 +396,48 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
+    await pumpSkeleton(const PageSkeleton.water());
+    expect(
+      find.byKey(const ValueKey<String>('water-page-skeleton')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
+  });
+
+  testWidgets('home and water skeletons fit a narrow phone', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 700);
+    addTearDown(tester.view.reset);
+
+    Future<void> pumpSkeleton(Widget skeleton) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: skeleton,
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.takeException(), isNull);
+    }
+
+    await pumpSkeleton(const PageSkeleton.home());
+    expect(
+      find.byKey(const ValueKey<String>('home-skeleton-mobile-layout')),
+      findsOneWidget,
+    );
+
+    await pumpSkeleton(const PageSkeleton.water());
+    expect(
+      find.byKey(const ValueKey<String>('water-page-skeleton')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Community uses the shared bar and loading shell', (

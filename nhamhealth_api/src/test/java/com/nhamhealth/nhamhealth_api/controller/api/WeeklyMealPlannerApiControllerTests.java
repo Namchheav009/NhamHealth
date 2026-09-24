@@ -10,6 +10,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.nhamhealth.nhamhealth_api.dto.request.AiAutoFillPlanRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealRecommendationRequest;
@@ -170,7 +172,10 @@ class WeeklyMealPlannerApiControllerTests {
                 MealPlannerForecastService forecastService = mock(MealPlannerForecastService.class);
 
                 WeightLossForecastResponse mockForecast = new WeightLossForecastResponse(
-                                new BigDecimal("75.0"), new BigDecimal("72.0"), new BigDecimal("2.50"),
+                                new BigDecimal("75.0"), 28, new BigDecimal("175.0"), new BigDecimal("24.5"),
+                                new BigDecimal("23.7"), new BigDecimal("56.7"), new BigDecimal("76.3"),
+                                "HEALTHY", "MAINTAIN", "MODERATE", true, false,
+                                new BigDecimal("72.0"), new BigDecimal("2.50"),
                                 new BigDecimal("72.5"), new BigDecimal("1650"), new BigDecimal("2400"),
                                 new BigDecimal("1800"), new BigDecimal("600"), 28, new BigDecimal("0.55"),
                                 "OPTIMAL", "Healthy pace", false, "", List.of(), List.of(), "Good progress", true);
@@ -185,6 +190,19 @@ class WeeklyMealPlannerApiControllerTests {
                 assertEquals(new BigDecimal("75.0"), response.getBody().currentWeightKg());
                 assertEquals(new BigDecimal("2.50"), response.getBody().projectedWeightLossKg());
                 assertEquals("OPTIMAL", response.getBody().paceStatus());
+        }
+
+        @Test
+        void forecastErrorsExposeTheActionableServiceReason() {
+                var handler = new WeeklyMealPlannerApiExceptionHandler();
+                var response = handler.handle(new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Complete your date of birth, height and weight before using a weight-loss plan."));
+
+                assertEquals(400, response.getStatusCode().value());
+                assertEquals(
+                                "Complete your date of birth, height and weight before using a weight-loss plan.",
+                                response.getBody().get("message"));
         }
 
         @Test

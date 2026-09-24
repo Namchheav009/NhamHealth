@@ -10,6 +10,7 @@ enum NotificationAction {
   reply,
   share,
   follow,
+  scan,
   recommendation,
   wellness,
   system,
@@ -112,15 +113,25 @@ class NotificationItem {
     return '${difference.inDays} days ago';
   }
 
-  IconData get icon => switch (kind) {
-    NotificationKind.social => Icons.person_rounded,
-    NotificationKind.recommendation => Icons.auto_awesome_rounded,
-    NotificationKind.wellness => Icons.water_drop_rounded,
-    NotificationKind.system => Icons.verified_rounded,
-  };
+  IconData get icon {
+    if (action == NotificationAction.scan) {
+      return Icons.document_scanner_rounded;
+    }
+    return switch (kind) {
+      NotificationKind.social => Icons.people_alt_rounded,
+      NotificationKind.recommendation => Icons.restaurant_menu_rounded,
+      NotificationKind.wellness => Icons.favorite_rounded,
+      NotificationKind.system => Icons.health_and_safety_rounded,
+    };
+  }
 
   NotificationAction get action {
     final copy = '$title $message'.toLowerCase();
+    if (referenceType == 'AI_FOOD' ||
+        copy.contains('food check') ||
+        copy.contains('food scan')) {
+      return NotificationAction.scan;
+    }
     if (copy.contains('replied')) return NotificationAction.reply;
     if (copy.contains('commented')) return NotificationAction.comment;
     if (copy.contains('liked')) return NotificationAction.like;
@@ -142,6 +153,7 @@ class NotificationItem {
     NotificationAction.reply => Icons.reply_rounded,
     NotificationAction.share => Icons.share_rounded,
     NotificationAction.follow => Icons.person_add_rounded,
+    NotificationAction.scan => Icons.center_focus_strong_rounded,
     NotificationAction.recommendation => Icons.auto_awesome_rounded,
     NotificationAction.wellness => Icons.favorite_rounded,
     NotificationAction.system => Icons.verified_rounded,
@@ -153,6 +165,7 @@ class NotificationItem {
     NotificationAction.reply => const Color(0xFF8B5CF6),
     NotificationAction.share => const Color(0xFF00A7A0),
     NotificationAction.follow => const Color(0xFF00A651),
+    NotificationAction.scan => const Color(0xFF00A896),
     NotificationAction.recommendation => const Color(0xFFFF9800),
     NotificationAction.wellness => const Color(0xFF4396FF),
     NotificationAction.system => const Color(0xFF00A651),
@@ -164,6 +177,7 @@ class NotificationItem {
     NotificationAction.reply => 'notifications.reply',
     NotificationAction.share => 'notifications.share',
     NotificationAction.follow => 'notifications.new_follower',
+    NotificationAction.scan => 'notifications.food_scan',
     NotificationAction.recommendation => 'notifications.for_you',
     NotificationAction.wellness => 'notifications.wellness',
     NotificationAction.system => 'Nham Health',

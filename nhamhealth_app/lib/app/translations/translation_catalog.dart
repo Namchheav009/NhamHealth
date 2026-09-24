@@ -2,6 +2,8 @@ import 'en/assistant_en.dart';
 import 'km/assistant_km.dart';
 import 'en/auth_en.dart';
 import 'km/auth_km.dart';
+import 'en/bmi_en.dart';
+import 'km/bmi_km.dart';
 import 'en/common_en.dart';
 import 'km/common_km.dart';
 import 'en/community_en.dart';
@@ -32,6 +34,7 @@ import 'km/wellness_km.dart';
 final Map<String, String> englishTranslations = {
   ...assistantEn,
   ...authEn,
+  ...bmiEn,
   ...commonEn,
   ...communityEn,
   ...errorsEn,
@@ -50,6 +53,7 @@ final Map<String, String> englishTranslations = {
 final Map<String, String> khmerTranslations = {
   ...assistantKm,
   ...authKm,
+  ...bmiKm,
   ...commonKm,
   ...communityKm,
   ...errorsKm,

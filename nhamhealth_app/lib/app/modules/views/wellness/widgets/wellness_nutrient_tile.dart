@@ -117,11 +117,7 @@ class WellnessNutrientTile extends StatelessWidget {
                 ),
                 if (onTap != null) ...[
                   const SizedBox(width: 4),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: context.appMutedText,
-                  ),
+                  Icon(Icons.add_circle_rounded, size: 17, color: item.color),
                 ],
               ],
             ),

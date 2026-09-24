@@ -11,6 +11,7 @@ import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_input_dialog.dart';
+import '../../models/profile/bmi_assessment.dart';
 import '../../repositories/profile/profile_repository.dart';
 import 'profile_controller.dart';
 
@@ -86,21 +87,17 @@ class EditProfileController extends GetxController {
   }
 
   double get bmi {
-    final heightMeter = height.value / 100;
-
-    if (heightMeter <= 0) {
-      return 0;
-    }
-
-    return weight.value / (heightMeter * heightMeter);
+    return BmiAssessment.calculate(
+      heightCm: height.value,
+      weightKg: weight.value,
+    );
   }
 
-  String get bmiStatus {
-    if (bmi < 18.5) return 'Underweight';
-    if (bmi < 25) return 'Normal';
-    if (bmi < 30) return 'Overweight';
-    return 'Obese';
-  }
+  String get bmiStatus => BmiAssessment.statusKey(
+    age: age.value,
+    heightCm: height.value,
+    weightKg: weight.value,
+  );
 
   @override
   void onInit() {
@@ -189,7 +186,9 @@ class EditProfileController extends GetxController {
       );
       return;
     }
-    if (emailAddress.isEmpty && !isPhoneVerified.value && !_savedPhoneVerified) {
+    if (emailAddress.isEmpty &&
+        !isPhoneVerified.value &&
+        !_savedPhoneVerified) {
       await AppAlert.actionError(
         title: 'profile.verify_phone',
         message: 'profile.verify_phone_before_remove_email',
@@ -958,7 +957,7 @@ class EditProfileController extends GetxController {
 
   void updateWeight(String value) {
     final number = double.tryParse(value);
-    weight.value = number != null && number >= 10 && number <= 500 ? number : 0;
+    weight.value = number != null && number >= 15 && number <= 500 ? number : 0;
   }
 
   Future<void> selectDateOfBirth(BuildContext context) async {

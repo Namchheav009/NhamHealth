@@ -7,20 +7,23 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/services/auth_service.dart';
-import '../../../widgets/app_alert.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 import '../../repositories/meals/meal_repository.dart';
+import '../../repositories/profile/profile_repository.dart';
 
 class MealPlannerController extends GetxController {
   MealPlannerController({
     MealPlannerProvider? provider,
+    ProfileRepository? profileRepository,
     FlutterSecureStorage? storage,
     AuthService? authService,
   }) : _provider = provider,
+       _profileRepository = profileRepository,
        _storage = storage ?? const FlutterSecureStorage(),
        _authService = authService {
     if (provider == null) {
@@ -40,8 +43,13 @@ class MealPlannerController extends GetxController {
       'meal_planner_analyzed_weight_loss';
   static const _storageAnalyzedMaintainHealthKey =
       'meal_planner_analyzed_maintain_health';
+  static const _storageGroceryCheckedKey = 'meal_planner_grocery_checked';
+  static const _storageWaterKey = 'meal_planner_water';
+
+  static const dailyWaterGoalGlasses = 8;
 
   final MealPlannerProvider? _provider;
+  final ProfileRepository? _profileRepository;
   final FlutterSecureStorage _storage;
   final AuthService? _authService;
   final selectedDayIndex = 0.obs;
@@ -52,6 +60,8 @@ class MealPlannerController extends GetxController {
   final dietaryPreferences = const MealPlannerDietaryPreferences().obs;
   final plans = <String, List<PlannedMeal>>{}.obs;
   final adminRecommendations = <PlannedMeal>[].obs;
+  final dailyWaterGlasses = 0.obs;
+  final checkedGroceryKeys = <String>{}.obs;
   final isLoading = true.obs;
   final isLoadingRecommendations = true.obs;
   final isLoadingDay = false.obs;
@@ -146,19 +156,17 @@ class MealPlannerController extends GetxController {
         _storageDietaryPreferencesKey,
       );
 
-      // Weight Loss is the only planner goal exposed by the current product.
-      // Migrate any older Maintain Health selection back to Weight Loss.
-      healthGoal.value = MealPlannerHealthGoal.loseWeight;
       final savedGoal = await _storage.read(key: goalKey);
-      if (savedGoal != MealPlannerHealthGoal.loseWeight.apiValue) {
+      healthGoal.value = MealPlannerHealthGoal.values.firstWhere(
+        (goal) => goal.apiValue == savedGoal,
+        // Keep the existing first-run experience until BMI analysis has loaded;
+        // the forecast then replaces this with GAIN, MAINTAIN, or LOSE.
+        orElse: () => MealPlannerHealthGoal.loseWeight,
+      );
+      if (savedGoal == null) {
         try {
-          await _storage.write(
-            key: goalKey,
-            value: MealPlannerHealthGoal.loseWeight.apiValue,
-          );
-        } catch (_) {
-          // An unavailable secure store must not prevent loading other settings.
-        }
+          await _storage.write(key: goalKey, value: healthGoal.value.apiValue);
+        } catch (_) {}
       }
 
       final savedPreferences = await _storage.read(key: preferencesKey);
@@ -221,6 +229,7 @@ class MealPlannerController extends GetxController {
       } catch (_) {
         // The legacy flag is ignored even if its stored value cannot be cleared.
       }
+      await _loadGroceryCheckedState();
     } catch (_) {
       // Secure storage read error ignored
     }
@@ -417,14 +426,22 @@ class MealPlannerController extends GetxController {
   }
 
   Future<void> setHealthGoal(MealPlannerHealthGoal goal) async {
-    const supportedGoal = MealPlannerHealthGoal.loseWeight;
-    if (healthGoal.value == supportedGoal && goal == supportedGoal) return;
-    healthGoal.value = supportedGoal;
+    if (healthGoal.value == goal) return;
+    healthGoal.value = goal;
     try {
       final goalKey = await _userScopedKey(_storageHealthGoalKey);
-      await _storage.write(key: goalKey, value: supportedGoal.apiValue);
+      await _storage.write(key: goalKey, value: goal.apiValue);
     } catch (_) {}
     await loadRecommendations(force: true);
+  }
+
+  Future<void> applyBmiWeightDirection(String direction) async {
+    final goal = switch (direction.toUpperCase()) {
+      'GAIN' => MealPlannerHealthGoal.gainWeight,
+      'LOSE' => MealPlannerHealthGoal.loseWeight,
+      _ => MealPlannerHealthGoal.maintainHealth,
+    };
+    await setHealthGoal(goal);
   }
 
   Future<void> setDietaryPreferences(
@@ -511,6 +528,7 @@ class MealPlannerController extends GetxController {
   Future<void> selectDay(int index, {bool force = false}) async {
     if (index >= 0 && index < planDays.length) {
       selectedDayIndex.value = index;
+      await loadWaterIntake(selectedDate);
       await loadDayMeals(selectedDate, force: force);
     }
   }
@@ -592,6 +610,7 @@ class MealPlannerController extends GetxController {
     selectedDayIndex.value =
         idx >= 0 ? idx : (today.weekday - 1).clamp(0, planDaysCount.value - 1);
     imageRefreshKey.value++;
+    await loadWaterIntake(selectedDate);
     if (forceRefresh || !hasLoadedOnce.value) {
       await refreshPlanner(force: true);
       await loadDayMeals(selectedDate, force: true);
@@ -619,12 +638,14 @@ class MealPlannerController extends GetxController {
       final changed = weekOffset.value != diffWeeks;
       weekOffset.value = diffWeeks;
       selectedDayIndex.value = normalized.weekday - 1;
+      unawaited(loadWaterIntake(selectedDate));
       if (changed) {
         unawaited(loadWeek());
       }
     } else {
       customStartDate.value = normalized;
       selectedDayIndex.value = 0;
+      unawaited(loadWaterIntake(selectedDate));
       unawaited(_persistSettings());
       unawaited(loadWeek());
     }
@@ -984,6 +1005,214 @@ class MealPlannerController extends GetxController {
     return null;
   }
 
+  DateTime get yesterdayDate => selectedDate.subtract(const Duration(days: 1));
+  List<PlannedMeal> get yesterdayMeals => mealsFor(yesterdayDate);
+
+  PlannedMeal? yesterdayMealFor(
+    MealPlanSlot slot, {
+    MealPlanSlot? fallbackSlot,
+  }) {
+    final dayMeals = yesterdayMeals;
+    for (final m in dayMeals) {
+      if (m.slot == slot) return m;
+    }
+    if (fallbackSlot != null) {
+      for (final m in dayMeals) {
+        if (m.slot == fallbackSlot) return m;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> copyFromYesterday(
+    MealPlanSlot targetSlot, {
+    MealPlanSlot? fromSlot,
+  }) async {
+    final sourceSlot = fromSlot ?? targetSlot;
+    final sourceMeal = yesterdayMealFor(sourceSlot);
+    if (sourceMeal == null) return false;
+    final newMeal = sourceMeal.copyWith(
+      slot: targetSlot,
+      planDate: selectedDate,
+      status: MealPlanStatus.planned,
+      clearCompletedAt: true,
+      clearActualServings: true,
+    );
+    final ok = await addMeal(
+      newMeal,
+      servings: sourceMeal.servings,
+      targetSlot: targetSlot,
+    );
+    if (ok) {
+      HapticFeedback.lightImpact();
+      AppAlert.toast(
+        message: 'planner.copied_yesterday_success'.trParams({
+          'slot': targetSlot.labelKey.tr,
+          'meal': sourceMeal.name,
+        }),
+      );
+    }
+    return ok;
+  }
+
+  Future<bool> copyAllFromYesterday() async {
+    final sourceMeals = yesterdayMeals;
+    if (sourceMeals.isEmpty) {
+      AppAlert.toast(message: 'planner.no_yesterday_meals'.tr);
+      return false;
+    }
+    if (isSaving.value) return false;
+    var anyCopied = false;
+    for (final meal in sourceMeals) {
+      final copy = meal.copyWith(
+        slot: meal.slot,
+        planDate: selectedDate,
+        status: MealPlanStatus.planned,
+        clearCompletedAt: true,
+        clearActualServings: true,
+      );
+      final ok = await addMeal(
+        copy,
+        servings: meal.servings,
+        targetSlot: meal.slot,
+      );
+      if (ok) anyCopied = true;
+    }
+    if (anyCopied) {
+      HapticFeedback.mediumImpact();
+      AppAlert.toast(message: 'planner.copied_all_yesterday_success'.tr);
+    }
+    return anyCopied;
+  }
+
+  // --- Water Intake Tracker ---
+  Future<void> loadWaterIntake(DateTime date) async {
+    if (_profileRepository != null) {
+      try {
+        final dashboard = await _profileRepository.getDashboard(date: date);
+        dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
+          0,
+          20,
+        );
+      } catch (_) {
+        // Keep the last server value visible if refreshing fails.
+      }
+      return;
+    }
+
+    // Local fallback is only for isolated/offline controller usage. The app
+    // injects ProfileRepository so Planner and Daily Wellness share one source.
+    try {
+      final baseKey = '${_storageWaterKey}_${_dateKey(date)}';
+      final key = await _userScopedKey(baseKey);
+      final saved = await _storage.read(key: key);
+      if (saved != null) {
+        dailyWaterGlasses.value = (int.tryParse(saved) ?? 0).clamp(0, 20);
+      } else {
+        dailyWaterGlasses.value = 0;
+      }
+    } catch (_) {
+      dailyWaterGlasses.value = 0;
+    }
+  }
+
+  Future<void> incrementWater() async {
+    if (dailyWaterGlasses.value >= 20) return;
+    if (_profileRepository != null) {
+      final dashboard = await _profileRepository.addDailyNutrition(
+        water: 1,
+        date: selectedDate,
+      );
+      dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
+        0,
+        20,
+      );
+      return;
+    }
+    dailyWaterGlasses.value++;
+    HapticFeedback.lightImpact();
+    await _persistWaterIntake();
+    if (dailyWaterGlasses.value == dailyWaterGoalGlasses) {
+      HapticFeedback.mediumImpact();
+      AppAlert.toast(message: 'planner.water_goal_reached'.tr);
+    }
+  }
+
+  Future<void> decrementWater() async {
+    if (dailyWaterGlasses.value <= 0) return;
+    dailyWaterGlasses.value--;
+    HapticFeedback.selectionClick();
+    await _persistWaterIntake();
+  }
+
+  Future<void> setWaterGlasses(int count) async {
+    final clamped = count.clamp(0, 20);
+    if (dailyWaterGlasses.value == clamped) return;
+    dailyWaterGlasses.value = clamped;
+    HapticFeedback.selectionClick();
+    await _persistWaterIntake();
+  }
+
+  Future<void> _persistWaterIntake() async {
+    try {
+      final baseKey = '${_storageWaterKey}_${_dateKey(selectedDate)}';
+      final key = await _userScopedKey(baseKey);
+      await _storage.write(key: key, value: '${dailyWaterGlasses.value}');
+    } catch (_) {}
+  }
+
+  Future<void> openWaterTracker() async {
+    await Get.toNamed<void>(AppRoutes.water, arguments: selectedDate);
+    await loadWaterIntake(selectedDate);
+  }
+
+  // --- Interactive Grocery Checklist ---
+  Future<void> _loadGroceryCheckedState() async {
+    try {
+      final key = await _userScopedKey(_storageGroceryCheckedKey);
+      final saved = await _storage.read(key: key);
+      if (saved != null && saved.isNotEmpty) {
+        final dynamic decoded = jsonDecode(saved);
+        if (decoded is List) {
+          checkedGroceryKeys.assignAll(decoded.map((e) => e.toString()));
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> toggleGroceryItemChecked(String itemKey) async {
+    if (checkedGroceryKeys.contains(itemKey)) {
+      checkedGroceryKeys.remove(itemKey);
+    } else {
+      checkedGroceryKeys.add(itemKey);
+    }
+    checkedGroceryKeys.refresh();
+    await _persistGroceryCheckedState();
+  }
+
+  Future<void> setAllGroceryChecked(
+    Iterable<String> keys,
+    bool isChecked,
+  ) async {
+    if (isChecked) {
+      checkedGroceryKeys.addAll(keys);
+    } else {
+      checkedGroceryKeys.removeAll(keys);
+    }
+    checkedGroceryKeys.refresh();
+    await _persistGroceryCheckedState();
+  }
+
+  Future<void> _persistGroceryCheckedState() async {
+    try {
+      final key = await _userScopedKey(_storageGroceryCheckedKey);
+      await _storage.write(
+        key: key,
+        value: jsonEncode(checkedGroceryKeys.toList()),
+      );
+    } catch (_) {}
+  }
+
   void putOptimisticMeal(PlannedMeal meal) {
     final key = _dateKey(meal.planDate ?? selectedDate);
     _put(key, meal);
@@ -1047,9 +1276,10 @@ class MealPlannerController extends GetxController {
 
     lastAiAutoFillResult.value = null;
 
-    if (dietaryPreferences.value.medicalFlags.contains(
-      'PREGNANT_OR_BREASTFEEDING',
-    )) {
+    if (healthGoal.value == MealPlannerHealthGoal.loseWeight &&
+        dietaryPreferences.value.medicalFlags.contains(
+          'PREGNANT_OR_BREASTFEEDING',
+        )) {
       await AppAlert.actionError(
         title: 'planner.medical_review_required'.tr,
         message: 'planner.pregnancy_weight_loss_warning'.tr,
@@ -1064,7 +1294,7 @@ class MealPlannerController extends GetxController {
           final response = await _provider.aiAutoFillPlan(
             startDate: planStartDate,
             days: planDaysCount.value,
-            goal: MealPlannerHealthGoal.loseWeight,
+            goal: healthGoal.value,
             targetTimeframeDays: targetTimeframeDays ?? 28,
             fillEmptyOnly: fillEmptyOnly,
             preferences: dietaryPreferences.value,

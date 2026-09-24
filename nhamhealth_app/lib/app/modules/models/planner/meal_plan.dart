@@ -243,10 +243,12 @@ class GroceryItem {
 }
 
 enum MealPlannerHealthGoal {
+  gainWeight,
   loseWeight,
   maintainHealth;
 
   String get apiValue => switch (this) {
+    gainWeight => 'GAIN_WEIGHT',
     loseWeight => 'LOSE_WEIGHT',
     maintainHealth => 'MAINTAIN_HEALTH',
   };

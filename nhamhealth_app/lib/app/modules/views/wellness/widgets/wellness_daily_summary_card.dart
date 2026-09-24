@@ -52,10 +52,10 @@ class WellnessDailySummaryCard extends GetView<WellnessController> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: WellnessNutrientTile(
                     item: controller.nutrients[index],
-                    // onTap:
-                    //     () => controller.openNutrientDetails(
-                    //       controller.nutrients[index].name,
-                    //     ),
+                    onTap:
+                        controller.nutrients[index].name == 'Water'
+                            ? () => controller.openNutrientDetails('Water')
+                            : null,
                   ),
                 );
               }),

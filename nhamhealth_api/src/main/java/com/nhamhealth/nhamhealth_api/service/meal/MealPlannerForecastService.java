@@ -112,7 +112,7 @@ public class MealPlannerForecastService {
         final String lang = (requestedLang != null && requestedLang.equalsIgnoreCase("km")) ? "km" : "en";
         final boolean isKhmer = "km".equals(lang);
         final String goal = IbmMealPlannerRecommendationService.normalizeGoal(requestedGoal);
-        final boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
+        final boolean requestedWeightLoss = "LOSE_WEIGHT".equals(goal);
 
         // 1. Resolve User Biometrics
         Optional<WellnessProfile> wellnessOpt = userId != null ? wellnessProfileRepository.findByUser_UserId(userId)
@@ -120,11 +120,15 @@ public class MealPlannerForecastService {
         Optional<UserProfile> profileOpt = userId != null ? userProfileRepository.findByUser_UserId(userId)
                 : Optional.empty();
 
+        requireWeightLossProfile(requestedWeightLoss, wellnessOpt, profileOpt, isKhmer);
+
         double weightKg = 70.0;
         double heightCm = 170.0;
         int age = 28;
         String activityLevel = "MODERATE";
-        String gender = "MALE";
+        String gender = "UNKNOWN";
+        boolean hasReportedActivityLevel = false;
+        boolean hasReportedGender = false;
 
         if (wellnessOpt.isPresent()) {
             WellnessProfile wp = wellnessOpt.get();
@@ -139,6 +143,7 @@ public class MealPlannerForecastService {
             }
             if (wp.getActivityLevel() != null && !wp.getActivityLevel().isBlank()) {
                 activityLevel = wp.getActivityLevel().trim().toUpperCase(Locale.ROOT);
+                hasReportedActivityLevel = true;
             }
         }
 
@@ -146,18 +151,41 @@ public class MealPlannerForecastService {
             UserProfile up = profileOpt.get();
             if (up.getGender() != null && !up.getGender().isBlank()) {
                 gender = up.getGender().trim().toUpperCase(Locale.ROOT);
+                hasReportedGender = true;
             }
-            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty() || wellnessOpt.get().getAgeCached() == null)) {
+            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty()
+                    || wellnessOpt.get().getAgeCached() == null
+                    || wellnessOpt.get().getAgeCached() <= 0)) {
                 age = Math.max(12, Period.between(up.getDateOfBirth(), LocalDate.now()).getYears());
             }
         }
 
+        if (requestedWeightLoss && age < 18) {
+            throw new ResponseStatusException(
+                    BAD_REQUEST,
+                    isKhmer
+                            ? "អ្នកប្រើអាយុក្រោម 18 ឆ្នាំត្រូវការការវាយតម្លៃតាមអាយុ និងភេទដោយអ្នកជំនាញ។"
+                            : "Weight-loss forecasts are not available for users under 18. Use age- and sex-specific growth guidance with a qualified professional.");
+        }
+
         boolean isFemale = gender.contains("FEMALE") || gender.contains("WOMAN") || gender.equalsIgnoreCase("F");
+        boolean isMale = gender.contains("MALE") || gender.contains("MAN") || gender.equalsIgnoreCase("M");
+        double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
+        String recommendedWeightDirection = currentBmi < 18.5
+                ? "GAIN"
+                : (currentBmi < 25.0 ? "MAINTAIN" : "LOSE");
+        boolean isWeightLoss = "LOSE".equals(recommendedWeightDirection);
+        boolean isWeightGain = "GAIN".equals(recommendedWeightDirection);
+        String effectiveGoal = isWeightLoss
+                ? "LOSE_WEIGHT"
+                : (isWeightGain ? "GAIN_WEIGHT" : "MAINTAIN_HEALTH");
 
         // 2. Compute Mifflin-St Jeor BMR
         // Men: 10 * weight(kg) + 6.25 * height(cm) - 5 * age + 5
         // Women: 10 * weight(kg) + 6.25 * height(cm) - 5 * age - 161
-        double bmr = (10.0 * weightKg) + (6.25 * heightCm) - (5.0 * age) + (isFemale ? -161.0 : 5.0);
+        // Unknown sex uses the midpoint of the two constants and is disclosed to the client.
+        double sexOffset = isFemale ? -161.0 : (isMale ? 5.0 : -78.0);
+        double bmr = (10.0 * weightKg) + (6.25 * heightCm) - (5.0 * age) + sexOffset;
         bmr = Math.max(800.0, bmr);
 
         // 3. Activity Multiplier & TDEE
@@ -196,7 +224,7 @@ public class MealPlannerForecastService {
             // Preview the correct calorie target before the user has planned meals.
             dailyPlannedCalories = isWeightLoss
                     ? Math.max(isFemale ? MIN_CALORIES_FEMALE : MIN_CALORIES_MALE, tdee - 500.0)
-                    : tdee;
+                    : (isWeightGain ? tdee + 300.0 : tdee);
         }
 
         // 5. Goal-aware energy and projection metrics
@@ -205,7 +233,12 @@ public class MealPlannerForecastService {
         double projectedWeightLossKg = isWeightLoss && dailyDeficit > 0
                 ? (dailyDeficit * timeframeDays) / KCAL_PER_KG_FAT
                 : 0.0;
-        double projectedEndWeightKg = Math.max(30.0, weightKg - projectedWeightLossKg);
+        double projectedWeightGainKg = isWeightGain && dailyDeficit < 0
+                ? (Math.abs(dailyDeficit) * timeframeDays) / KCAL_PER_KG_FAT
+                : 0.0;
+        double projectedEndWeightKg = isWeightGain
+                ? weightKg + projectedWeightGainKg
+                : Math.max(30.0, weightKg - projectedWeightLossKg);
 
         // 6. Goal-aware status and description
         String paceStatus;
@@ -274,18 +307,44 @@ public class MealPlannerForecastService {
                 .filter(p -> p.getPlannerMeal() != null)
                 .map(p -> p.getPlannerMeal().getPlannerMealId())
                 .collect(Collectors.toSet());
-        List<ForecastRecommendationItem> recommendedFoods = selectRecommendedFoods(lang, goal, plannedMealIds);
+        List<ForecastRecommendationItem> recommendedFoods = selectRecommendedFoods(lang, effectiveGoal, plannedMealIds);
 
         // 9. Direct Database Recommendations: Beverages
-        List<ForecastRecommendationItem> recommendedBeverages = selectRecommendedBeverages(lang, goal);
+        List<ForecastRecommendationItem> recommendedBeverages = selectRecommendedBeverages(lang, effectiveGoal);
 
         // 10. Explain whether these figures describe planned meals or a preview target.
         String aiSummary = generateGoalSummary(
                 isKhmer, isWeightLoss, plannedMeals.isEmpty(), timeframeDays,
                 dailyDeficit, projectedWeightLossKg, weeklyPaceKg);
 
+        boolean hasBiometricProfile = hasBiometricProfile(wellnessOpt, profileOpt);
+        BigDecimal bmi = hasBiometricProfile ? round(currentBmi, 1) : null;
+        double heightMetersSquared = Math.pow(heightCm / 100.0, 2);
+        BigDecimal projectedBmi = hasBiometricProfile
+                ? round(projectedEndWeightKg / heightMetersSquared, 1)
+                : null;
+        BigDecimal healthyWeightMinKg = hasBiometricProfile
+                ? round(18.5 * heightMetersSquared, 1)
+                : null;
+        BigDecimal healthyWeightMaxKg = hasBiometricProfile
+                ? round(24.9 * heightMetersSquared, 1)
+                : null;
+
         return new WeightLossForecastResponse(
                 round(weightKg, 1),
+                hasBiometricProfile ? age : null,
+                hasBiometricProfile ? round(heightCm, 1) : null,
+                bmi,
+                projectedBmi,
+                healthyWeightMinKg,
+                healthyWeightMaxKg,
+                bmiStatus(age, bmi),
+                recommendedWeightDirection,
+                hasBiometricProfile
+                        ? (hasReportedActivityLevel ? activityLevel : "MODERATE_ESTIMATE")
+                        : "UNKNOWN",
+                hasBiometricProfile,
+                hasBiometricProfile && (!hasReportedActivityLevel || !hasReportedGender),
                 round(isWeightLoss
                         ? Math.max(35.0, weightKg - (timeframeDays >= 28 ? 3.0 : 1.5))
                         : weightKg, 1),
@@ -318,10 +377,10 @@ public class MealPlannerForecastService {
             String requestedLang) {
 
         final String lang = (requestedLang != null && requestedLang.equalsIgnoreCase("km")) ? "km" : "en";
-        final String goal = IbmMealPlannerRecommendationService.normalizeGoal(request.goal());
-        final boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
+        final String requestedGoal = IbmMealPlannerRecommendationService.normalizeGoal(request.goal());
+        final boolean isKhmer = "km".equals(lang);
 
-        if (isWeightLoss && request.medicalFlags().stream()
+        if ("LOSE_WEIGHT".equals(requestedGoal) && request.medicalFlags().stream()
                 .anyMatch(flag -> "PREGNANT_OR_BREASTFEEDING".equalsIgnoreCase(flag))) {
             throw new ResponseStatusException(BAD_REQUEST,
                     "Weight-loss auto-planning is not available during pregnancy or breastfeeding.");
@@ -332,6 +391,8 @@ public class MealPlannerForecastService {
                 : Optional.empty();
         Optional<UserProfile> profileOpt = userId != null ? userProfileRepository.findByUser_UserId(userId)
                 : Optional.empty();
+
+        requireWeightLossProfile("LOSE_WEIGHT".equals(requestedGoal), wellnessOpt, profileOpt, isKhmer);
 
         double weightKg = 70.0;
         double heightCm = 170.0;
@@ -360,9 +421,28 @@ public class MealPlannerForecastService {
             if (up.getGender() != null && !up.getGender().isBlank()) {
                 gender = up.getGender().trim().toUpperCase(Locale.ROOT);
             }
-            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty() || wellnessOpt.get().getAgeCached() == null)) {
+            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty()
+                    || wellnessOpt.get().getAgeCached() == null
+                    || wellnessOpt.get().getAgeCached() <= 0)) {
                 age = Math.max(12, Period.between(up.getDateOfBirth(), LocalDate.now()).getYears());
             }
+        }
+
+        double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
+        final String goal = hasBiometricProfile(wellnessOpt, profileOpt)
+                ? (currentBmi < 18.5
+                        ? "GAIN_WEIGHT"
+                        : (currentBmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT"))
+                : requestedGoal;
+        final boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
+        final boolean isWeightGain = "GAIN_WEIGHT".equals(goal);
+
+        if (isWeightLoss && age < 18) {
+            throw new ResponseStatusException(
+                    BAD_REQUEST,
+                    isKhmer
+                            ? "មិនមានផែនការសម្រកទម្ងន់សម្រាប់អ្នកប្រើអាយុក្រោម 18 ឆ្នាំទេ។"
+                            : "Weight-loss meal plans are not available for users under 18.");
         }
 
         boolean isFemale = gender.contains("FEMALE") || gender.contains("WOMAN") || gender.equalsIgnoreCase("F");
@@ -386,6 +466,8 @@ public class MealPlannerForecastService {
         double targetDailyCalories;
         if (isWeightLoss) {
             targetDailyCalories = Math.max(safeFloor, tdee - 500.0);
+        } else if (isWeightGain) {
+            targetDailyCalories = Math.max(safeFloor, tdee + 300.0);
         } else {
             targetDailyCalories = Math.max(safeFloor, tdee);
         }
@@ -504,6 +586,50 @@ public class MealPlannerForecastService {
                 synthesis.summaryRationale(),
                 goal,
                 synthesis.modelUsed());
+    }
+
+    private void requireWeightLossProfile(
+            boolean isWeightLoss,
+            Optional<WellnessProfile> wellnessOpt,
+            Optional<UserProfile> profileOpt,
+            boolean isKhmer) {
+        if (!isWeightLoss || hasBiometricProfile(wellnessOpt, profileOpt)) return;
+        throw new ResponseStatusException(
+                BAD_REQUEST,
+                isKhmer
+                        ? "សូមបំពេញថ្ងៃខែឆ្នាំកំណើត កម្ពស់ និងទម្ងន់ក្នុងប្រវត្តិរូប មុនប្រើផែនការសម្រកទម្ងន់។"
+                        : "Complete your date of birth, height and weight before using a weight-loss plan.");
+    }
+
+    private boolean hasBiometricProfile(
+            Optional<WellnessProfile> wellnessOpt,
+            Optional<UserProfile> profileOpt) {
+        boolean hasAge = wellnessOpt
+                .map(WellnessProfile::getAgeCached)
+                .filter(value -> value > 0)
+                .isPresent()
+                || profileOpt.map(UserProfile::getDateOfBirth).isPresent();
+        boolean hasHeight = wellnessOpt
+                .map(WellnessProfile::getHeightCm)
+                .filter(value -> value.compareTo(new BigDecimal("50")) >= 0
+                        && value.compareTo(new BigDecimal("300")) <= 0)
+                .isPresent();
+        boolean hasWeight = wellnessOpt
+                .map(WellnessProfile::getWeightKg)
+                .filter(value -> value.compareTo(new BigDecimal("15")) >= 0
+                        && value.compareTo(new BigDecimal("500")) <= 0)
+                .isPresent();
+        return hasAge && hasHeight && hasWeight;
+    }
+
+    private String bmiStatus(int age, BigDecimal bmi) {
+        if (bmi == null) return "UNKNOWN";
+        if (age < 18) return "UNDER_18";
+        double value = bmi.doubleValue();
+        if (value < 18.5) return "UNDERWEIGHT";
+        if (value < 25.0) return "HEALTHY";
+        if (value < 30.0) return "OVERWEIGHT";
+        return "OBESITY";
     }
 
     private boolean matchesDietaryPreferences(PlannerMeal meal, AiAutoFillPlanRequest request) {
@@ -874,7 +1000,7 @@ public class MealPlannerForecastService {
             String requestedLang) {
 
         final String lang = (requestedLang != null && requestedLang.equalsIgnoreCase("km")) ? "km" : "en";
-        final String goal = IbmMealPlannerRecommendationService.normalizeGoal(request.goal());
+        final String requestedGoal = IbmMealPlannerRecommendationService.normalizeGoal(request.goal());
         final String slot = request.slot();
         final LocalDate date = request.date() != null ? request.date() : LocalDate.now();
 
@@ -911,9 +1037,19 @@ public class MealPlannerForecastService {
             if (up.getGender() != null && !up.getGender().isBlank()) {
                 gender = up.getGender().trim().toUpperCase(Locale.ROOT);
             }
-            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty() || wellnessOpt.get().getAgeCached() == null)) {
+            if (up.getDateOfBirth() != null && (wellnessOpt.isEmpty()
+                    || wellnessOpt.get().getAgeCached() == null
+                    || wellnessOpt.get().getAgeCached() <= 0)) {
                 age = Math.max(12, Period.between(up.getDateOfBirth(), LocalDate.now()).getYears());
             }
+        }
+
+        String goal = requestedGoal;
+        if (hasBiometricProfile(wellnessOpt, profileOpt) && age >= 18) {
+            double currentBmi = weightKg / Math.pow(heightCm / 100.0, 2);
+            goal = currentBmi < 18.5
+                    ? "GAIN_WEIGHT"
+                    : (currentBmi < 25.0 ? "MAINTAIN_HEALTH" : "LOSE_WEIGHT");
         }
 
         boolean isFemale = gender.contains("FEMALE") || gender.contains("WOMAN") || gender.equalsIgnoreCase("F");
@@ -931,8 +1067,11 @@ public class MealPlannerForecastService {
         double tdee = bmr * activityMultiplier;
 
         boolean isWeightLoss = "LOSE_WEIGHT".equals(goal);
+        boolean isWeightGain = "GAIN_WEIGHT".equals(goal);
         double safeFloor = isFemale ? MIN_CALORIES_FEMALE : MIN_CALORIES_MALE;
-        double targetDailyCalories = isWeightLoss ? Math.max(safeFloor, tdee - 500.0) : Math.max(safeFloor, tdee);
+        double targetDailyCalories = isWeightLoss
+                ? Math.max(safeFloor, tdee - 500.0)
+                : (isWeightGain ? Math.max(safeFloor, tdee + 300.0) : Math.max(safeFloor, tdee));
 
         // 2. Resolve Current Meal (for SWAP)
         PlannerMeal currentMeal = null;

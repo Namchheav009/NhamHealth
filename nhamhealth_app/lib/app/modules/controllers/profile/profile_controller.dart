@@ -15,6 +15,7 @@ import '../../models/community/community_person.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_post.dart';
 import '../../models/community/community_types.dart';
+import '../../models/profile/bmi_assessment.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/community/community_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
@@ -63,8 +64,8 @@ class ProfileController extends GetxController {
   final insight = "Start logging meals to build today's progress.".obs;
 
   final age = 0.obs;
-  final height = 0.obs;
-  final weight = 0.obs;
+  final height = 0.0.obs;
+  final weight = 0.0.obs;
 
   String get contact {
     final savedEmail = email.value.trim();
@@ -73,18 +74,17 @@ class ProfileController extends GetxController {
   }
 
   double get bmi {
-    final heightInMeters = height.value / 100;
-    if (heightInMeters <= 0) return 0;
-    return weight.value / (heightInMeters * heightInMeters);
+    return BmiAssessment.calculate(
+      heightCm: height.value.toDouble(),
+      weightKg: weight.value.toDouble(),
+    );
   }
 
-  String get bmiStatus {
-    if (height.value <= 0 || weight.value <= 0) return 'Not set';
-    if (bmi < 18.5) return 'Underweight';
-    if (bmi < 25) return 'Normal';
-    if (bmi < 30) return 'Overweight';
-    return 'Obese';
-  }
+  String get bmiStatus => BmiAssessment.statusKey(
+    age: age.value,
+    heightCm: height.value.toDouble(),
+    weightKg: weight.value.toDouble(),
+  );
 
   final calories = 0.obs;
   final caloriesGoal = 2000.obs;
@@ -366,8 +366,8 @@ class ProfileController extends GetxController {
             ? dashboard.membership!.trim()
             : 'WellBite Member';
     if (dashboard.age != null) age.value = dashboard.age!;
-    if (dashboard.heightCm != null) height.value = dashboard.heightCm!.round();
-    if (dashboard.weightKg != null) weight.value = dashboard.weightKg!.round();
+    if (dashboard.heightCm != null) height.value = dashboard.heightCm!;
+    if (dashboard.weightKg != null) weight.value = dashboard.weightKg!;
     if (dashboard.calories != null) {
       calories.value = dashboard.calories!.current.round();
       caloriesGoal.value = dashboard.calories!.goal.round();

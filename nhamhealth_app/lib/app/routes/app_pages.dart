@@ -42,6 +42,7 @@ import '../modules/views/onboarding/choose_language_view.dart';
 import '../modules/views/onboarding/onboarding_view.dart';
 import '../modules/views/planner/goal_analysis_pages.dart';
 import '../modules/views/planner/meal_planner_flow_views.dart';
+import '../modules/views/profile/bmi_analysis_view.dart';
 import '../modules/views/profile/change_password_view.dart';
 import '../modules/views/profile/language_view.dart';
 import '../modules/views/profile/profile_view.dart';
@@ -187,6 +188,12 @@ abstract class AppPages {
       page: () => const ProfileView(),
       binding: ProfileBinding(),
       transition: Transition.noTransition,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.bmiAnalysis,
+      page: () => const BmiAnalysisView(),
+      binding: ProfileBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage<dynamic>(
       name: AppRoutes.changePassword,

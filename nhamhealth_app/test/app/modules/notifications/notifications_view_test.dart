@@ -58,7 +58,24 @@ void main() {
       find.byKey(const ValueKey<String>('notifications-back-button')),
       findsOneWidget,
     );
+    expect(find.byIcon(Icons.done_all_rounded), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  test('AI food notification uses the scan icon treatment', () {
+    final notification = NotificationItem.fromJson({
+      'id': 6,
+      'type': 'HEALTH',
+      'title': 'AI food check complete',
+      'message': 'Your food was analyzed.',
+      'referenceType': 'AI_FOOD',
+      'read': false,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+
+    expect(notification.action, NotificationAction.scan);
+    expect(notification.icon, Icons.document_scanner_rounded);
+    expect(notification.actionIcon, Icons.center_focus_strong_rounded);
   });
 
   testWidgets('tapping a post notification opens its community post', (

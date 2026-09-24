@@ -9,6 +9,17 @@ import java.util.List;
  */
 public record WeightLossForecastResponse(
         BigDecimal currentWeightKg,
+        Integer age,
+        BigDecimal heightCm,
+        BigDecimal bmi,
+        BigDecimal projectedBmi,
+        BigDecimal healthyWeightMinKg,
+        BigDecimal healthyWeightMaxKg,
+        String bmiStatus,
+        String recommendedWeightDirection,
+        String activityLevel,
+        boolean hasBiometricProfile,
+        boolean energyEstimateUsesDefaults,
         BigDecimal targetWeightKg,
         BigDecimal projectedWeightLossKg,
         BigDecimal projectedEndWeightKg,

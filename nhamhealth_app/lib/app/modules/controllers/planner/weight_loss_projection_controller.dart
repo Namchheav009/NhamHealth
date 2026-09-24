@@ -16,7 +16,7 @@ class WeightLossProjectionController extends GetxController {
 
   final MealPlannerProvider? _provider;
 
-  final selectedTimeframeDays = 28.obs;
+  final selectedTimeframeDays = 5.obs;
   final forecast = Rxn<WeightLossForecast>();
   final weightLossForecast = Rxn<WeightLossForecast>();
   final activeAnalysisGoal = Rx<MealPlannerHealthGoal>(
@@ -25,6 +25,7 @@ class WeightLossProjectionController extends GetxController {
   final isLoading = true.obs;
   final isSaving = false.obs;
   final errorMessage = ''.obs;
+  final requiresProfileReview = false.obs;
   final selectedTab = 0.obs; // 0: Suitable Foods, 1: Healthy Beverages
   Worker? _healthGoalWorker;
   Worker? _weekOffsetWorker;
@@ -33,7 +34,7 @@ class WeightLossProjectionController extends GetxController {
   bool _forecastRefreshQueued = false;
   int _forecastRequestId = 0;
 
-  static const List<int> availableTimeframes = [7, 14, 28, 56, 84];
+  static const List<int> availableTimeframes = [3, 4, 5, 6, 7];
 
   @override
   void onInit() {
@@ -94,6 +95,7 @@ class WeightLossProjectionController extends GetxController {
     final requestId = ++_forecastRequestId;
     isLoading.value = true;
     errorMessage.value = '';
+    requiresProfileReview.value = false;
 
     final provider = _resolveProvider();
     if (provider == null) {
@@ -106,21 +108,41 @@ class WeightLossProjectionController extends GetxController {
         Get.isRegistered<MealPlannerController>()
             ? Get.find<MealPlannerController>()
             : null;
-    activeAnalysisGoal.value = MealPlannerHealthGoal.loseWeight;
+    activeAnalysisGoal.value =
+        planner?.healthGoal.value ?? MealPlannerHealthGoal.maintainHealth;
 
     try {
       final result = await provider.getWeightLossForecast(
         days: selectedTimeframeDays.value,
         startDate: planner?.planStartDate,
-        goal: MealPlannerHealthGoal.loseWeight,
+        goal: planner?.healthGoal.value ?? MealPlannerHealthGoal.maintainHealth,
       );
       if (requestId == _forecastRequestId) {
+        requiresProfileReview.value = false;
         forecast.value = result;
         weightLossForecast.value = result;
+        final bmiGoal = switch (result.resolvedWeightDirection) {
+          'GAIN' => MealPlannerHealthGoal.gainWeight,
+          'LOSE' => MealPlannerHealthGoal.loseWeight,
+          _ => MealPlannerHealthGoal.maintainHealth,
+        };
+        activeAnalysisGoal.value = bmiGoal;
+        if (planner != null && planner.healthGoal.value != bmiGoal) {
+          unawaited(
+            planner.applyBmiWeightDirection(result.resolvedWeightDirection),
+          );
+        }
       }
-    } catch (e) {
+    } on MealPlannerProviderException catch (e) {
+      if (requestId == _forecastRequestId) {
+        errorMessage.value = e.message;
+        requiresProfileReview.value = e.statusCode == 400;
+        forecast.value = null;
+      }
+    } catch (_) {
       if (requestId == _forecastRequestId) {
         errorMessage.value = 'planner.forecast_unavailable'.tr;
+        requiresProfileReview.value = false;
         forecast.value = null;
       }
     } finally {
@@ -223,7 +245,7 @@ class WeightLossProjectionController extends GetxController {
               : null;
       final startDate = plannerCtrl?.planStartDate ?? DateTime.now();
       final days = plannerCtrl?.planDaysCount.value ?? 7;
-      const goal = MealPlannerHealthGoal.loseWeight;
+      final goal = plannerCtrl?.healthGoal.value ?? activeAnalysisGoal.value;
       final preferences =
           plannerCtrl?.dietaryPreferences.value ??
           const MealPlannerDietaryPreferences();

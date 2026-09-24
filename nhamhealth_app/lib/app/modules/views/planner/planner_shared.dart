@@ -446,7 +446,6 @@ Future<void> showAutoFillConfirmDialog(
     controller.autoFillStatusKey.value = 'planner.autofill_loading_preparing';
     controller.isAutoFilling.value = true;
     try {
-      await controller.setHealthGoal(MealPlannerHealthGoal.loseWeight);
       await controller.setDietaryPreferences(preferences);
       controller.autoFillStatusKey.value =
           'planner.autofill_loading_generating';
@@ -667,10 +666,17 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final goal = widget.controller.healthGoal.value;
     final isPregnantOrBreastfeeding = _preferences.medicalFlags.contains(
       'PREGNANT_OR_BREASTFEEDING',
     );
-    final hasPregnancyConflict = isPregnantOrBreastfeeding;
+    final hasPregnancyConflict =
+        isPregnantOrBreastfeeding && goal == MealPlannerHealthGoal.loseWeight;
+    final goalLabel = switch (goal) {
+      MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
+      MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
+      MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
+    };
 
     final accentColor =
         hasPregnancyConflict
@@ -733,7 +739,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'planner.autofill_title_loss'.tr,
+                        'planner.ibm_smart_plan'.tr,
                         style: TextStyle(
                           color: context.appText,
                           fontSize: 16,
@@ -743,7 +749,7 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'planner.autofill_target_preview'.tr,
+                        '${'planner.current_goal'.tr}: $goalLabel',
                         style: TextStyle(
                           color: context.appMutedText,
                           fontSize: 12,
@@ -955,11 +961,14 @@ class _AiAutoFillBottomSheetState extends State<_AiAutoFillBottomSheet> {
                     height: 50,
                     child: FilledButton.icon(
                       onPressed: hasPregnancyConflict ? null : _submit,
-                      icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                      icon: const Icon(
+                        Icons.add_circle_outline_rounded,
+                        size: 18,
+                      ),
                       label: Text(
                         hasPregnancyConflict
                             ? 'planner.autofill_unavailable'.tr
-                            : 'planner.autofill_action_loss'.tr,
+                            : 'planner.quick_auto_fill_btn'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1618,6 +1627,16 @@ Future<void> showWeeklyReportDialog(
   final totalSlots = controller.planDaysCount.value * 4;
   final plannedCount = controller.weeklyMealCount;
   final eatenCount = controller.weeklyEatenMeals;
+  final goalLabel = switch (controller.healthGoal.value) {
+    MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
+    MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
+    MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
+  };
+  final goalIcon = switch (controller.healthGoal.value) {
+    MealPlannerHealthGoal.gainWeight => Icons.trending_up_rounded,
+    MealPlannerHealthGoal.maintainHealth => Icons.trending_flat_rounded,
+    MealPlannerHealthGoal.loseWeight => Icons.trending_down_rounded,
+  };
 
   int totalWeekCalories = 0;
   double totalWeekProtein = 0.0;
@@ -1708,14 +1727,14 @@ Future<void> showWeeklyReportDialog(
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.trending_down_rounded,
+                                Icon(
+                                  goalIcon,
                                   size: 13,
                                   color: Color(0xFF0F62FE),
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'planner.goal_lose_weight'.tr,
+                                  goalLabel,
                                   style: const TextStyle(
                                     color: Color(0xFF0F62FE),
                                     fontSize: 11,

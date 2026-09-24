@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_back_header.dart';
@@ -15,10 +16,7 @@ import '../../models/planner/weight_loss_forecast_model.dart';
 import 'planner_shared.dart';
 
 class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
-  const WeightLossProjectionView({
-    super.key,
-    this.embedded = false,
-  });
+  const WeightLossProjectionView({super.key, this.embedded = false});
 
   final bool embedded;
   String get _pageTitle => 'planner.weight_loss_forecast'.tr;
@@ -72,71 +70,109 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
 
     final forecast = controller.forecast.value;
     if (forecast == null) {
+      final error = controller.errorMessage.value.trim();
+      final needsProfile = controller.requiresProfileReview.value;
       return Padding(
         key: embedded ? const ValueKey('embedded-weight-loss-forecast') : null,
         padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _pageTitle,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+        child: Container(
+          key: ValueKey(
+            needsProfile
+                ? 'weight-goal-profile-review-state'
+                : 'weight-goal-network-error-state',
+          ),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+          decoration: BoxDecoration(
+            color: context.appElevatedSurface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: context.appBorder),
+            boxShadow: context.appTileShadow,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color:
+                      needsProfile
+                          ? context.appSoftGreen
+                          : context.appSurfaceLow,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  needsProfile
+                      ? Icons.manage_accounts_outlined
+                      : Icons.cloud_off_outlined,
+                  size: 29,
+                  color:
+                      needsProfile
+                          ? AppColors.primaryGreen
+                          : context.appMutedText,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Icon(
-              Icons.cloud_off_outlined,
-              size: 36,
-              color: context.appMutedText,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'planner.forecast_unavailable'.tr,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: context.appMutedText, fontSize: 13),
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => controller.loadForecast(forceRefresh: true),
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text('planner.retry'.tr),
-            ),
-          ],
+              const SizedBox(height: 13),
+              Text(
+                needsProfile ? 'planner.profile_review_needed'.tr : _pageTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                error.isEmpty ? 'planner.forecast_unavailable'.tr : error,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.appMutedText,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (needsProfile) ...[
+                FilledButton.icon(
+                  onPressed: () => Get.toNamed<void>(AppRoutes.bmiAnalysis),
+                  icon: const Icon(Icons.monitor_heart_outlined, size: 19),
+                  label: Text('planner.review_health_profile'.tr),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    backgroundColor: context.appColorScheme.primary,
+                    foregroundColor: context.appColorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 7),
+                TextButton.icon(
+                  onPressed: () => controller.loadForecast(forceRefresh: true),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text('planner.retry'.tr),
+                ),
+              ] else
+                OutlinedButton.icon(
+                  onPressed: () => controller.loadForecast(forceRefresh: true),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text('planner.retry'.tr),
+                ),
+            ],
+          ),
         ),
       );
     }
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (embedded) ...[
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _pageTitle,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-        ],
-        if (!forecast.hasPlannedMeals)
-          _emptyForecastCard(context)
-        else ...[
-          _projectionHeroCard(context, forecast),
-          const SizedBox(height: 16),
-          _energyBalanceCard(context, forecast),
-          const SizedBox(height: 22),
-          _recommendationsSection(context, forecast),
-        ],
+        _projectionHeroCard(context, forecast),
+        const SizedBox(height: 12),
+        _energyBalanceCard(context, forecast),
+        const SizedBox(height: 12),
+        _profileContextCard(context, forecast),
       ],
     );
 
@@ -170,64 +206,142 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     );
   }
 
-  Widget _emptyForecastCard(BuildContext context) => Container(
-    key: const ValueKey('forecast-needs-meals'),
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: context.appBorder),
-    ),
-    child: Column(
-      children: [
-        Icon(
-          Icons.restaurant_menu_rounded,
-          size: 34,
-          color: AppColors.primaryGreen,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'planner.forecast_needs_meals_title'.tr,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+  // Kept as a reusable expanded presentation. The analysis page now uses the
+  // compact direction summary inside the forecast card.
+  // ignore: unused_element
+  Widget _weightDirectionCard(
+    BuildContext context,
+    WeightLossForecast forecast,
+  ) {
+    final color =
+        forecast.shouldGainWeight
+            ? AppColors.accentOrange
+            : forecast.shouldMaintainWeight
+            ? _secondaryAccent(context)
+            : AppColors.primaryGreen;
+    final icon =
+        forecast.shouldGainWeight
+            ? Icons.trending_up_rounded
+            : forecast.shouldMaintainWeight
+            ? Icons.trending_flat_rounded
+            : Icons.trending_down_rounded;
+
+    return Container(
+      key: ValueKey(
+        'weight-direction-${forecast.resolvedWeightDirection.toLowerCase()}',
+      ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+        boxShadow: context.appCardShadow,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 29),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'planner.forecast_needs_meals_help'.tr,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: context.appMutedText, fontSize: 13),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'planner.your_weight_direction'.tr,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  forecast.weightDirectionTitleKey.tr,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  forecast.weightDirectionMessageKey.tr,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 11.5,
+                    height: 1.45,
+                  ),
+                ),
+                if (forecast.hasBmiContext) ...[
+                  const SizedBox(height: 9),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      'BMI ${forecast.bmi!.toStringAsFixed(1)} • ${forecast.bmiStatusKey.tr}',
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _projectionHeroCard(
     BuildContext context,
     WeightLossForecast forecast,
   ) {
-    final isSurplus = forecast.isSurplus;
-    final lossText =
-        isSurplus
-            ? '+0.0 kg'
-            : '−${forecast.projectedWeightLossKg.toStringAsFixed(1)} kg';
+    final change = forecast.projectedEndWeightKg - forecast.currentWeightKg;
+    final changeText =
+        change.abs() < 0.05
+            ? '0.0 kg'
+            : '${change > 0 ? '+' : '−'}${change.abs().toStringAsFixed(1)} kg';
+    final accent =
+        forecast.shouldGainWeight
+            ? AppColors.accentOrange
+            : forecast.shouldMaintainWeight
+            ? _secondaryAccent(context)
+            : AppColors.primaryGreen;
+    final titleKey =
+        forecast.shouldGainWeight
+            ? 'planner.weight_gain_forecast'
+            : forecast.shouldMaintainWeight
+            ? 'planner.weight_maintenance_forecast'
+            : 'planner.weight_loss_forecast';
+    final directionKey = ValueKey(
+      'weight-direction-${forecast.resolvedWeightDirection.toLowerCase()}',
+    );
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      key: const ValueKey('weight-goal-forecast-card'),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [context.appSoftGreen, context.appElevatedSurface],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.primaryGreen.withValues(alpha: 0.20),
-        ),
-        boxShadow: context.appTileShadow,
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
+        boxShadow: context.appCardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -235,38 +349,79 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                key: directionKey,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: (isSurplus
-                          ? AppColors.accentOrange
-                          : AppColors.primaryGreen)
-                      .withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(10),
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(
-                  isSurplus
+                  forecast.shouldGainWeight
                       ? Icons.trending_up_rounded
-                      : Icons.trending_down_rounded,
-                  size: 20,
-                  color:
-                      isSurplus
-                          ? AppColors.accentOrange
-                          : AppColors.primaryGreen,
+                      : forecast.shouldMaintainWeight
+                      ? Icons.balance_rounded
+                      : Icons.bar_chart_rounded,
+                  size: 23,
+                  color: accent,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'planner.forecast_hero_title'.tr,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titleKey.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          forecast.weightDirectionTitleKey.tr,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (forecast.hasBmiContext)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              'BMI ${forecast.bmi!.toStringAsFixed(1)}',
+                              style: TextStyle(
+                                color: accent,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              _paceBadge(context, forecast),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.appMutedText,
+                size: 22,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -276,12 +431,9 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
             child: Column(
               children: [
                 Text(
-                  lossText,
+                  changeText,
                   style: TextStyle(
-                    color:
-                        isSurplus
-                            ? context.appOnWarningSurface
-                            : _positiveText(context),
+                    color: accent,
                     fontSize: 42,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.0,
@@ -303,210 +455,196 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
           ),
           const SizedBox(height: 16),
 
-          // Starting -> Target Weight Row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: context.appSurfaceLow,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Column(
-                  children: [
-                    Text(
-                      'planner.current_weight'.tr,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${forecast.currentWeightKg.toStringAsFixed(1)} kg',
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  color: context.appMutedText,
-                  size: 18,
-                ),
-                Column(
-                  children: [
-                    Text(
-                      'planner.projected_weight'.tr,
-                      style: TextStyle(
-                        color: context.appMutedText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${forecast.projectedEndWeightKg.toStringAsFixed(1)} kg',
-                      style: TextStyle(
-                        color:
-                            isSurplus
-                                ? context.appText
-                                : _positiveText(context),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
+          _weightProgress(context, forecast, accent: accent),
+          const SizedBox(height: 16),
 
           // Timeframe Selection Chips
-          Row(
-            children: [
-              Text(
-                'planner.timeframe'.tr,
-                style: TextStyle(
-                  color: context.appMutedText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    children:
-                        WeightLossProjectionController.availableTimeframes.map((
-                          days,
-                        ) {
-                          final isSelected =
-                              controller.selectedTimeframeDays.value == days;
-                          final label =
-                              days < 14
-                                  ? 'planner.timeframe_days'.trParams({
-                                    'count': '$days',
-                                  })
-                                  : 'planner.timeframe_weeks'.trParams({
-                                    'count': '${days ~/ 7}',
-                                  });
-
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 6),
-                            child: InkWell(
-                              key: ValueKey('timeframe-chip-$days'),
-                              onTap: () => controller.setTimeframeDays(days),
-                              borderRadius: BorderRadius.circular(10),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 160),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      isSelected
-                                          ? AppColors.primaryGreen
-                                          : context.appSurfaceLow,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color:
-                                        isSelected
-                                            ? AppColors.primaryGreen
-                                            : context.appBorder.withValues(
-                                              alpha: 0.5,
-                                            ),
-                                  ),
-                                ),
-                                child: Text(
-                                  label,
-                                  style: TextStyle(
-                                    color:
-                                        isSelected
-                                            ? context.appOnBrand
-                                            : context.appText,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _timeframeSelector(context),
         ],
       ),
     );
   }
 
-  Widget _paceBadge(BuildContext context, WeightLossForecast forecast) {
-    Color badgeColor;
-    String label;
-
-    switch (forecast.paceStatus.toUpperCase()) {
-      case 'BALANCED':
-        badgeColor = _positiveText(context);
-        label = 'planner.pace_balanced'.tr;
-        break;
-      case 'BELOW_TARGET':
-        badgeColor = _secondaryAccent(context);
-        label = 'planner.pace_below_target'.tr;
-        break;
-      case 'ABOVE_TARGET':
-        badgeColor = context.appOnWarningSurface;
-        label = 'planner.pace_above_target'.tr;
-        break;
-      case 'SURPLUS':
-        badgeColor = context.appOnWarningSurface;
-        label = 'planner.pace_surplus'.tr;
-        break;
-      case 'STEADY':
-        badgeColor = _secondaryAccent(context);
-        label = 'planner.pace_steady'.tr;
-        break;
-      case 'OPTIMAL':
-        badgeColor = _positiveText(context);
-        label = 'planner.pace_optimal'.tr;
-        break;
-      case 'RAPID':
-      default:
-        badgeColor = context.appOnWarningSurface;
-        label = 'planner.pace_rapid'.tr;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: badgeColor.withValues(alpha: 0.35)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: badgeColor,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
+  Widget _weightProgress(
+    BuildContext context,
+    WeightLossForecast forecast, {
+    required Color accent,
+  }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'planner.current_weight'.tr,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '${forecast.currentWeightKg.toStringAsFixed(1)} kg',
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'planner.projected_weight'.tr,
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '${forecast.projectedEndWeightKg.toStringAsFixed(1)} kg',
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 14,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                height: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 7),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      accent.withValues(alpha: 0.65),
+                      accent.withValues(alpha: 0.18),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(width: 14, height: 14),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: context.appElevatedSurface,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: accent, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 2),
+        Icon(Icons.arrow_forward_rounded, size: 18, color: accent),
+      ],
+    );
+  }
+
+  Widget _timeframeSelector(BuildContext context) {
+    return Row(
+      children:
+          WeightLossProjectionController.availableTimeframes.map((days) {
+            final isSelected = controller.selectedTimeframeDays.value == days;
+            final label = 'planner.timeframe_day_short'.trParams({
+              'count': '$days',
+            });
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: InkWell(
+                  key: ValueKey('timeframe-chip-$days'),
+                  onTap: () => controller.setTimeframeDays(days),
+                  borderRadius: BorderRadius.circular(99),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 34,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? AppColors.primaryGreen
+                              : context.appSurfaceLow,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(
+                        color:
+                            isSelected
+                                ? AppColors.primaryGreen
+                                : context.appBorder.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color:
+                              isSelected
+                                  ? context.appOnBrand
+                                  : context.appMutedText,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
     );
   }
 
   Widget _energyBalanceCard(BuildContext context, WeightLossForecast forecast) {
+    final isGain = forecast.shouldGainWeight;
+    final isMaintain = forecast.shouldMaintainWeight;
+    final balanceValue = forecast.dailyDeficitCalories.abs().round();
+    final titleKey =
+        isGain
+            ? 'planner.daily_surplus'
+            : isMaintain
+            ? 'planner.daily_balance'
+            : 'planner.daily_deficit';
+    final descriptionKey =
+        isGain
+            ? 'planner.estimated_daily_surplus'
+            : isMaintain
+            ? 'planner.estimated_daily_balance'
+            : 'planner.estimated_daily_deficit';
+    final accent = isGain ? AppColors.accentOrange : AppColors.primaryGreen;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -520,34 +658,69 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.local_fire_department_rounded,
-                size: 18,
-                color: AppColors.accentOrange,
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.accentOrange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.local_fire_department_rounded,
+                  size: 23,
+                  color: AppColors.accentOrange,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 11),
               Expanded(
-                child: Text(
-                  'planner.daily_deficit'.tr,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.appText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titleKey.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      descriptionKey.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '${forecast.dailyDeficitCalories.round()} ${'planner.kcal_per_day'.tr}',
-                style: TextStyle(
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
                   color:
-                      forecast.isSurplus
-                          ? context.appOnWarningSurface
-                          : _positiveText(context),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                      isGain ? context.appWarningSurface : context.appSoftGreen,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Text(
+                  '$balanceValue ${'planner.kcal_per_day'.tr}',
+                  style: TextStyle(
+                    color:
+                        isGain
+                            ? context.appOnWarningSurface
+                            : _positiveText(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ],
@@ -577,7 +750,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                   subtext:
                       '${forecast.weeklyPaceKg.toStringAsFixed(2)} ${'planner.kg_per_week'.tr}',
                   icon: Icons.restaurant_rounded,
-                  color: AppColors.primaryGreen,
+                  color: accent,
                 ),
               ),
             ],
@@ -636,6 +809,593 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
         ],
       ),
     );
+  }
+
+  Widget _profileContextCard(
+    BuildContext context,
+    WeightLossForecast forecast,
+  ) {
+    if (!forecast.hasBmiContext) {
+      return Container(
+        key: const ValueKey('weight-goal-profile-context-missing'),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.person_add_alt_1_rounded,
+              color: context.appColorScheme.primary,
+              size: 30,
+            ),
+            const SizedBox(height: 9),
+            Text(
+              'planner.complete_health_profile'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'planner.complete_health_profile_help'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.appMutedText,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Get.toNamed<void>(AppRoutes.bmiAnalysis),
+              icon: const Icon(Icons.monitor_heart_outlined, size: 18),
+              label: Text('planner.open_bmi_analysis'.tr),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final bmi = forecast.bmi!;
+    final projectedBmi = forecast.resolvedProjectedBmi;
+    final healthyMin = forecast.resolvedHealthyWeightMinKg;
+    final healthyMax = forecast.resolvedHealthyWeightMaxKg;
+    final timeframeLabel =
+        forecast.timeframeDays < 14
+            ? 'planner.timeframe_days'.trParams({
+              'count': '${forecast.timeframeDays}',
+            })
+            : 'planner.timeframe_weeks'.trParams({
+              'count': '${forecast.timeframeDays ~/ 7}',
+            });
+    return Container(
+      key: const ValueKey('weight-goal-bmi-context'),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [context.appElevatedSurface, context.appSoftGreen],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.18),
+        ),
+        boxShadow: context.appTileShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.person_outline_rounded,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'planner.your_health_context'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'planner.personalized_from_profile'.tr,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.link_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 13,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'planner.profile_connected'.tr,
+                      style: const TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: AppColors.primaryGreen.withValues(alpha: 0.18),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline_rounded,
+                  color: AppColors.primaryGreen,
+                  size: 20,
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'planner.why_this_weight_goal'.tr,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        forecast.weightDirectionMessageKey.tr,
+                        style: TextStyle(
+                          color: context.appMutedText,
+                          fontSize: 10.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 13),
+          Row(
+            children: [
+              Expanded(
+                child: _bmiOutlookTile(
+                  context,
+                  label: 'planner.current_bmi'.tr,
+                  value: bmi.toStringAsFixed(1),
+                  supportingText: forecast.bmiStatusKey.tr,
+                  emphasized: true,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 19,
+                  color: context.appMutedText,
+                ),
+              ),
+              Expanded(
+                child: _bmiOutlookTile(
+                  context,
+                  label: 'planner.projected_bmi'.tr,
+                  value:
+                      projectedBmi == null
+                          ? '—'
+                          : projectedBmi.toStringAsFixed(1),
+                  supportingText: 'planner.projected_bmi_timeframe'.trParams({
+                    'timeframe': timeframeLabel,
+                  }),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 600 ? 3 : 2;
+              const spacing = 9.0;
+              final itemWidth =
+                  (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: 10,
+                children: [
+                  _contextMetric(
+                    context,
+                    width: itemWidth,
+                    icon: Icons.cake_outlined,
+                    label: 'bmi.age'.tr,
+                    value:
+                        forecast.age == null
+                            ? '—'
+                            : '${forecast.age} ${'bmi.years'.tr}',
+                  ),
+                  _contextMetric(
+                    context,
+                    width: itemWidth,
+                    icon: Icons.height_rounded,
+                    label: 'bmi.height'.tr,
+                    value:
+                        forecast.heightCm == null
+                            ? '—'
+                            : '${_number(forecast.heightCm!)} cm',
+                  ),
+                  _contextMetric(
+                    context,
+                    width: itemWidth,
+                    icon: Icons.monitor_weight_outlined,
+                    label: 'bmi.weight'.tr,
+                    value: '${_number(forecast.currentWeightKg)} kg',
+                  ),
+                  _contextMetric(
+                    context,
+                    width: itemWidth,
+                    icon: Icons.monitor_heart_outlined,
+                    label: 'planner.current_bmi'.tr,
+                    value: bmi.toStringAsFixed(1),
+                  ),
+                  _contextMetric(
+                    context,
+                    width: itemWidth,
+                    icon: Icons.directions_walk_rounded,
+                    label: 'planner.activity'.tr,
+                    value: forecast.activityLevelKey.tr,
+                  ),
+                  _contextMetric(
+                    context,
+                    width: itemWidth,
+                    icon: Icons.track_changes_rounded,
+                    label: 'planner.goal'.tr,
+                    value:
+                        forecast.shouldGainWeight
+                            ? 'planner.goal_gain_weight'.tr
+                            : forecast.shouldMaintainWeight
+                            ? 'planner.goal_maintain_health'.tr
+                            : 'planner.goal_lose_weight'.tr,
+                  ),
+                ],
+              );
+            },
+          ),
+          if (healthyMin != null && healthyMax != null) ...[
+            const SizedBox(height: 13),
+            Container(
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: context.appSurfaceLow,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: context.appBorder),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.health_and_safety_outlined,
+                      size: 19,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'planner.healthy_weight_reference'.tr,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${_number(healthyMin)}–${_number(healthyMax)} kg',
+                          style: TextStyle(
+                            color: _positiveText(context),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'planner.healthy_weight_reference_help'.tr,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 9.5,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 92),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            forecast.isRapid
+                                ? context.appWarningSurface
+                                : context.appSoftGreen,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          forecast.paceStatusKey.tr,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color:
+                                forecast.isRapid
+                                    ? context.appOnWarningSurface
+                                    : _positiveText(context),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (forecast.projectionBelowHealthyRange) ...[
+            const SizedBox(height: 10),
+            _contextNotice(
+              context,
+              icon: Icons.warning_amber_rounded,
+              text:
+                  forecast.shouldGainWeight
+                      ? 'planner.current_bmi_below_range'.tr
+                      : 'planner.projected_bmi_warning'.tr,
+              warning: true,
+            ),
+          ],
+          if (forecast.energyEstimateUsesDefaults) ...[
+            const SizedBox(height: 10),
+            _contextNotice(
+              context,
+              icon: Icons.calculate_outlined,
+              text: 'planner.energy_estimate_defaults'.tr,
+            ),
+          ],
+          const SizedBox(height: 10),
+          _contextNotice(
+            context,
+            icon: Icons.info_outline_rounded,
+            text: 'planner.bmi_supporting_context'.tr,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => Get.toNamed<void>(AppRoutes.bmiAnalysis),
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+              label: Text('planner.open_bmi_analysis'.tr),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _contextMetric(
+    BuildContext context, {
+    required double width,
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      width: width,
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: context.appSurfaceLow,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.65)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 17, color: AppColors.primaryGreen),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 10.5,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bmiOutlookTile(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required String supportingText,
+    bool emphasized = false,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 112),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+      decoration: BoxDecoration(
+        color: context.appSurfaceLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              emphasized
+                  ? AppColors.primaryGreen.withValues(alpha: 0.28)
+                  : context.appBorder,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: emphasized ? _positiveText(context) : context.appText,
+              fontSize: 27,
+              height: 1.15,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            supportingText,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.appMutedText,
+              fontSize: 9.5,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _contextNotice(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    bool warning = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: warning ? context.appWarningSurface : context.appSurfaceLow,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: warning ? context.appOnWarningSurface : context.appMutedText,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color:
+                    warning
+                        ? context.appOnWarningSurface
+                        : context.appMutedText,
+                fontSize: 10.5,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _number(double value) {
+    final text = value.toStringAsFixed(1);
+    return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;
   }
 
   Widget _metricBox(
@@ -698,6 +1458,9 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     );
   }
 
+  // Kept for reuse in a dedicated recommendations page; intentionally hidden
+  // from Weight Goal Analysis so this page stays focused on the forecast.
+  // ignore: unused_element
   Widget _recommendationsSection(
     BuildContext context,
     WeightLossForecast forecast,
@@ -1069,9 +1832,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.30),
-        ),
+        border: Border.all(color: accent.withValues(alpha: 0.30)),
       ),
       child: Text(
         source,

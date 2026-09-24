@@ -35,6 +35,17 @@ void main() {
     test('correctly parses JSON payload', () {
       final json = {
         'currentWeightKg': 80.0,
+        'age': 30,
+        'heightCm': 175.0,
+        'bmi': 26.1,
+        'projectedBmi': 25.3,
+        'healthyWeightMinKg': 56.7,
+        'healthyWeightMaxKg': 76.3,
+        'bmiStatus': 'OVERWEIGHT',
+        'recommendedWeightDirection': 'LOSE',
+        'activityLevel': 'MODERATE',
+        'hasBiometricProfile': true,
+        'energyEstimateUsesDefaults': false,
         'targetWeightKg': 77.0,
         'projectedWeightLossKg': 2.58,
         'projectedEndWeightKg': 77.42,
@@ -91,6 +102,17 @@ void main() {
       final forecast = WeightLossForecast.fromJson(json);
 
       expect(forecast.currentWeightKg, 80.0);
+      expect(forecast.age, 30);
+      expect(forecast.heightCm, 175.0);
+      expect(forecast.bmi, 26.1);
+      expect(forecast.resolvedProjectedBmi, 25.3);
+      expect(forecast.resolvedHealthyWeightMinKg, 56.7);
+      expect(forecast.resolvedHealthyWeightMaxKg, 76.3);
+      expect(forecast.bmiStatusKey, 'profile.bmi_overweight_range');
+      expect(forecast.shouldLoseWeight, isTrue);
+      expect(forecast.activityLevelKey, 'planner.activity_moderate');
+      expect(forecast.hasBmiContext, isTrue);
+      expect(forecast.energyEstimateUsesDefaults, isFalse);
       expect(forecast.projectedWeightLossKg, 2.58);
       expect(forecast.dailyDeficitCalories, 711.0);
       expect(forecast.isOptimal, isTrue);
@@ -131,6 +153,31 @@ void main() {
   });
 
   group('WeightLossProjectionController Tests', () {
+    test('surfaces the profile requirement returned by the API', () async {
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'detail':
+                  'Complete your date of birth, height and weight before using a weight-loss plan.',
+            }),
+            400,
+          ),
+        ),
+      );
+      final controller = WeightLossProjectionController(provider: provider);
+
+      await controller.loadForecast();
+
+      expect(controller.forecast.value, isNull);
+      expect(controller.requiresProfileReview.value, isTrue);
+      expect(
+        controller.errorMessage.value,
+        contains('date of birth, height and weight'),
+      );
+    });
+
     test(
       'forecast follows the selected meal plan dates and health goal',
       () async {
@@ -229,7 +276,45 @@ void main() {
   });
 
   group('WeightLossProjectionView Widget Tests', () {
-    testWidgets('hides estimated weight change until meals are planned', (
+    testWidgets('turns a generic 400 into an actionable profile review state', (
+      tester,
+    ) async {
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({'status': 400, 'error': 'Bad Request'}),
+            400,
+          ),
+        ),
+      );
+      Get.put<WeightLossProjectionController>(
+        WeightLossProjectionController(provider: provider),
+      );
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: const Material(
+            child: SingleChildScrollView(
+              child: WeightLossProjectionView(embedded: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('weight-goal-profile-review-state')),
+        findsOneWidget,
+      );
+      expect(find.text('Health profile review needed'), findsOneWidget);
+      expect(find.text('Review Health Profile'), findsOneWidget);
+      expect(find.text('Bad Request'), findsNothing);
+    });
+
+    testWidgets('shows an easy-to-read preview before meals are planned', (
       tester,
     ) async {
       final provider = MealPlannerProvider(
@@ -259,11 +344,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const ValueKey('forecast-needs-meals')),
+        find.byKey(const ValueKey('weight-goal-forecast-card')),
         findsOneWidget,
       );
-      expect(find.text('Estimated weight change'), findsNothing);
-      expect(find.text('Add meals to see your estimate'), findsOneWidget);
+      expect(find.text('Weight Loss Forecast'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('weight-goal-profile-context-missing')),
+        findsOneWidget,
+      );
+      expect(find.text('Complete your health profile'), findsOneWidget);
     });
 
     testWidgets('legacy maintenance selection still shows Weight Loss', (
@@ -423,45 +512,11 @@ void main() {
       expect(find.textContaining('550 kcal'), findsOneWidget);
       expect(find.textContaining('2500 kcal'), findsOneWidget);
 
-      // Check Food Analysis badge & recommendation item
-      expect(find.text('Weight Loss Food Analysis'), findsOneWidget);
-
-      // Check Suitable Food recommendation item
-      expect(find.text('Grilled Salmon Bowl'), findsOneWidget);
-      expect(
-        find.textContaining('IBM Granite Insight: Rich in lean protein'),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('add-recommendation-50')),
-        findsOneWidget,
-      );
-
-      // Switch to Healthy Beverages tab
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('tab-healthy-beverages')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('tab-healthy-beverages')));
-      await tester.pumpAndSettle();
-
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('add-recommendation-60')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Unsweetened Green Tea'), findsOneWidget);
-      expect(
-        find.textContaining('IBM Granite Insight: EGCG supports'),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('add-recommendation-60')),
-        findsOneWidget,
-      );
+      expect(find.text('Meals for weight loss'), findsNothing);
+      expect(find.byKey(const ValueKey('tab-suitable-foods')), findsNothing);
     });
 
-    testWidgets('renders web-sourced recommendations with verified source badges', (
+    testWidgets('does not render meal recommendations on goal analysis', (
       tester,
     ) async {
       final webForecast = WeightLossForecast(
@@ -542,36 +597,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify Food with verified source badge
+      expect(find.text('Meals for weight loss'), findsNothing);
       expect(
         find.text('Chicken Satay Salad with Ginger-Lime Dressing'),
-        findsOneWidget,
+        findsNothing,
       );
-      expect(find.text('BBC Good Food'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('add-recommendation-701')),
-        findsOneWidget,
-      );
-
-      // Switch to Beverages
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('tab-healthy-beverages')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('tab-healthy-beverages')));
-      await tester.pumpAndSettle();
-
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('add-recommendation-702')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Matcha Green Tea with Fresh Mint'), findsOneWidget);
-      expect(find.text('Healthline'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('add-recommendation-702')),
-        findsOneWidget,
-      );
+      expect(find.text('Matcha Green Tea with Fresh Mint'), findsNothing);
     });
 
     testWidgets(
@@ -613,7 +644,7 @@ void main() {
 
         // Weight Loss content is visible
         expect(find.text('Weight Loss Forecast'), findsOneWidget);
-        expect(find.text('Estimated weight change'), findsOneWidget);
+        expect(find.text('Focus on gradual weight loss'), findsOneWidget);
 
         // Maintain Health and Dual Switcher must NOT be shown
         expect(find.byKey(const ValueKey('dual-goal-switcher')), findsNothing);
@@ -642,15 +673,10 @@ void main() {
 
         final provider = MealPlannerProvider(
           authService: _FakeAuthService(),
-          client: MockClient(
-            (request) async {
-              requestedGoals.add(request.url.queryParameters['goal']);
-              return http.Response(
-                jsonEncode(maintainForecast.toJson()),
-                200,
-              );
-            },
-          ),
+          client: MockClient((request) async {
+            requestedGoals.add(request.url.queryParameters['goal']);
+            return http.Response(jsonEncode(maintainForecast.toJson()), 200);
+          }),
         );
 
         Get.put<WeightLossProjectionController>(
@@ -676,7 +702,8 @@ void main() {
         expect(find.text('Health Maintenance Outlook'), findsNothing);
         expect(find.text('Maintain Your Balance'), findsNothing);
         expect(requestedGoals, isNotEmpty);
-        expect(requestedGoals, everyElement('LOSE_WEIGHT'));
+        expect(requestedGoals, contains('MAINTAIN_HEALTH'));
+        expect(requestedGoals.last, 'LOSE_WEIGHT');
         expect(
           find.byKey(const ValueKey('dual-goal-comparison-card')),
           findsNothing,
@@ -684,64 +711,62 @@ void main() {
       },
     );
 
-    testWidgets(
-      'legacy dual-goal flags never show the removed goal',
-      (tester) async {
-        final planner = Get.put(MealPlannerController());
-        planner.hasAnalyzedWeightLoss.value = true;
-        planner.hasAnalyzedMaintainHealth.value = true;
+    testWidgets('legacy dual-goal flags never show the removed goal', (
+      tester,
+    ) async {
+      final planner = Get.put(MealPlannerController());
+      planner.hasAnalyzedWeightLoss.value = true;
+      planner.hasAnalyzedMaintainHealth.value = true;
 
-        final lossForecast = WeightLossForecast.fallback(
-          goal: MealPlannerHealthGoal.loseWeight,
-          hasPlannedMeals: true,
-        );
-        final maintainForecast = WeightLossForecast.fallback(
-          goal: MealPlannerHealthGoal.maintainHealth,
-          hasPlannedMeals: true,
-        );
+      final lossForecast = WeightLossForecast.fallback(
+        goal: MealPlannerHealthGoal.loseWeight,
+        hasPlannedMeals: true,
+      );
+      final maintainForecast = WeightLossForecast.fallback(
+        goal: MealPlannerHealthGoal.maintainHealth,
+        hasPlannedMeals: true,
+      );
 
-        final provider = MealPlannerProvider(
-          authService: _FakeAuthService(),
-          client: MockClient((req) async {
-            final uri = req.url.toString();
-            final isMaintain = uri.contains('MAINTAIN');
-            return http.Response(
-              jsonEncode(
-                (isMaintain ? maintainForecast : lossForecast).toJson(),
-              ),
-              200,
-            );
-          }),
-        );
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: MockClient((req) async {
+          final uri = req.url.toString();
+          final isMaintain = uri.contains('MAINTAIN');
+          return http.Response(
+            jsonEncode((isMaintain ? maintainForecast : lossForecast).toJson()),
+            200,
+          );
+        }),
+      );
 
-        final projController = WeightLossProjectionController(
-          provider: provider,
-        );
-        Get.put<WeightLossProjectionController>(projController);
+      final projController = WeightLossProjectionController(provider: provider);
+      Get.put<WeightLossProjectionController>(projController);
 
-        await tester.pumpWidget(
-          GetMaterialApp(
-            translations: AppTranslations(),
-            locale: const Locale('en', 'US'),
-            home: const Material(
-              child: SingleChildScrollView(
-                child: WeightLossProjectionView(embedded: true),
-              ),
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: const Material(
+            child: SingleChildScrollView(
+              child: WeightLossProjectionView(embedded: true),
             ),
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.byKey(const ValueKey('dual-goal-switcher')), findsNothing);
-        expect(find.byKey(const ValueKey('pill-maintain-health')), findsNothing);
-        expect(find.byKey(const ValueKey('dual-goal-comparison-card')), findsNothing);
-        expect(find.text('Health Maintenance Outlook'), findsNothing);
-        expect(
-          projController.activeAnalysisGoal.value,
-          MealPlannerHealthGoal.loseWeight,
-        );
-        expect(find.text('Weight Loss Forecast'), findsOneWidget);
-      },
-    );
+      expect(find.byKey(const ValueKey('dual-goal-switcher')), findsNothing);
+      expect(find.byKey(const ValueKey('pill-maintain-health')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('dual-goal-comparison-card')),
+        findsNothing,
+      );
+      expect(find.text('Health Maintenance Outlook'), findsNothing);
+      expect(
+        projController.activeAnalysisGoal.value,
+        MealPlannerHealthGoal.loseWeight,
+      );
+      expect(find.text('Weight Loss Forecast'), findsOneWidget);
+    });
   });
 }

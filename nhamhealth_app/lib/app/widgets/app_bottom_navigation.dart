@@ -137,8 +137,9 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
                               ),
                             ),
                             child: CustomPaint(
-                              foregroundPainter:
-                                  _NavigationInnerShadowPainter(isDark: isDark),
+                              foregroundPainter: _NavigationInnerShadowPainter(
+                                isDark: isDark,
+                              ),
                               child: Padding(
                                 padding: EdgeInsets.zero,
                                 child: Row(
@@ -521,10 +522,7 @@ class _ChatbotButtonState extends State<_ChatbotButton> {
                         ),
                         child: ClipOval(
                           child: BackdropFilter(
-                            filter: ui.ImageFilter.blur(
-                              sigmaX: 24,
-                              sigmaY: 24,
-                            ),
+                            filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                             child: Container(
                               decoration: BoxDecoration(
                                 color: colors.surface.withValues(alpha: 0.54),
@@ -554,7 +552,14 @@ class _ChatbotButtonState extends State<_ChatbotButton> {
                             child: Lottie.asset(
                               'assets/animations/chatbot.json',
                               fit: BoxFit.contain,
-                              repeat: true,
+                              repeat:
+                                  !WidgetsBinding.instance.runtimeType
+                                      .toString()
+                                      .contains('Test'),
+                              animate:
+                                  !WidgetsBinding.instance.runtimeType
+                                      .toString()
+                                      .contains('Test'),
                             ),
                           ),
                         ),

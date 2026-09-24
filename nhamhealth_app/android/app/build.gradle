@@ -42,6 +42,8 @@ if (googleServerClientId &&
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("key.properties")
 def releaseKeystoreAvailable = false
+def customDebugKeystoreFile = file("nhamhealth-test-debug.keystore")
+def customDebugKeystoreAvailable = customDebugKeystoreFile.exists()
 
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(
@@ -94,11 +96,13 @@ android {
     // ========================================================
 
     signingConfigs {
-        nhamhealthDebug {
-            storeFile file("nhamhealth-test-debug.keystore")
-            storePassword "android"
-            keyAlias "nhamhealthdebug"
-            keyPassword "android"
+        if (customDebugKeystoreAvailable) {
+            nhamhealthDebug {
+                storeFile customDebugKeystoreFile
+                storePassword "android"
+                keyAlias "nhamhealthdebug"
+                keyPassword "android"
+            }
         }
 
         release {
@@ -113,13 +117,17 @@ android {
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.nhamhealthDebug
+            signingConfig = customDebugKeystoreAvailable
+                    ? signingConfigs.nhamhealthDebug
+                    : signingConfigs.debug
         }
 
         release {
             signingConfig = releaseKeystoreAvailable
                     ? signingConfigs.release
-                    : signingConfigs.nhamhealthDebug
+                    : (customDebugKeystoreAvailable
+                        ? signingConfigs.nhamhealthDebug
+                        : signingConfigs.debug)
         }
     }
 }

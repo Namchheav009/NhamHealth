@@ -39,8 +39,14 @@ class MealPlannerProvider {
         .get(uri, headers: headers)
         .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw const MealPlannerProviderException(
-        'Unable to load weight loss forecast.',
+      throw MealPlannerProviderException(
+        _errorMessage(
+          response,
+          response.statusCode == 400
+              ? 'planner.forecast_profile_check'.tr
+              : 'planner.forecast_unavailable'.tr,
+        ),
+        statusCode: response.statusCode,
       );
     }
     final payload = jsonDecode(response.body);
@@ -319,13 +325,28 @@ class MealPlannerProvider {
     try {
       final payload = jsonDecode(response.body);
       if (payload is Map) {
-        final message = '${payload['message'] ?? payload['detail'] ?? payload['error'] ?? ''}'.trim();
-        if (message.isNotEmpty) return message;
+        for (final key in const ['message', 'detail', 'error']) {
+          final message = '${payload[key] ?? ''}'.trim();
+          if (message.isNotEmpty && !_isGenericHttpError(message)) {
+            return message;
+          }
+        }
       }
     } catch (_) {
       // The server did not return JSON; use the stable fallback below.
     }
     return fallback;
+  }
+
+  bool _isGenericHttpError(String message) {
+    return const {
+      'bad request',
+      'unauthorized',
+      'forbidden',
+      'not found',
+      'internal server error',
+      'service unavailable',
+    }.contains(message.toLowerCase());
   }
 
   Future<Map<String, dynamic>> analyzeIngredients({

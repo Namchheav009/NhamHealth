@@ -50,7 +50,7 @@ class NotificationsView extends StatelessWidget {
                 Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: paddedMaxWidth),
-                    child: _NotificationsHeader(controller: controller),
+                    child: const _NotificationsHeader(),
                   ),
                 ),
                 Expanded(
@@ -163,9 +163,7 @@ class NotificationsView extends StatelessWidget {
 }
 
 class _NotificationsHeader extends StatelessWidget {
-  const _NotificationsHeader({required this.controller});
-
-  final NotificationsController controller;
+  const _NotificationsHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -181,27 +179,6 @@ class _NotificationsHeader extends StatelessWidget {
         title: 'common.notifications',
         backButtonKey: const ValueKey<String>('notifications-back-button'),
         onBack: Get.back,
-        trailing: Obx(
-          () =>
-              controller.unread.isEmpty
-                  ? const SizedBox(width: 44)
-                  : IconButton(
-                    tooltip: 'notifications.mark_all_read'.tr,
-                    onPressed:
-                        controller.isMarkingAllRead.value
-                            ? null
-                            : controller.markAllRead,
-                    icon:
-                        controller.isMarkingAllRead.value
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Icon(Icons.done_all_rounded),
-                    color: AppColors.primaryGreen,
-                  ),
-        ),
       ),
     );
   }
@@ -324,6 +301,15 @@ class _NotificationLeading extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSocial = notification.kind == NotificationKind.social;
     final isNhamHealth = notification.kind == NotificationKind.system;
+    final accent = notification.actionColor;
+    final iconBackground = Color.alphaBlend(
+      accent.withValues(alpha: 0.12),
+      context.appSurface,
+    );
+    final iconHighlight = Color.alphaBlend(
+      accent.withValues(alpha: 0.04),
+      context.appSurface,
+    );
 
     return Stack(
       clipBehavior: Clip.none,
@@ -332,43 +318,55 @@ class _NotificationLeading extends StatelessWidget {
           width: 58,
           height: 58,
           decoration: BoxDecoration(
-            color:
-                notification.kind == NotificationKind.wellness
-                    ? Color.alphaBlend(
-                      const Color(0xFF4396FF).withValues(alpha: 0.14),
-                      context.appSurface,
-                    )
-                    : context.appSoftGreen,
-            shape: BoxShape.circle,
-            border: Border.all(color: context.appSurface, width: 2),
+            gradient:
+                isSocial
+                    ? null
+                    : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [iconHighlight, iconBackground],
+                    ),
+            color: isSocial ? iconBackground : null,
+            shape: isSocial ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: isSocial ? null : BorderRadius.circular(18),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.18),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.10),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           clipBehavior: Clip.antiAlias,
           child:
               isSocial
                   ? _SocialNotificationAvatar(
                     imageUrl: notification.actorAvatarUrl,
+                    displayName: notification.displayTitle,
+                    accent: accent,
                   )
                   : isNhamHealth
                   ? const _NhamHealthNotificationAvatar()
                   : Icon(
                     notification.icon,
-                    size: 29,
-                    color:
-                        notification.kind == NotificationKind.wellness
-                            ? const Color(0xFF4396FF)
-                            : AppColors.primaryGreen,
+                    size: 28,
+                    color: accent,
                   ),
         ),
         Positioned(
           right: -2,
           bottom: -1,
           child: Container(
-            width: 23,
-            height: 23,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
               color: notification.actionColor,
               shape: BoxShape.circle,
-              border: Border.all(color: context.appSurface, width: 2),
+              border: Border.all(color: context.appSurface, width: 2.5),
               boxShadow: [
                 BoxShadow(
                   color: notification.actionColor.withValues(alpha: 0.22),
@@ -376,7 +374,11 @@ class _NotificationLeading extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(notification.actionIcon, size: 12, color: Colors.white),
+            child: Icon(
+              notification.actionIcon,
+              size: 12.5,
+              color: Colors.white,
+            ),
           ),
         ),
       ],
@@ -385,16 +387,41 @@ class _NotificationLeading extends StatelessWidget {
 }
 
 class _SocialNotificationAvatar extends StatelessWidget {
-  const _SocialNotificationAvatar({required this.imageUrl});
+  const _SocialNotificationAvatar({
+    required this.imageUrl,
+    required this.displayName,
+    required this.accent,
+  });
 
   final String imageUrl;
+  final String displayName;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final fallback = Icon(
-      Icons.person_rounded,
-      size: 30,
-      color: AppColors.primaryGreen,
+    final trimmedName = displayName.trim();
+    final initial = trimmedName.isEmpty ? '?' : trimmedName.characters.first;
+    final fallback = DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.72),
+            accent,
+          ],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          initial.toUpperCase(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
     );
     if (imageUrl.isEmpty) return fallback;
     return Image.network(

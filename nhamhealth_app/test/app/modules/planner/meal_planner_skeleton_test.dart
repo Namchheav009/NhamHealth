@@ -166,6 +166,7 @@ void main() {
     (tester) async {
       final controller = Get.put(MealPlannerController());
       controller.hasLoadedOnce.value = true;
+      controller.hasLoadedOnce.value = false;
       controller.isLoading.value = true;
 
       await tester.pumpWidget(

@@ -12,6 +12,7 @@ enum PageSkeletonType {
   foodDetailContent,
   profile,
   wellness,
+  water,
   notifications,
   favorites,
   community,
@@ -74,6 +75,11 @@ class PageSkeleton extends StatefulWidget {
     super.key,
     this.duration = const Duration(milliseconds: 1650),
   }) : type = PageSkeletonType.wellness;
+
+  const PageSkeleton.water({
+    super.key,
+    this.duration = const Duration(milliseconds: 1500),
+  }) : type = PageSkeletonType.water;
 
   const PageSkeleton.notifications({
     super.key,
@@ -255,6 +261,7 @@ class _PageSkeletonState extends State<PageSkeleton>
     PageSkeletonType.foodDetailContent => const _FoodDetailContentPlaceholder(),
     PageSkeletonType.profile => const _ProfilePlaceholder(),
     PageSkeletonType.wellness => const _WellnessPlaceholder(),
+    PageSkeletonType.water => const _WaterPlaceholder(),
     PageSkeletonType.notifications => const _NotificationsPlaceholder(),
     PageSkeletonType.favorites => const _FavoritesPlaceholder(),
     PageSkeletonType.community => const _CommunityPlaceholder(),
@@ -868,18 +875,22 @@ class _HomePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      const search = _SkeletonBox(height: 48, radius: 24);
       if (constraints.maxWidth < AppSpacing.twoColumnBreakpoint) {
         return const Column(
+          key: ValueKey<String>('home-skeleton-mobile-layout'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            search,
-            SizedBox(height: 18),
-            _TextLines(widths: [.56, .82]),
-            SizedBox(height: 18),
-            _SkeletonCard(height: 150),
+            _TextLines(widths: [.34, .52]),
             SizedBox(height: 16),
-            _SkeletonCard(height: 190),
+            _HomeMoodSkeleton(),
+            SizedBox(height: 12),
+            _SkeletonCard(height: 164),
+            SizedBox(height: 12),
+            _SkeletonCard(height: 164),
+            SizedBox(height: 12),
+            _SkeletonCard(height: 204),
+            SizedBox(height: 16),
+            _HomeRecommendationsSkeleton(),
           ],
         );
       }
@@ -888,35 +899,101 @@ class _HomePlaceholder extends StatelessWidget {
         key: ValueKey<String>('home-skeleton-tablet-layout'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          search,
+          _TextLines(widths: [.22, .36]),
           SizedBox(height: 16),
+          _HomeMoodSkeleton(),
+          SizedBox(height: 18),
+          _SkeletonCard(height: 164),
+          SizedBox(height: 18),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    _SkeletonCard(height: 150),
-                    SizedBox(height: 16),
-                    _SkeletonCard(height: 190),
-                  ],
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    _SkeletonCard(height: 272),
-                    SizedBox(height: 16),
-                    _SkeletonCard(height: 120),
-                  ],
-                ),
-              ),
+              Expanded(flex: 5, child: _SkeletonCard(height: 164)),
+              SizedBox(width: 18),
+              Expanded(flex: 6, child: _SkeletonCard(height: 204)),
             ],
           ),
+          SizedBox(height: 18),
+          _HomeRecommendationsSkeleton(),
         ],
       );
     },
+  );
+}
+
+class _HomeMoodSkeleton extends StatelessWidget {
+  const _HomeMoodSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SkeletonBox(width: 210, height: 18, radius: 9),
+      SizedBox(height: 7),
+      _SkeletonBox(width: 150, height: 11, radius: 6),
+      SizedBox(height: 10),
+      Row(
+        children: [
+          Expanded(child: _SkeletonBox(height: 78, radius: 16)),
+          SizedBox(width: 7),
+          Expanded(child: _SkeletonBox(height: 78, radius: 16)),
+          SizedBox(width: 7),
+          Expanded(child: _SkeletonBox(height: 78, radius: 16)),
+          SizedBox(width: 7),
+          Expanded(child: _SkeletonBox(height: 78, radius: 16)),
+        ],
+      ),
+    ],
+  );
+}
+
+class _HomeRecommendationsSkeleton extends StatelessWidget {
+  const _HomeRecommendationsSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          _SkeletonBox(width: 34, height: 34, radius: 10),
+          SizedBox(width: 9),
+          Expanded(child: _TextLines(widths: [.38, .62])),
+          SizedBox(width: 12),
+          _SkeletonBox(width: 66, height: 30, radius: 15),
+        ],
+      ),
+      SizedBox(height: 10),
+      Row(
+        children: [
+          Expanded(child: _SkeletonBox(height: 184, radius: 17)),
+          SizedBox(width: 10),
+          Expanded(child: _SkeletonBox(height: 184, radius: 17)),
+        ],
+      ),
+    ],
+  );
+}
+
+class _WaterPlaceholder extends StatelessWidget {
+  const _WaterPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    key: ValueKey<String>('water-page-skeleton'),
+    children: [
+      _SkeletonCard(height: 195),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 70),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 196),
+      SizedBox(height: 12),
+      _SkeletonBox(height: 46, radius: 15),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 84),
+      SizedBox(height: 10),
+      _SkeletonCard(height: 76),
+    ],
   );
 }
 

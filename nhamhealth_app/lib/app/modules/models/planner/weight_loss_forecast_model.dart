@@ -93,6 +93,17 @@ class ForecastRecommendationItem {
 class WeightLossForecast {
   const WeightLossForecast({
     required this.currentWeightKg,
+    this.age,
+    this.heightCm,
+    this.bmi,
+    this.projectedBmi,
+    this.healthyWeightMinKg,
+    this.healthyWeightMaxKg,
+    this.bmiStatus = 'UNKNOWN',
+    this.recommendedWeightDirection = 'UNKNOWN',
+    this.activityLevel = 'UNKNOWN',
+    this.hasBiometricProfile = false,
+    this.energyEstimateUsesDefaults = false,
     required this.targetWeightKg,
     required this.projectedWeightLossKg,
     required this.projectedEndWeightKg,
@@ -113,6 +124,17 @@ class WeightLossForecast {
   });
 
   final double currentWeightKg;
+  final int? age;
+  final double? heightCm;
+  final double? bmi;
+  final double? projectedBmi;
+  final double? healthyWeightMinKg;
+  final double? healthyWeightMaxKg;
+  final String bmiStatus;
+  final String recommendedWeightDirection;
+  final String activityLevel;
+  final bool hasBiometricProfile;
+  final bool energyEstimateUsesDefaults;
   final double targetWeightKg;
   final double projectedWeightLossKg;
   final double projectedEndWeightKg;
@@ -135,9 +157,107 @@ class WeightLossForecast {
   bool get isSurplus => dailyDeficitCalories <= 0 || paceStatus == 'SURPLUS';
   bool get isOptimal => paceStatus == 'OPTIMAL';
   bool get isRapid => paceStatus == 'RAPID';
+  bool get hasBmiContext => hasBiometricProfile && bmi != null;
+
+  double? get resolvedProjectedBmi {
+    if (projectedBmi != null) return projectedBmi;
+    final height = heightCm;
+    if (height == null || height <= 0) return null;
+    final heightMeters = height / 100;
+    return projectedEndWeightKg / (heightMeters * heightMeters);
+  }
+
+  double? get resolvedHealthyWeightMinKg {
+    if (healthyWeightMinKg != null) return healthyWeightMinKg;
+    final height = heightCm;
+    if (height == null || height <= 0) return null;
+    final heightMeters = height / 100;
+    return 18.5 * heightMeters * heightMeters;
+  }
+
+  double? get resolvedHealthyWeightMaxKg {
+    if (healthyWeightMaxKg != null) return healthyWeightMaxKg;
+    final height = heightCm;
+    if (height == null || height <= 0) return null;
+    final heightMeters = height / 100;
+    return 24.9 * heightMeters * heightMeters;
+  }
+
+  bool get projectionBelowHealthyRange {
+    final value = resolvedProjectedBmi;
+    return value != null && value < 18.5;
+  }
+
+  String get resolvedWeightDirection {
+    final direction = recommendedWeightDirection.toUpperCase();
+    if (direction == 'GAIN' || direction == 'MAINTAIN' || direction == 'LOSE') {
+      return direction;
+    }
+    final value = bmi;
+    if (value == null) return 'LOSE';
+    if (value < 18.5) return 'GAIN';
+    if (value < 25) return 'MAINTAIN';
+    return 'LOSE';
+  }
+
+  bool get shouldGainWeight => resolvedWeightDirection == 'GAIN';
+  bool get shouldMaintainWeight => resolvedWeightDirection == 'MAINTAIN';
+  bool get shouldLoseWeight => resolvedWeightDirection == 'LOSE';
+
+  String get weightDirectionTitleKey => switch (resolvedWeightDirection) {
+    'GAIN' => 'planner.weight_direction_gain',
+    'MAINTAIN' => 'planner.weight_direction_maintain',
+    'LOSE' => 'planner.weight_direction_lose',
+    _ => 'planner.weight_direction_unknown',
+  };
+
+  String get weightDirectionMessageKey => switch (resolvedWeightDirection) {
+    'GAIN' => 'planner.weight_direction_gain_help',
+    'MAINTAIN' => 'planner.weight_direction_maintain_help',
+    'LOSE' => 'planner.weight_direction_lose_help',
+    _ => 'planner.weight_direction_unknown_help',
+  };
+
+  String get bmiStatusKey => switch (bmiStatus.toUpperCase()) {
+    'UNDER_18' => 'profile.bmi_under_18',
+    'UNDERWEIGHT' => 'profile.bmi_underweight_range',
+    'HEALTHY' => 'profile.bmi_healthy_range',
+    'OVERWEIGHT' => 'profile.bmi_overweight_range',
+    'OBESITY' => 'profile.bmi_obesity_range',
+    _ => 'profile.not_set',
+  };
+
+  String get activityLevelKey => switch (activityLevel.toUpperCase()) {
+    'SEDENTARY' => 'planner.activity_sedentary',
+    'LIGHT' || 'LIGHTLY_ACTIVE' => 'planner.activity_light',
+    'ACTIVE' || 'VERY_ACTIVE' => 'planner.activity_active',
+    'EXTRA_ACTIVE' || 'EXTREMELY_ACTIVE' => 'planner.activity_very_active',
+    'MODERATE' || 'MODERATELY_ACTIVE' => 'planner.activity_moderate',
+    'MODERATE_ESTIMATE' => 'planner.activity_moderate_estimated',
+    _ => 'planner.activity_unknown',
+  };
+
+  String get paceStatusKey => switch (paceStatus.toUpperCase()) {
+    'OPTIMAL' => 'planner.pace_optimal',
+    'STEADY' => 'planner.pace_steady',
+    'RAPID' => 'planner.pace_rapid',
+    'SURPLUS' => 'planner.pace_surplus',
+    _ => 'planner.pace_balanced',
+  };
 
   Map<String, dynamic> toJson() => {
     'currentWeightKg': currentWeightKg,
+    'age': age,
+    'heightCm': heightCm,
+    'bmi': bmi,
+    'projectedBmi': projectedBmi,
+    'healthyWeightMinKg': healthyWeightMinKg,
+    'healthyWeightMaxKg': healthyWeightMaxKg,
+    'bmiStatus': bmiStatus,
+    'recommendedWeightDirection': recommendedWeightDirection,
+    'activityLevel': activityLevel,
+    'hasBiometricProfile': hasBiometricProfile,
+    'energyEstimateUsesDefaults': energyEstimateUsesDefaults,
     'targetWeightKg': targetWeightKg,
     'projectedWeightLossKg': projectedWeightLossKg,
     'projectedEndWeightKg': projectedEndWeightKg,
@@ -185,6 +305,18 @@ class WeightLossForecast {
 
     return WeightLossForecast(
       currentWeightKg: (json['currentWeightKg'] as num?)?.toDouble() ?? 70.0,
+      age: (json['age'] as num?)?.toInt(),
+      heightCm: (json['heightCm'] as num?)?.toDouble(),
+      bmi: (json['bmi'] as num?)?.toDouble(),
+      projectedBmi: (json['projectedBmi'] as num?)?.toDouble(),
+      healthyWeightMinKg: (json['healthyWeightMinKg'] as num?)?.toDouble(),
+      healthyWeightMaxKg: (json['healthyWeightMaxKg'] as num?)?.toDouble(),
+      bmiStatus: (json['bmiStatus'] as String?) ?? 'UNKNOWN',
+      recommendedWeightDirection:
+          (json['recommendedWeightDirection'] as String?) ?? 'UNKNOWN',
+      activityLevel: (json['activityLevel'] as String?) ?? 'UNKNOWN',
+      hasBiometricProfile: json['hasBiometricProfile'] == true,
+      energyEstimateUsesDefaults: json['energyEstimateUsesDefaults'] == true,
       targetWeightKg: (json['targetWeightKg'] as num?)?.toDouble() ?? 67.0,
       projectedWeightLossKg:
           (json['projectedWeightLossKg'] as num?)?.toDouble() ?? 0.0,
@@ -211,6 +343,17 @@ class WeightLossForecast {
 
   factory WeightLossForecast.fallback({
     double currentWeightKg = 70.0,
+    int? age,
+    double? heightCm,
+    double? bmi,
+    double? projectedBmi,
+    double? healthyWeightMinKg,
+    double? healthyWeightMaxKg,
+    String bmiStatus = 'UNKNOWN',
+    String recommendedWeightDirection = 'UNKNOWN',
+    String activityLevel = 'UNKNOWN',
+    bool hasBiometricProfile = false,
+    bool energyEstimateUsesDefaults = false,
     int timeframeDays = 28,
     double dailyDeficit = 500.0,
     MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
@@ -222,6 +365,17 @@ class WeightLossForecast {
     final pace = (effectiveDeficit * 7.0) / 7700.0;
     return WeightLossForecast(
       currentWeightKg: currentWeightKg,
+      age: age,
+      heightCm: heightCm,
+      bmi: bmi,
+      projectedBmi: projectedBmi,
+      healthyWeightMinKg: healthyWeightMinKg,
+      healthyWeightMaxKg: healthyWeightMaxKg,
+      bmiStatus: bmiStatus,
+      recommendedWeightDirection: recommendedWeightDirection,
+      activityLevel: activityLevel,
+      hasBiometricProfile: hasBiometricProfile,
+      energyEstimateUsesDefaults: energyEstimateUsesDefaults,
       targetWeightKg:
           isWeightLoss
               ? (currentWeightKg - 3.0).clamp(35.0, 300.0)

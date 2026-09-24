@@ -48,7 +48,7 @@ void main() {
       fullName: 'Nham User',
     );
 
-await tester.pumpWidget(_buildTestApp(const HomeView()));
+    await tester.pumpWidget(_buildTestApp(const HomeView()));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump(const Duration(milliseconds: 250));
 
@@ -67,6 +67,25 @@ await tester.pumpWidget(_buildTestApp(const HomeView()));
     );
     expect(
       find.byKey(const ValueKey<String>('home-wellness-water')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .getTopLeft(find.byKey(const ValueKey<String>('home-wellness-water')))
+          .dx,
+      lessThan(
+        tester
+            .getTopLeft(
+              find.byKey(const ValueKey<String>('home-wellness-calories')),
+            )
+            .dx,
+      ),
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('home-wellness-water')),
+        matching: find.byIcon(Icons.add_circle_rounded),
+      ),
       findsOneWidget,
     );
     expect(
@@ -107,7 +126,7 @@ await tester.pumpWidget(_buildTestApp(const HomeView()));
       );
       Get.put<HomeController>(controller);
 
-await tester.pumpWidget(_buildTestApp(const HomeView()));
+      await tester.pumpWidget(_buildTestApp(const HomeView()));
       await tester.pump(const Duration(milliseconds: 900));
 
       expect(find.text('How are you feeling today?'), findsOneWidget);
@@ -154,7 +173,7 @@ await tester.pumpWidget(_buildTestApp(const HomeView()));
     );
     Get.put<HomeController>(controller);
 
-await tester.pumpWidget(_buildTestApp(const HomeView()));
+    await tester.pumpWidget(_buildTestApp(const HomeView()));
     await tester.pump(const Duration(milliseconds: 900));
 
     final homeScroll = find.byType(SingleChildScrollView);

@@ -21,6 +21,15 @@ class WellnessController extends GetxController {
   final nutrients =
       <WellnessSummaryModel>[
         const WellnessSummaryModel(
+          name: 'Water',
+          current: '0',
+          target: '8',
+          unit: 'glasses',
+          percentage: 0,
+          icon: AppNutrientTheme.waterIcon,
+          color: AppNutrientTheme.waterColor,
+        ),
+        const WellnessSummaryModel(
           name: 'Calories',
           current: '0',
           target: '2000',
@@ -55,15 +64,6 @@ class WellnessController extends GetxController {
           percentage: 0,
           icon: AppNutrientTheme.fatIcon,
           color: AppNutrientTheme.fatColor,
-        ),
-        const WellnessSummaryModel(
-          name: 'Water',
-          current: '0',
-          target: '8',
-          unit: 'glasses',
-          percentage: 0,
-          icon: AppNutrientTheme.waterIcon,
-          color: AppNutrientTheme.waterColor,
         ),
         const WellnessSummaryModel(
           name: 'Fiber',

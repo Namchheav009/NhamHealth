@@ -11,12 +11,14 @@ class NutritionProgressCard extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     this.onTap,
+    this.showActionIndicator = false,
   });
 
   final NutritionProgressModel data;
   final IconData icon;
   final Color iconColor;
   final VoidCallback? onTap;
+  final bool showActionIndicator;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,10 @@ class NutritionProgressCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (showActionIndicator) ...[
+                    const SizedBox(width: 3),
+                    Icon(Icons.add_circle_rounded, size: 13, color: iconColor),
+                  ],
                 ],
               ),
               const SizedBox(height: 6),

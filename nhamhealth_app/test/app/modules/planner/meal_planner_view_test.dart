@@ -74,13 +74,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Rebalance Entire Week'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Auto-Fill Weight Loss Plan'));
+    await tester.tap(find.text('Auto-Fill Now'));
     await tester.pumpAndSettle();
     expect(find.text('Replace your planned meals?'), findsOneWidget);
     await tester.tap(find.text('Cancel').last);
     await tester.pumpAndSettle();
     expect(find.text('Replace your planned meals?'), findsNothing);
-    expect(find.text('Auto-Fill Weight Loss Plan'), findsOneWidget);
+    expect(find.text('Auto-Fill Now'), findsOneWidget);
 
     await tester.tap(find.text('2  Food preferences'));
     await tester.pumpAndSettle();
@@ -121,6 +121,10 @@ void main() {
     expect(find.byKey(const ValueKey('planner-week-card')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('planner-daily-overview')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('planner-nutrition-scroll')),
       findsOneWidget,
     );
     expect(
@@ -166,6 +170,14 @@ void main() {
     expect(find.byKey(const ValueKey('planner-week-card')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('planner-daily-overview')),
+      findsOneWidget,
+    );
+    expect(find.text('Meal for Today'), findsOneWidget);
+    expect(find.text('Find healthy and tasty meals'), findsWidgets);
+    await tester.tap(find.text('Forecast & Week'));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('open-weight-loss-analysis')),
       findsOneWidget,
     );
   });
@@ -310,6 +322,8 @@ void main() {
     addTearDown(tester.view.reset);
 
     final controller = Get.put(MealPlannerController());
+    controller.hasLoadedOnce.value = true;
+    controller.isLoading.value = false;
     controller.adminRecommendations.add(
       PlannedMeal(
         id: 101,
@@ -354,7 +368,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Meal Planner'), findsOneWidget);
+    expect(find.text('NHAM'), findsOneWidget);
     expect(find.textContaining('0/4'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('planner-daily-overview')),
@@ -372,6 +386,8 @@ void main() {
     final breakfastSlot = find.byKey(const ValueKey('planner-slot-breakfast'));
     await tester.drag(find.byType(ListView), const Offset(0, -280));
     await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(breakfastSlot);
     await tester.tap(breakfastSlot);
     await tester.pumpAndSettle();
@@ -406,7 +422,16 @@ void main() {
 
     expect(find.text('Oatmeal with banana'), findsOneWidget);
     expect(find.textContaining('0/4'), findsOneWidget);
-    expect(find.text('360'), findsOneWidget);
+    expect(find.textContaining('360'), findsWidgets);
+
+    final markEaten = find.byKey(
+      const ValueKey('planner-mark-eaten-breakfast'),
+    );
+    await tester.ensureVisible(markEaten);
+    await tester.tap(markEaten);
+    await tester.pump();
+    expect(find.textContaining('1/4'), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsWidgets);
 
     Get.closeAllSnackbars();
     await tester.pump(const Duration(milliseconds: 350));

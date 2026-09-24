@@ -1146,8 +1146,8 @@ void main() {
       );
 
       await controller.setHealthGoal(MealPlannerHealthGoal.maintainHealth);
-      expect(controller.healthGoal.value, MealPlannerHealthGoal.loseWeight);
-      expect(lastRequestedGoal, 'LOSE_WEIGHT');
+      expect(controller.healthGoal.value, MealPlannerHealthGoal.maintainHealth);
+      expect(lastRequestedGoal, 'MAINTAIN_HEALTH');
     },
   );
 
@@ -1409,4 +1409,158 @@ void main() {
       expect(res.aiRationale, 'ល្អសម្រាប់អាហារពេលល្ងាច');
     },
   );
+
+  group('Phase 2 UX Enhancements', () {
+    test('yesterdayMealFor finds yesterday meal with slot fallback', () async {
+      final controller = withAdminMeals();
+      final yesterday = controller.yesterdayDate;
+      final yesterdayBreakfast = PlannedMeal(
+        id: 201,
+        name: 'Yesterday Porridge',
+        calories: 320,
+        slot: MealPlanSlot.breakfast,
+        planDate: yesterday,
+        ingredients: const ['Rice', 'Water'],
+      );
+      final yesterdayDinner = PlannedMeal(
+        id: 202,
+        name: 'Yesterday Salmon',
+        calories: 550,
+        slot: MealPlanSlot.dinner,
+        planDate: yesterday,
+        ingredients: const ['Salmon'],
+      );
+
+      controller.putOptimisticMeal(yesterdayBreakfast);
+      controller.putOptimisticMeal(yesterdayDinner);
+
+      // Breakfast matches breakfast
+      final foundBreakfast = controller.yesterdayMealFor(
+        MealPlanSlot.breakfast,
+      );
+      expect(foundBreakfast, isNotNull);
+      expect(foundBreakfast!.name, 'Yesterday Porridge');
+
+      // Lunch fallback to dinner (leftover from dinner)
+      final foundLunchFallback = controller.yesterdayMealFor(
+        MealPlanSlot.lunch,
+        fallbackSlot: MealPlanSlot.dinner,
+      );
+      expect(foundLunchFallback, isNotNull);
+      expect(foundLunchFallback!.name, 'Yesterday Salmon');
+
+      // Non-existent slot returns null
+      final foundSnack = controller.yesterdayMealFor(MealPlanSlot.snack);
+      expect(foundSnack, isNull);
+    });
+
+    test('copyFromYesterday copies yesterday meal into today slot', () async {
+      final controller = withAdminMeals();
+      final yesterday = controller.yesterdayDate;
+      final yesterdayDinner = PlannedMeal(
+        id: 202,
+        name: 'Roast Chicken',
+        calories: 520,
+        slot: MealPlanSlot.dinner,
+        planDate: yesterday,
+        ingredients: const ['Chicken'],
+      );
+      controller.putOptimisticMeal(yesterdayDinner);
+
+      // Copy dinner to today's lunch as leftover
+      final success = await controller.copyFromYesterday(
+        MealPlanSlot.lunch,
+        fromSlot: MealPlanSlot.dinner,
+      );
+      expect(success, isTrue);
+
+      final todayLunch = controller.mealFor(MealPlanSlot.lunch);
+      expect(todayLunch, isNotNull);
+      expect(todayLunch!.name, 'Roast Chicken');
+      expect(todayLunch.slot, MealPlanSlot.lunch);
+      expect(todayLunch.status, MealPlanStatus.planned);
+    });
+
+    test('copyAllFromYesterday copies all yesterday meals to today', () async {
+      final controller = withAdminMeals();
+      final yesterday = controller.yesterdayDate;
+      controller.putOptimisticMeal(
+        PlannedMeal(
+          id: 301,
+          name: 'Noodle Soup',
+          calories: 400,
+          slot: MealPlanSlot.breakfast,
+          planDate: yesterday,
+          ingredients: const ['Noodles'],
+        ),
+      );
+      controller.putOptimisticMeal(
+        PlannedMeal(
+          id: 302,
+          name: 'Salad Bowl',
+          calories: 350,
+          slot: MealPlanSlot.lunch,
+          planDate: yesterday,
+          ingredients: const ['Salad'],
+        ),
+      );
+
+      final ok = await controller.copyAllFromYesterday();
+      expect(ok, isTrue);
+
+      expect(controller.mealFor(MealPlanSlot.breakfast)?.name, 'Noodle Soup');
+      expect(controller.mealFor(MealPlanSlot.lunch)?.name, 'Salad Bowl');
+    });
+
+    test(
+      'water tracker increments, decrements, and sets glasses with clamp',
+      () async {
+        final controller = withAdminMeals();
+        expect(controller.dailyWaterGlasses.value, 0);
+
+        await controller.incrementWater();
+        expect(controller.dailyWaterGlasses.value, 1);
+
+        await controller.incrementWater();
+        expect(controller.dailyWaterGlasses.value, 2);
+
+        await controller.decrementWater();
+        expect(controller.dailyWaterGlasses.value, 1);
+
+        await controller.decrementWater();
+        expect(controller.dailyWaterGlasses.value, 0);
+
+        // Cannot go below 0
+        await controller.decrementWater();
+        expect(controller.dailyWaterGlasses.value, 0);
+
+        // Set directly
+        await controller.setWaterGlasses(8);
+        expect(controller.dailyWaterGlasses.value, 8);
+
+        // Clamps to 20
+        await controller.setWaterGlasses(25);
+        expect(controller.dailyWaterGlasses.value, 20);
+      },
+    );
+
+    test('grocery checklist toggles and persists checked keys', () async {
+      final controller = withAdminMeals();
+      expect(controller.checkedGroceryKeys.isEmpty, isTrue);
+
+      await controller.toggleGroceryItemChecked('oats|g');
+      expect(controller.checkedGroceryKeys.contains('oats|g'), isTrue);
+
+      await controller.toggleGroceryItemChecked('oats|g');
+      expect(controller.checkedGroceryKeys.contains('oats|g'), isFalse);
+
+      await controller.setAllGroceryChecked(['item1', 'item2', 'item3'], true);
+      expect(controller.checkedGroceryKeys.length, 3);
+      expect(controller.checkedGroceryKeys.contains('item1'), isTrue);
+
+      await controller.setAllGroceryChecked(['item1', 'item2'], false);
+      expect(controller.checkedGroceryKeys.length, 1);
+      expect(controller.checkedGroceryKeys.contains('item3'), isTrue);
+    });
+  });
 }

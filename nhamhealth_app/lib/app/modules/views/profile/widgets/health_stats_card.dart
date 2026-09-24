@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../../controllers/profile/profile_controller.dart';
-import '../../../../theme/app_colors.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
+
+import '../../../../routes/app_routes.dart';
+import '../../../../theme/app_colors.dart';
+import '../../../controllers/profile/profile_controller.dart';
 
 class HealthStatsCard extends GetView<ProfileController> {
   const HealthStatsCard({super.key});
@@ -39,7 +40,7 @@ class HealthStatsCard extends GetView<ProfileController> {
                 title: 'profile.height',
                 value:
                     controller.height.value > 0
-                        ? '${controller.height.value}'
+                        ? _measurementText(controller.height.value)
                         : '--',
                 unit: 'cm',
               ),
@@ -51,23 +52,32 @@ class HealthStatsCard extends GetView<ProfileController> {
                 title: 'profile.weight',
                 value:
                     controller.weight.value > 0
-                        ? '${controller.weight.value}'
+                        ? _measurementText(controller.weight.value)
                         : '--',
                 unit: 'kg',
               ),
             ),
             const _StatDivider(),
             Expanded(
-              child: _Stat(
-                icon: Icons.monitor_heart_outlined,
-                title: 'common.bmi',
-                value:
-                    controller.bmi > 0
-                        ? controller.bmi.toStringAsFixed(1)
-                        : '--',
-                unit: controller.bmiStatus,
-                unitColor: green,
-                alignment: MainAxisAlignment.center,
+              child: Semantics(
+                button: true,
+                label: 'bmi.title'.tr,
+                child: InkWell(
+                  key: const ValueKey('profile-bmi-analysis-button'),
+                  onTap: () => Get.toNamed<void>(AppRoutes.bmiAnalysis),
+                  borderRadius: BorderRadius.circular(10),
+                  child: _Stat(
+                    icon: Icons.monitor_heart_outlined,
+                    title: 'common.bmi',
+                    value:
+                        controller.bmi > 0
+                            ? controller.bmi.toStringAsFixed(1)
+                            : '--',
+                    unit: controller.bmiStatus,
+                    unitColor: green,
+                    alignment: MainAxisAlignment.center,
+                  ),
+                ),
               ),
             ),
           ],
@@ -75,6 +85,11 @@ class HealthStatsCard extends GetView<ProfileController> {
       ),
     );
   }
+}
+
+String _measurementText(double value) {
+  final text = value.toStringAsFixed(1);
+  return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;
 }
 
 class _Stat extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'package:nhamhealth_flutter/app/modules/views/main_tabs_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/auth/account_created_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/notifications/notifications_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/profile/bmi_analysis_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/setting_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/onboarding/choose_language_view.dart';
 import 'package:nhamhealth_flutter/app/routes/app_pages.dart';
@@ -55,5 +56,13 @@ void main() {
     );
 
     expect(settingsPage.page(), isA<SettingsView>());
+  });
+
+  test('BMI analysis route builds BmiAnalysisView', () {
+    final bmiPage = AppPages.pages.singleWhere(
+      (page) => page.name == AppRoutes.bmiAnalysis,
+    );
+
+    expect(bmiPage.page(), isA<BmiAnalysisView>());
   });
 }
