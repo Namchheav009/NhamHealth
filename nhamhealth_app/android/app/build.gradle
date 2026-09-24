@@ -94,36 +94,32 @@ android {
     // ========================================================
 
     signingConfigs {
+        nhamhealthDebug {
+            storeFile file("nhamhealth-test-debug.keystore")
+            storePassword "android"
+            keyAlias "nhamhealthdebug"
+            keyPassword "android"
+        }
+
         release {
             keyAlias = keystoreProperties["keyAlias"]
             keyPassword = keystoreProperties["keyPassword"]
-
             storeFile = keystoreProperties["storeFile"]
                     ? file(keystoreProperties["storeFile"])
                     : null
-
             storePassword = keystoreProperties["storePassword"]
         }
     }
 
-
-    // ========================================================
-    // BUILD TYPES
-    // ========================================================
-
     buildTypes {
         debug {
-            // Use Android's standard automatically generated debug keystore.
-            signingConfig signingConfigs.debug
+            signingConfig = signingConfigs.nhamhealthDebug
         }
 
         release {
-            // Local/CI APKs remain installable when the private production key is
-            // unavailable. Play Store builds should always provide key.properties
-            // and the referenced keystore.
             signingConfig = releaseKeystoreAvailable
                     ? signingConfigs.release
-                    : signingConfigs.debug
+                    : signingConfigs.nhamhealthDebug
         }
     }
 }

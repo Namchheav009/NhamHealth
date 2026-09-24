@@ -1,8 +1,8 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=C:\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\VISAL-DEV\Downloads\NhamHealth\nhamhealth_app"
-export "FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=C:\Users\VISAL-DEV\Downloads\NhamHealth\nhamhealth_app\macos\Flutter\ephemeral\Packages\.packages\FlutterFramework"
+export "FLUTTER_ROOT=C:\src\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\Ron Namchheav\Documents\20lean\NhamHealth\nhamhealth_app"
+export "FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=C:\Users\Ron Namchheav\Documents\20lean\NhamHealth\nhamhealth_app\macos\Flutter\ephemeral\Packages\.packages\FlutterFramework"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"

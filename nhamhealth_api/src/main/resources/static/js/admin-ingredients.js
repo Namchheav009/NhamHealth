@@ -7,6 +7,11 @@
     const form = document.getElementById('ingredientForm');
     const imageFile = document.getElementById('ingredientImageFile');
     const imageHelp = document.getElementById('ingredientImageHelp');
+    const currentImage = document.getElementById('currentIngredientImage');
+    const currentImagePreview = document.getElementById('currentIngredientImagePreview');
+    const imageViewer = document.getElementById('ingredientImageViewer');
+    const imageViewerPreview = document.getElementById('ingredientImageViewerPreview');
+    const imageViewerTitle = document.getElementById('ingredientImageViewerTitle');
     const saveButton = document.getElementById('saveIngredientButton');
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -52,10 +57,40 @@
         modal.setAttribute('aria-hidden', String(!isOpen));
     }
 
+    function setCurrentImage(url, name = '') {
+        const hasImage = Boolean(url);
+        currentImage.hidden = !hasImage;
+        if (hasImage) {
+            currentImagePreview.src = url;
+            currentImagePreview.alt = `Current image for ${name}`;
+        } else {
+            currentImagePreview.removeAttribute('src');
+            currentImagePreview.alt = '';
+        }
+    }
+
+    function openImageViewer(url, name) {
+        if (!url) return;
+        imageViewerPreview.src = url;
+        imageViewerPreview.alt = `Image for ${name}`;
+        imageViewerTitle.textContent = name ? `${name} image` : 'Ingredient image';
+        imageViewer.classList.add('show');
+        imageViewer.setAttribute('aria-hidden', 'false');
+        document.getElementById('closeIngredientImageViewer').focus();
+    }
+
+    function closeImageViewer() {
+        imageViewer.classList.remove('show');
+        imageViewer.setAttribute('aria-hidden', 'true');
+        imageViewerPreview.removeAttribute('src');
+        imageViewerPreview.alt = '';
+    }
+
     function openCreateModal() {
         editingIngredientId = null;
         currentImageUrl = null;
         form.reset();
+        setCurrentImage(null);
         if (form.elements.ingredientNameKm) form.elements.ingredientNameKm.value = '';
         if (form.elements.descriptionKm) form.elements.descriptionKm.value = '';
         imageFile.required = false;
@@ -78,6 +113,7 @@
         form.elements.description.value = row.dataset.description || '';
         if (form.elements.descriptionKm) form.elements.descriptionKm.value = row.dataset.descriptionKm || '';
         imageFile.required = false;
+        setCurrentImage(currentImageUrl, row.dataset.name || 'ingredient');
         imageHelp.textContent = 'Leave empty to keep the current image. JPG, PNG, or WebP; maximum 5 MB.';
         document.getElementById('ingredientModalTitle').textContent = 'Edit Ingredient';
         document.getElementById('ingredientModalText').textContent = 'Update this ingredient in the catalog.';
@@ -91,6 +127,7 @@
         form.reset();
         editingIngredientId = null;
         currentImageUrl = null;
+        setCurrentImage(null);
     }
 
     async function request(url, method, payload) {
@@ -208,19 +245,25 @@
     document.getElementById('openIngredientModal').addEventListener('click', openCreateModal);
     document.getElementById('closeIngredientModal').addEventListener('click', closeModal);
     document.getElementById('cancelIngredientModal').addEventListener('click', closeModal);
+    document.getElementById('closeIngredientImageViewer').addEventListener('click', closeImageViewer);
     modal.addEventListener('click', (event) => {
         if (event.target === modal) closeModal();
+    });
+    imageViewer.addEventListener('click', (event) => {
+        if (event.target === imageViewer) closeImageViewer();
     });
     form.addEventListener('submit', saveIngredient);
     document.getElementById('exportIngredients').addEventListener('click', exportIngredients);
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && modal.classList.contains('show')) closeModal();
+        if (event.key === 'Escape' && imageViewer.classList.contains('show')) closeImageViewer();
     });
     rowsBox.addEventListener('click', (event) => {
         const button = event.target.closest('button[data-action]');
         if (!button) return;
         const row = button.closest('tr[data-id]');
         if (!row) return;
+        if (button.dataset.action === 'view-image') openImageViewer(row.dataset.imageUrl, row.dataset.name || 'Ingredient');
         if (button.dataset.action === 'edit') openEditModal(row);
         if (button.dataset.action === 'delete') deleteIngredient(row, button);
     });

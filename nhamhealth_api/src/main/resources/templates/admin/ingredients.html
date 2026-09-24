@@ -76,7 +76,8 @@
                             <td th:text="${iter.index + 1}">1</td>
                             <td>
                                 <div class="ingredient-name">
-                                    <span class="ingredient-icon"><img th:if="${ingredient.imageUrl != null}" th:src="${ingredient.imageUrl}" th:alt="${ingredient.ingredientName}"><i th:unless="${ingredient.imageUrl != null}" class="bi bi-flower1"></i></span>
+                                    <button th:if="${ingredient.imageUrl != null and !ingredient.imageUrl.isBlank()}" class="ingredient-icon ingredient-image-button" data-action="view-image" type="button" th:aria-label="${'View image for ' + ingredient.ingredientName}"><img th:src="${ingredient.imageUrl}" th:alt="${ingredient.ingredientName}" loading="lazy"></button>
+                                    <span th:unless="${ingredient.imageUrl != null and !ingredient.imageUrl.isBlank()}" class="ingredient-icon"><i class="bi bi-flower1"></i></span>
                                     <div>
                                         <span th:text="${ingredient.ingredientName}">Spinach</span>
                                         <small class="ingredient-name-km" th:if="${kmTranslations[ingredient.ingredientId] != null and kmTranslations[ingredient.ingredientId].name != null and !kmTranslations[ingredient.ingredientId].name.isBlank()}" th:text="${kmTranslations[ingredient.ingredientId].name}" lang="km" style="display:block;color:var(--text-muted,#6b7280);font-size:0.85rem;margin-top:2px;">ស្ពៃពួយឡេង</small>
@@ -147,6 +148,10 @@
                     <label for="ingredientImageFile">Ingredient image</label>
                     <input id="ingredientImageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp">
                     <span class="field-help" id="ingredientImageHelp">Optional. JPG, PNG, or WebP; maximum 5 MB.</span>
+                    <div class="current-image" id="currentIngredientImage" hidden>
+                        <span>Current image</span>
+                        <img id="currentIngredientImagePreview" alt="Current ingredient image">
+                    </div>
                 </div>
                 <div class="field full">
                     <label for="ingredientDescription">Description (English)</label>
@@ -162,6 +167,16 @@
                 <button class="btn btn-primary" id="saveIngredientButton" type="submit">Save Ingredient</button>
             </div>
         </form>
+    </section>
+</div>
+
+<div class="modal image-viewer-modal" id="ingredientImageViewer" aria-hidden="true">
+    <section class="image-viewer-card" role="dialog" aria-modal="true" aria-labelledby="ingredientImageViewerTitle">
+        <div class="modal-header">
+            <h2 id="ingredientImageViewerTitle">Ingredient image</h2>
+            <button class="close" id="closeIngredientImageViewer" type="button" aria-label="Close image viewer"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <img id="ingredientImageViewerPreview" alt="">
     </section>
 </div>
 
