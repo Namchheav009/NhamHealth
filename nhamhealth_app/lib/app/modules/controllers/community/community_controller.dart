@@ -332,7 +332,7 @@ class CommunityController extends GetxController {
     final topBarRequest = _loadTopBarSafely();
     try {
       final newPosts = await _repository.getPosts();
-      posts.assignAll(newPosts);
+      _replacePosts(newPosts);
       displayedPostCount.value =
           newPosts.length < pageSize && newPosts.isNotEmpty
               ? newPosts.length
@@ -419,7 +419,7 @@ class CommunityController extends GetxController {
     if (_feedRefreshInFlight) return;
     _feedRefreshInFlight = true;
     try {
-      posts.assignAll(await _repository.getPosts());
+      _replacePosts(await _repository.getPosts());
     } on Object {
       // Keep the existing feed visible until the next successful refresh.
     } finally {
@@ -769,6 +769,14 @@ class CommunityController extends GetxController {
       tagIds: tagIds,
       categoryId: categoryId,
     );
+    // A deleted post must never lend its local engagement state to a newly
+    // published card, even if a development database reuses an identifier.
+    _clearPostState(post.id);
+    posts.removeWhere((item) => item.id == post.id);
+    post.likes = 0;
+    post.comments = 0;
+    post.shares = 0;
+    post.isLiked = false;
     posts.insert(0, post);
     section.value = CommunitySection.feed;
   }
@@ -819,7 +827,21 @@ class CommunityController extends GetxController {
     }
     await _repository.deletePost(recipeId);
     posts.removeWhere((item) => item.id == post.id);
-    commentsByPost.remove(post.id);
+    _clearPostState(post.id);
+  }
+
+  void _replacePosts(List<CommunityPost> refreshedPosts) {
+    final activeIds = refreshedPosts.map((post) => post.id).toSet();
+    likeUpdates.removeWhere((postId, _) => !activeIds.contains(postId));
+    likingPostIds.removeWhere((postId) => !activeIds.contains(postId));
+    commentsByPost.removeWhere((postId, _) => !activeIds.contains(postId));
+    posts.assignAll(refreshedPosts);
+  }
+
+  void _clearPostState(String postId) {
+    likingPostIds.remove(postId);
+    likeUpdates.remove(postId);
+    commentsByPost.remove(postId);
   }
 
   Future<void> updateConnection(

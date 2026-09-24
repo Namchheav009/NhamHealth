@@ -1283,6 +1283,9 @@ class CommunityPage extends GetView<CommunityController> {
               post;
           final sharedAsPost = current.sharedPost?.toPost();
           return ProfilePostCard(
+            key: ValueKey<String>(
+              'community-post-card-${current.id}-${current.createdAt?.microsecondsSinceEpoch ?? 0}',
+            ),
             post: current,
             onAuthorTap: () => _openAuthorProfile(current),
             relationshipLabel: _authorRelationshipLabel(current),

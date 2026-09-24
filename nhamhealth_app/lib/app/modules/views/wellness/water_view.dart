@@ -47,7 +47,7 @@ class WaterView extends GetView<WaterController> {
                     child: Padding(
                       padding: AppSpacing.pagePaddingFor(
                         context,
-                      ).copyWith(top: 12, bottom: 28),
+                      ).copyWith(top: 8, bottom: 20),
                       child: Obx(() => _content(context)),
                     ),
                   ),
@@ -109,19 +109,19 @@ class WaterView extends GetView<WaterController> {
     return Column(
       children: [
         _progressHero(context),
-        const SizedBox(height: 10),
+        const SizedBox(height: 7),
         _benefits(context),
-        const SizedBox(height: 10),
+        const SizedBox(height: 7),
         _amountCard(context),
         if (controller.errorMessage.value != null) ...[
           const SizedBox(height: 12),
           _errorCard(context, controller.errorMessage.value!),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _submitButton(),
-        const SizedBox(height: 10),
+        const SizedBox(height: 7),
         _todayTotal(context),
-        const SizedBox(height: 10),
+        const SizedBox(height: 7),
         _tipCard(context),
       ],
     );
@@ -146,10 +146,10 @@ class WaterView extends GetView<WaterController> {
         return Stack(
           children: [
             Positioned(
-              right: compact ? -20 : -4,
+              right: compact ? -17 : -4,
               top: compact ? 5 : 2,
               width: imageWidth,
-              bottom: -2,
+              bottom: 20,
               child: Image.asset(_image, fit: BoxFit.contain),
             ),
             Positioned(
@@ -241,7 +241,7 @@ class WaterView extends GetView<WaterController> {
   );
 
   Widget _benefits(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
     decoration: _cardDecoration(context),
     child: const Row(
       children: [
@@ -267,7 +267,7 @@ class WaterView extends GetView<WaterController> {
 
   Widget _amountCard(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
     decoration: _cardDecoration(context),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,7 +285,7 @@ class WaterView extends GetView<WaterController> {
           'wellness.1_glass_is_about_250_ml'.tr,
           style: TextStyle(fontSize: 12, color: context.appMutedText),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -307,7 +307,7 @@ class WaterView extends GetView<WaterController> {
                       const Icon(
                         Icons.local_drink_outlined,
                         color: _blue,
-                        size: 22,
+                        size: 19,
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -321,7 +321,7 @@ class WaterView extends GetView<WaterController> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 3),
                   Text(
                     _selectedAmountText(),
                     style: TextStyle(fontSize: 12, color: context.appMutedText),
@@ -341,7 +341,7 @@ class WaterView extends GetView<WaterController> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
         Text(
           'wellness.quick_select'.tr,
           style: TextStyle(
@@ -350,7 +350,7 @@ class WaterView extends GetView<WaterController> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 3),
         Row(
           children: [
             for (var amount = 1; amount <= 4; amount++) ...[
@@ -371,7 +371,7 @@ class WaterView extends GetView<WaterController> {
       borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 3),
         decoration: BoxDecoration(
           color: selected ? _blue.withValues(alpha: 0.09) : context.appSurface,
           borderRadius: BorderRadius.circular(14),
@@ -381,7 +381,7 @@ class WaterView extends GetView<WaterController> {
           children: [
             Icon(
               Icons.local_drink_rounded,
-              size: 16,
+              size: 14,
               color: selected ? _blue : context.appMutedText,
             ),
             const SizedBox(height: 2),
@@ -425,7 +425,7 @@ class WaterView extends GetView<WaterController> {
             : 'wellness.add_to_todays_water'.tr,
       ),
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(46),
+        minimumSize: const Size.fromHeight(42),
         backgroundColor: _blue,
         foregroundColor: Colors.white,
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
@@ -435,7 +435,7 @@ class WaterView extends GetView<WaterController> {
   );
 
   Widget _todayTotal(BuildContext context) => Container(
-    padding: const EdgeInsets.all(13),
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
     decoration: _cardDecoration(context),
     child: Row(
       children: [
@@ -496,7 +496,7 @@ class WaterView extends GetView<WaterController> {
   );
 
   Widget _tipCard(BuildContext context) => Container(
-    padding: const EdgeInsets.all(13),
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
     decoration: BoxDecoration(
       color: const Color(0xFFFFFAEC),
       borderRadius: BorderRadius.circular(18),
@@ -534,8 +534,8 @@ class WaterView extends GetView<WaterController> {
   );
 
   Widget _iconBox(IconData icon, Color color) => Container(
-    width: 42,
-    height: 42,
+    width: 38,
+    height: 38,
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(15),
@@ -552,11 +552,13 @@ class WaterView extends GetView<WaterController> {
     key: key,
     tooltip: tooltip,
     onPressed: onTap,
-    icon: Icon(icon),
+    icon: Icon(icon, size: 20),
     color: _blue,
     style: IconButton.styleFrom(
       backgroundColor: _blue.withValues(alpha: 0.11),
-      minimumSize: const Size.square(40),
+      minimumSize: const Size.square(34),
+      maximumSize: const Size.square(34),
+      padding: EdgeInsets.zero,
     ),
   );
 
