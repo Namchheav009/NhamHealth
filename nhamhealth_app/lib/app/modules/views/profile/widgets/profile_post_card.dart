@@ -66,6 +66,9 @@ class ProfilePostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayDescription = post.description.trim().isNotEmpty
+        ? post.description.trim()
+        : post.mealName.trim();
     return InkWell(
       onTap: onComment,
       borderRadius: BorderRadius.circular(22),
@@ -217,23 +220,10 @@ class ProfilePostCard extends StatelessWidget {
               ],
             ),
 
-            if (post.mealName.isNotEmpty) ...[
-              const SizedBox(height: 15),
+            if (displayDescription.isNotEmpty) ...[
+              const SizedBox(height: 12),
               Text(
-                post.mealName,
-                style: TextStyle(
-                  fontSize: 19,
-                  height: 1.22,
-                  letterSpacing: -.25,
-                  fontWeight: FontWeight.w800,
-                  color: context.appText,
-                ),
-              ),
-            ],
-            if (post.description.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                post.description,
+                displayDescription,
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.48,

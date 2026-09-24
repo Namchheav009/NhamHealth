@@ -59,7 +59,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   ];
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
-  late final TextEditingController _name, _time, _servings;
+  late final TextEditingController _description, _time, _servings;
   late List<_IngredientInput> _ingredients;
   final _newIngredient = _IngredientInput();
   List<IngredientSuggestion> _ingredientSuggestions = const [];
@@ -91,13 +91,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   void initState() {
     super.initState();
     final post = widget.post;
-    _name = TextEditingController(text: post?.mealName ?? '');
+    // Older recipe posts did not collect a caption.  Start their editor with
+    // the existing title so users can turn it into a proper description.
+    _description = TextEditingController(
+      text: post?.description.isNotEmpty == true
+          ? post!.description
+          : post?.mealName ?? '',
+    );
     _time = TextEditingController(
       text: post?.cookingTimeMinutes?.toString() ?? '',
     );
     _servings = TextEditingController(text: post?.servings?.toString() ?? '');
     _ingredientSearchController = TextEditingController();
-    _name.addListener(_refreshBasicInfoState);
+    _description.addListener(_refreshBasicInfoState);
     _time.addListener(_refreshBasicInfoState);
     _servings.addListener(_refreshBasicInfoState);
     _difficulty =
@@ -313,7 +319,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       }
     }
     if (!mounted) return;
-    _name.text = food.name;
+    _description.text = food.name;
     setState(() {
       _selectedFavoriteFood = food;
       if (imageBytes != null) _images.add(imageBytes);
@@ -336,10 +342,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   @override
   void dispose() {
     _ingredientSearchDebounce?.cancel();
-    _name.removeListener(_refreshBasicInfoState);
+    _description.removeListener(_refreshBasicInfoState);
     _time.removeListener(_refreshBasicInfoState);
     _servings.removeListener(_refreshBasicInfoState);
-    _name.dispose();
+    _description.dispose();
     _time.dispose();
     _servings.dispose();
     _ingredientSearchController.dispose();
@@ -503,8 +509,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     try {
       await widget.onSubmit(
         CommunityPostDraft(
-          mealName: _name.text.trim(),
-          description: '',
+          // Recipes still require a short name in the API.  Use a compact
+          // first line as an internal title while displaying the full text as
+          // the community description.
+          mealName: _titleFromDescription(_description.text),
+          description: _description.text.trim(),
           cookingTimeMinutes: int.parse(_time.text),
           servings: int.parse(_servings.text),
           difficulty: _difficulty,
@@ -1037,7 +1046,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               final exactMatch = _tags.any(
                 (tag) => tag.name.toLowerCase() == query,
               );
-              final mealName = _name.text.trim();
+              final mealName = _titleFromDescription(_description.text);
               final hasMealNameTag = _tags.any(
                 (tag) => tag.name.toLowerCase() == mealName.toLowerCase(),
               );
@@ -1745,7 +1754,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _nameField(),
+                    _descriptionField(),
                     _timeAndServingsRow(),
                     _difficultySection(),
                     const SizedBox(height: 8),
@@ -1772,7 +1781,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           _selectedImageStrip(),
         ],
         const SizedBox(height: 14),
-        _nameField(),
+        _descriptionField(),
         _timeAndServingsRow(),
         _difficultySection(),
         const SizedBox(height: 12),
@@ -1910,13 +1919,26 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     ),
   );
 
-  Widget _nameField() => _field(
-    _name,
-    'Meal name',
-    hint: 'Khmer Fish Amok',
-    icon: Icons.restaurant_menu_rounded,
+  String _titleFromDescription(String value) {
+    final firstLine = value
+        .split(RegExp(r'\r?\n'))
+        .firstWhere((line) => line.trim().isNotEmpty, orElse: () => '')
+        .trim();
+    return firstLine.length <= 150 ? firstLine : firstLine.substring(0, 150);
+  }
+
+  Widget _descriptionField() => _field(
+    _description,
+    'Description',
+    hint: 'Tell the community about this meal',
+    icon: Icons.notes_rounded,
+    lines: 3,
+    maxLength: 4000,
+    keyboard: TextInputType.multiline,
     validator:
-        (v) => v == null || v.trim().isEmpty ? 'Meal name is required.' : null,
+        (v) => v == null || v.trim().isEmpty
+            ? 'Please add a description.'
+            : null,
   );
 
   Widget _timeAndServingsRow() => Row(

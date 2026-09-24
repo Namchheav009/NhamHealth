@@ -52,6 +52,9 @@ class CommunitySharedPostCard extends StatelessWidget {
             : (post.imageUrl.isNotEmpty ? [post.imageUrl] : const <String>[]);
     final hasImages = images.isNotEmpty;
     final hasRecipe = showRecipeButton && post.hasRecipe;
+    final displayDescription = post.description.trim().isNotEmpty
+        ? post.description.trim()
+        : post.mealName.trim();
 
     return Material(
       color: context.appElevatedSurface,
@@ -175,28 +178,11 @@ class CommunitySharedPostCard extends StatelessWidget {
               ),
             ),
 
-            // Meal Name
-            if (post.mealName.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                child: Text(
-                  post.mealName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: context.appText,
-                  ),
-                ),
-              ),
-
-            // Description
-            if (post.description.isNotEmpty)
+            if (displayDescription.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
                 child: Text(
-                  post.description,
+                  displayDescription,
                   maxLines: compact ? 4 : null,
                   overflow: compact ? TextOverflow.ellipsis : null,
                   style: TextStyle(
