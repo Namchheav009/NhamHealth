@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../core/services/dynamic_notification_sync_service.dart';
 import '../modules/models/auth/authenticated_user_model.dart';
 import '../modules/views/home/widgets/authenticated_user_avatar.dart';
 import '../routes/app_routes.dart';
@@ -76,10 +77,7 @@ class NhamAppBar extends StatelessWidget {
                         () => Get.toNamed<void>(AppRoutes.favorites),
                   ),
                   const SizedBox(width: 2),
-                  _NotificationButton(
-                    count: unreadNotificationCount,
-                    onTap: onNotifications,
-                  ),
+                  _realtimeNotificationButton(),
                   const SizedBox(width: 4),
                   _ProfileButton(user: user, onTap: onProfile),
                 ],
@@ -87,6 +85,25 @@ class NhamAppBar extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _realtimeNotificationButton() {
+    final syncService = DynamicNotificationSyncService.instance;
+    if (syncService == null) {
+      return _NotificationButton(
+        count: unreadNotificationCount,
+        onTap: onNotifications,
+      );
+    }
+    return Obx(
+      () => _NotificationButton(
+        count:
+            syncService.hasSynced.value
+                ? syncService.unreadCount.value
+                : unreadNotificationCount,
+        onTap: onNotifications,
       ),
     );
   }
@@ -116,6 +133,7 @@ class _FavoritesButton extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class _NotificationButton extends StatelessWidget {

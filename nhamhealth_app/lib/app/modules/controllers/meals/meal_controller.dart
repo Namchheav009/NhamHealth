@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../../core/services/app_locale_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/current_user_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/auth/authenticated_user_model.dart';
@@ -15,11 +16,16 @@ import '../../repositories/meals/meal_repository.dart';
 import '../home/home_controller.dart';
 
 class MealController extends GetxController with WidgetsBindingObserver {
-  MealController({required this.repository, AppLocaleService? localeService})
-    : _localeService = localeService;
+  MealController({
+    required this.repository,
+    AppLocaleService? localeService,
+    Stream<NotificationRealtimeEvent>? realtimeEvents,
+  }) : _localeService = localeService,
+       _realtimeEvents = realtimeEvents;
 
   final MealRepository repository;
   final AppLocaleService? _localeService;
+  final Stream<NotificationRealtimeEvent>? _realtimeEvents;
   final selectedCategory = 0.obs;
   final currentSlide = 0.obs;
   final selectedBottomIndex = 1.obs;
@@ -39,8 +45,10 @@ class MealController extends GetxController with WidgetsBindingObserver {
 
   Timer? _slideTimer;
   Timer? _searchTimer;
+  Timer? _notificationCountTimer;
   Worker? _localeWorker;
   Worker? _currentUserWorker;
+  StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
   int _mealRequestVersion = 0;
   bool _refreshInProgress = false;
   Set<int> _favoriteMealIds = const <int>{};
@@ -122,6 +130,13 @@ class MealController extends GetxController with WidgetsBindingObserver {
     unawaited(loadPersonalizedIdeas());
     loadMeals();
     loadUnreadNotificationCount();
+    _notificationSubscription = _realtimeEvents?.listen(
+      (_) => unawaited(loadUnreadNotificationCount()),
+    );
+    _notificationCountTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(loadUnreadNotificationCount()),
+    );
   }
 
   Future<void> refreshPage({
@@ -443,6 +458,8 @@ class MealController extends GetxController with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _localeWorker?.dispose();
     _currentUserWorker?.dispose();
+    _notificationSubscription?.cancel();
+    _notificationCountTimer?.cancel();
     _slideTimer?.cancel();
     _searchTimer?.cancel();
     slideController.dispose();

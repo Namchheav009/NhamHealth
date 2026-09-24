@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../widgets/app_alert.dart';
 import '../../../routes/app_routes.dart';
 import '../../../../core/services/notification_realtime_event.dart';
+import '../../../../core/services/dynamic_notification_sync_service.dart';
 import '../../models/notifications/notification_item.dart';
 import '../../repositories/notifications/notifications_repository.dart';
 
@@ -73,6 +74,9 @@ class NotificationsController extends GetxController {
               : const <NotificationItem>[];
       _knownNotificationIds.addAll(result.map((item) => item.id));
       notifications.assignAll(result);
+      DynamicNotificationSyncService.instance?.updateUnreadCount(
+        result.where((item) => item.isUnread).length,
+      );
       _hasLoaded = true;
       if (silent && announceNew && newItems.isNotEmpty) {
         final newest = newItems.first;
@@ -105,10 +109,12 @@ class NotificationsController extends GetxController {
     final index = notifications.indexWhere((value) => value.id == item.id);
     if (index < 0) return;
     notifications[index] = item.copyWith(isUnread: false);
+    DynamicNotificationSyncService.instance?.updateUnreadCount(unread.length);
     try {
       await repository.markRead(item.id);
     } on Object catch (error) {
       notifications[index] = item;
+      DynamicNotificationSyncService.instance?.updateUnreadCount(unread.length);
       AppAlert.error(
         title: 'notifications.notification_not_updated',
         message: error.toString(),
@@ -128,6 +134,7 @@ class NotificationsController extends GetxController {
     notifications.assignAll(
       notifications.map((item) => item.copyWith(isUnread: false)),
     );
+    DynamicNotificationSyncService.instance?.updateUnreadCount(0);
     try {
       for (final item in unreadItems) {
         await repository.markRead(item.id);
@@ -135,6 +142,7 @@ class NotificationsController extends GetxController {
       return true;
     } on Object catch (error) {
       notifications.assignAll(previous);
+      DynamicNotificationSyncService.instance?.updateUnreadCount(unread.length);
       AppAlert.error(
         title: 'notifications.not_updated',
         message: error.toString(),

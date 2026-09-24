@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/services/app_locale_service.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../controllers/meals/meal_controller.dart';
 import '../../repositories/meals/meal_repository.dart';
 
@@ -11,10 +12,11 @@ class MealBinding extends Bindings {
       Get.put<MealController>(
         MealController(
           repository: Get.find<MealRepository>(),
-        localeService:
-            Get.isRegistered<AppLocaleService>()
-                ? Get.find<AppLocaleService>()
-                : null,
+          localeService:
+              Get.isRegistered<AppLocaleService>()
+                  ? Get.find<AppLocaleService>()
+                  : null,
+          realtimeEvents: PushNotificationService.realtimeEvents,
         ),
         permanent: true,
       );

@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 import '../../app/modules/models/notifications/notification_item.dart';
 import '../../app/modules/providers/notifications/notifications_provider.dart';
 import '../../app/modules/repositories/notifications/notifications_repository.dart';
+import '../../app/widgets/app_alert.dart';
 import 'auth_service.dart';
+import 'notification_realtime_event.dart';
 import 'push_notification_service.dart';
 
 class DynamicNotificationSyncService extends GetxService with WidgetsBindingObserver {
@@ -27,8 +29,11 @@ class DynamicNotificationSyncService extends GetxService with WidgetsBindingObse
   final AuthService _authService;
   final NotificationsRepository _repository;
   final Set<int> _notifiedNotificationIds = <int>{};
+  final unreadCount = 0.obs;
+  final hasSynced = false.obs;
 
   Timer? _pollTimer;
+  StreamSubscription<NotificationRealtimeEvent>? _realtimeSubscription;
   bool _initialLoadDone = false;
   bool _syncInFlight = false;
 
@@ -38,12 +43,16 @@ class DynamicNotificationSyncService extends GetxService with WidgetsBindingObse
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    _realtimeSubscription = PushNotificationService.realtimeEvents.listen(
+      _handleRealtimeEvent,
+    );
     startSync();
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    _realtimeSubscription?.cancel();
     stopSync();
     super.onClose();
   }
@@ -75,10 +84,12 @@ class DynamicNotificationSyncService extends GetxService with WidgetsBindingObse
       if (token == null || token.isEmpty) {
         _initialLoadDone = false;
         _notifiedNotificationIds.clear();
+        updateUnreadCount(0);
         return;
       }
 
       final items = await _repository.getNotifications();
+      updateUnreadCount(items.where((item) => item.isUnread).length);
       if (!_initialLoadDone) {
         _notifiedNotificationIds.addAll(items.map((item) => item.id));
         _initialLoadDone = true;
@@ -100,9 +111,37 @@ class DynamicNotificationSyncService extends GetxService with WidgetsBindingObse
     }
   }
 
+  void updateUnreadCount(int value) {
+    unreadCount.value = value < 0 ? 0 : value;
+    hasSynced.value = true;
+  }
+
+  void _handleRealtimeEvent(NotificationRealtimeEvent event) {
+    final id = event.id;
+    if (id == null || _notifiedNotificationIds.add(id)) {
+      updateUnreadCount(unreadCount.value + 1);
+    }
+    unawaited(syncNow());
+  }
+
   Future<void> _dispatchSystemAlert(NotificationItem item) async {
+    PushNotificationService.publishRealtimeEvent(
+      NotificationRealtimeEvent(
+        id: item.id,
+        title: item.displayTitle,
+        message: item.displayMessage,
+        referenceType: item.referenceType,
+        referenceId: item.referenceId,
+      ),
+    );
     final pushService = PushNotificationService.instance;
-    if (pushService == null) return;
+    if (pushService == null) {
+      AppAlert.notification(
+        title: item.displayTitle,
+        message: item.displayMessage,
+      );
+      return;
+    }
 
     final avatarUrl = item.actorAvatarUrl.isNotEmpty ? item.actorAvatarUrl : null;
     await pushService.showDynamicNotification(

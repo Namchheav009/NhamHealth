@@ -30,7 +30,7 @@ class HomeBinding extends Bindings {
     Get.lazyPut<HomeController>(
       () => HomeController(
         repository: Get.find<HomeRepository>(),
-        realtimeEvents: PushNotificationService.instance?.events,
+        realtimeEvents: PushNotificationService.realtimeEvents,
       ),
     );
   }

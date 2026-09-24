@@ -146,7 +146,7 @@ class WaterView extends GetView<WaterController> {
         return Stack(
           children: [
             Positioned(
-              right: compact ? -12 : -4,
+              right: compact ? -20 : -4,
               top: compact ? 5 : 2,
               width: imageWidth,
               bottom: -2,

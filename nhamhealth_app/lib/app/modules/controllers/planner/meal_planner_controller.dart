@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
@@ -22,10 +23,12 @@ class MealPlannerController extends GetxController {
     ProfileRepository? profileRepository,
     FlutterSecureStorage? storage,
     AuthService? authService,
+    Stream<NotificationRealtimeEvent>? realtimeEvents,
   }) : _provider = provider,
        _profileRepository = profileRepository,
        _storage = storage ?? const FlutterSecureStorage(),
-       _authService = authService {
+       _authService = authService,
+       _realtimeEvents = realtimeEvents {
     if (provider == null) {
       isLoading.value = false;
       isLoadingRecommendations.value = false;
@@ -52,6 +55,8 @@ class MealPlannerController extends GetxController {
   final ProfileRepository? _profileRepository;
   final FlutterSecureStorage _storage;
   final AuthService? _authService;
+  final Stream<NotificationRealtimeEvent>? _realtimeEvents;
+  StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
   final selectedDayIndex = 0.obs;
   final weekOffset = 0.obs;
   final planDaysCount = 7.obs;
@@ -96,6 +101,15 @@ class MealPlannerController extends GetxController {
         idx >= 0 ? idx : (today.weekday - 1).clamp(0, planDaysCount.value - 1);
     unawaited(initPlanner());
     unawaited(loadUnreadNotificationCount());
+    _notificationSubscription = _realtimeEvents?.listen(
+      (_) => unawaited(loadUnreadNotificationCount()),
+    );
+  }
+
+  @override
+  void onClose() {
+    _notificationSubscription?.cancel();
+    super.onClose();
   }
 
   Future<void> initPlanner() => _initPlanner();

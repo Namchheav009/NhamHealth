@@ -42,7 +42,7 @@ class CommunityBinding extends Bindings {
         repository: Get.find<CommunityRepository>(),
         followConnectionsRepository: Get.find<FollowConnectionsRepository>(),
         notificationsRepository: Get.find<NotificationsRepository>(),
-        realtimeEvents: PushNotificationService.instance?.events,
+        realtimeEvents: PushNotificationService.realtimeEvents,
       ),
       fenix: true,
     );

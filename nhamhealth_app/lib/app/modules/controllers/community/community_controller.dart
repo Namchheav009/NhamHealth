@@ -245,7 +245,12 @@ class CommunityController extends GetxController {
       if (!Get.testMode) {
         _notificationTimer = Timer.periodic(notificationRefreshInterval, (_) {
           if (Get.currentRoute == AppRoutes.community) {
-            unawaited(_refreshCommunityNotifications(showAlert: true));
+            unawaited(
+              Future.wait<void>([
+                _refreshUnreadNotificationCount(),
+                _refreshCommunityNotifications(showAlert: true),
+              ]),
+            );
           }
         });
       }

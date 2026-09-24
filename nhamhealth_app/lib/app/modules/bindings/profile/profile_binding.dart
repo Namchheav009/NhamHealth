@@ -19,7 +19,7 @@ class ProfileBinding extends Bindings {
       () => ProfileController(
         repository: Get.find<ProfileRepository>(),
         communityRepository: Get.find<CommunityRepository>(),
-        realtimeEvents: PushNotificationService.instance?.events,
+        realtimeEvents: PushNotificationService.realtimeEvents,
       ),
     );
   }

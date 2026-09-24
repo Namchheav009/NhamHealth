@@ -71,11 +71,11 @@ class HomeController extends GetxController {
     loadFavoriteMeals();
     loadUnreadNotificationCount();
     _notificationSubscription = realtimeEvents?.listen(
-      (_) => loadUnreadNotificationCount(),
+      (_) => unawaited(loadUnreadNotificationCount()),
     );
     _notificationCountTimer = Timer.periodic(
       const Duration(seconds: 5),
-      (_) => loadUnreadNotificationCount(),
+      (_) => unawaited(loadUnreadNotificationCount()),
     );
     // Refresh dashboard data only. Mood selection and AI recommendations are
     // intentionally user-triggered through Select Mood -> Suggest Meals.

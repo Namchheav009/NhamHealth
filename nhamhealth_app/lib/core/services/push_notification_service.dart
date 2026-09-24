@@ -40,7 +40,7 @@ class PushNotificationService {
   final FirebaseMessaging? _messaging;
   FirebaseMessaging get _firebaseMessaging =>
       _messaging ?? FirebaseMessaging.instance;
-  final StreamController<NotificationRealtimeEvent> _events =
+  static final StreamController<NotificationRealtimeEvent> _events =
       StreamController<NotificationRealtimeEvent>.broadcast(sync: true);
   StreamSubscription<String>? _tokenSubscription;
   StreamSubscription<RemoteMessage>? _messageSubscription;
@@ -48,7 +48,16 @@ class PushNotificationService {
   String? _token;
   bool _initialized = false;
 
-  Stream<NotificationRealtimeEvent> get events => _events.stream;
+  /// Available before Firebase initialization completes so route bindings can
+  /// subscribe during app startup without permanently capturing a null service.
+  static Stream<NotificationRealtimeEvent> get realtimeEvents => _events.stream;
+
+  /// Kept for hot-reload and callers that already hold the initialized service.
+  Stream<NotificationRealtimeEvent> get events => realtimeEvents;
+
+  static void publishRealtimeEvent(NotificationRealtimeEvent event) {
+    if (!_events.isClosed) _events.add(event);
+  }
 
   static bool get isSupported =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -130,9 +139,8 @@ class PushNotificationService {
   }
 
   void _publish(RemoteMessage message) {
-    if (_events.isClosed) return;
     final notification = message.notification;
-    _events.add(
+    publishRealtimeEvent(
       NotificationRealtimeEvent(
         id: int.tryParse(message.data['notificationId'] ?? ''),
         title: notification?.title ?? message.data['title'] ?? 'NhamHealth',
@@ -287,7 +295,6 @@ class PushNotificationService {
     await _messageSubscription?.cancel();
     await _tapSubscription?.cancel();
     _androidNotifications.setMethodCallHandler(null);
-    await _events.close();
     _client.close();
     if (identical(instance, this)) instance = null;
   }

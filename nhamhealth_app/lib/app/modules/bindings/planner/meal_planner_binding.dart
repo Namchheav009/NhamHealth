@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
 import '../../providers/planner/meal_planner_provider.dart';
@@ -24,6 +25,7 @@ class MealPlannerBinding extends Bindings {
         provider: Get.find<MealPlannerProvider>(),
         profileRepository: Get.find<ProfileRepository>(),
         authService: Get.find<AuthService>(),
+        realtimeEvents: PushNotificationService.realtimeEvents,
       ),
       fenix: true,
     );

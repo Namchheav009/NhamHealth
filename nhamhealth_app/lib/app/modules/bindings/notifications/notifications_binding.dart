@@ -19,7 +19,7 @@ class NotificationsBinding extends Bindings {
     Get.lazyPut(
       () => NotificationsController(
         repository: Get.find<NotificationsRepository>(),
-        realtimeEvents: PushNotificationService.instance?.events,
+        realtimeEvents: PushNotificationService.realtimeEvents,
       ),
     );
   }

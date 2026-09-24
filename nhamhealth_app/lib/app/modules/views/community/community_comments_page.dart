@@ -77,7 +77,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     _post = widget.post.copyWith();
     _repository = Get.find<CommunityRepository>();
     _loadComments();
-    _realtimeSubscription = PushNotificationService.instance?.events.listen(
+    _realtimeSubscription = PushNotificationService.realtimeEvents.listen(
       _handleRealtimeEvent,
     );
     if (!Get.testMode) {
