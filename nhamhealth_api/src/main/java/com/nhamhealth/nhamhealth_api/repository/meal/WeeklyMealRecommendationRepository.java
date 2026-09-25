@@ -10,13 +10,13 @@ import com.nhamhealth.nhamhealth_api.entity.WeeklyMealRecommendation;
 public interface WeeklyMealRecommendationRepository
                 extends JpaRepository<WeeklyMealRecommendation, Integer> {
 
-        @EntityGraph(attributePaths = { "plannerMeal", "plannerMeal.category", "plannerMeal.categories" })
+        @EntityGraph(attributePaths = { "plannerMeal", "plannerMeal.category", "plannerMeal.categories", "plannerMeal.dietTypes", "plannerMeal.allergens" })
         List<WeeklyMealRecommendation> findAllByOrderBySortOrderAscRecommendationIdAsc();
 
-        @EntityGraph(attributePaths = { "plannerMeal", "plannerMeal.category", "plannerMeal.categories" })
+        @EntityGraph(attributePaths = { "plannerMeal", "plannerMeal.category", "plannerMeal.categories", "plannerMeal.dietTypes", "plannerMeal.allergens" })
         List<WeeklyMealRecommendation> findAllByActiveTrueAndPlannerMealActiveTrueOrderBySortOrderAscRecommendationIdAsc();
 
-        @EntityGraph(attributePaths = { "plannerMeal", "plannerMeal.category", "plannerMeal.categories" })
+        @EntityGraph(attributePaths = { "plannerMeal", "plannerMeal.category", "plannerMeal.categories", "plannerMeal.dietTypes", "plannerMeal.allergens" })
         List<WeeklyMealRecommendation> findAllByActiveTrueAndPlannerMealActiveTrueAndDayOfWeekInOrderBySortOrderAscRecommendationIdAsc(
                         List<String> days);
 

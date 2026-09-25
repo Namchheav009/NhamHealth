@@ -816,19 +816,35 @@ class _MealPlannerViewState extends State<MealPlannerView>
         Get.isRegistered<WeightLossProjectionController>()
             ? Get.find<WeightLossProjectionController>()
             : null;
-    if (projection == null) return _forecastDashboard(context, null);
-    return Obx(() => _forecastDashboard(context, projection.forecast.value));
+    if (projection == null) {
+      return _forecastDashboard(
+        context,
+        null,
+        isLoading: false,
+        errorMessage: 'planner.analysis_unavailable'.tr,
+      );
+    }
+    return Obx(
+      () => _forecastDashboard(
+        context,
+        projection.forecast.value,
+        isLoading: projection.isLoading.value,
+        errorMessage: projection.errorMessage.value,
+      ),
+    );
   }
 
   Widget _forecastDashboard(
     BuildContext context,
-    WeightLossForecast? forecast,
-  ) {
+    WeightLossForecast? forecast, {
+    required bool isLoading,
+    required String errorMessage,
+  }) {
     final planned = controller.weeklyMealCount;
     final total = controller.planDaysCount.value * controller.dailyMealGoal;
     final progress =
         total == 0 ? 0.0 : (planned / total).clamp(0.0, 1.0).toDouble();
-    final days = forecast?.timeframeDays ?? 7;
+    final days = forecast?.timeframeDays;
     final goal = controller.healthGoal.value;
     final goalLabel = switch (goal) {
       MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
@@ -845,15 +861,29 @@ class _MealPlannerViewState extends State<MealPlannerView>
             ? 0.0
             : forecast.projectedEndWeightKg - forecast.currentWeightKg;
     final projectedChange =
-        weightChange.abs() < 0.05
+        forecast == null
+            ? '—'
+            : weightChange.abs() < 0.05
             ? '0.0'
             : '${weightChange > 0 ? '+' : '−'}${weightChange.abs().toStringAsFixed(1)}';
     final calorieGap = forecast?.dailyDeficitCalories.abs().round() ?? 0;
     final pace = forecast?.paceDescription.trim();
+    final unavailableMessage =
+        errorMessage.trim().isEmpty
+            ? 'planner.analysis_unavailable'.tr
+            : errorMessage.trim();
     final paceLabel =
-        pace?.isNotEmpty == true
+        forecast == null
+            ? (isLoading ? 'planner.analysis_loading'.tr : unavailableMessage)
+            : pace?.isNotEmpty == true
             ? pace!
             : _plannerLabel('planner.steady_healthy', 'Steady & healthy');
+    final strategyLabel =
+        forecast == null
+            ? 'planner.complete_analysis_hint'.tr
+            : forecast.weightDirectionMessageKey.tr;
+    final activityLabel =
+        forecast == null ? '—' : forecast.activityLevelKey.tr;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1041,8 +1071,10 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
-                      forecast?.paceStatusKey.tr ??
-                          _plannerLabel('planner.ready', 'Ready'),
+                      isLoading
+                          ? 'planner.analysis_loading'.tr
+                          : forecast?.paceStatusKey.tr ??
+                              'planner.analysis_unavailable'.tr,
                       style: const TextStyle(
                         color: AppColors.primaryGreen,
                         fontSize: 9.5,
@@ -1071,7 +1103,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       'planner.projected_change',
                       'Projected change',
                     ),
-                    '$projectedChange kg\n$days days',
+                    forecast == null
+                        ? projectedChange
+                        : '$projectedChange kg\n$days days',
                     const Color(0xFFFFEDEE),
                     const Color(0xFFFF5364),
                   ),
@@ -1087,10 +1121,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                     context,
                     Icons.restaurant_rounded,
                     _plannerLabel('planner.meal_strategy', 'Meal strategy'),
-                    _plannerLabel(
-                      'planner.high_protein_balanced',
-                      'High-protein balanced meals',
-                    ),
+                    strategyLabel,
                     const Color(0xFFEAF6FF),
                     const Color(0xFF2C8DDB),
                   ),
@@ -1098,10 +1129,7 @@ class _MealPlannerViewState extends State<MealPlannerView>
                     context,
                     Icons.directions_run_rounded,
                     _plannerLabel('planner.activity_focus', 'Activity focus'),
-                    _plannerLabel(
-                      'planner.light_daily_movement',
-                      'Light daily movement',
-                    ),
+                    activityLabel,
                     const Color(0xFFF2EAFE),
                     const Color(0xFF8B4CE8),
                   ),
@@ -1112,11 +1140,13 @@ class _MealPlannerViewState extends State<MealPlannerView>
                       'planner.calories_approach',
                       'Calories approach',
                     ),
-                    '${goal == MealPlannerHealthGoal.gainWeight
-                        ? 'planner.daily_surplus'.tr
-                        : goal == MealPlannerHealthGoal.maintainHealth
-                        ? 'planner.daily_balance'.tr
-                        : _plannerLabel('planner.moderate_deficit', 'Moderate deficit')}\n$calorieGap kcal/day',
+                    forecast == null
+                        ? '—'
+                        : '${goal == MealPlannerHealthGoal.gainWeight
+                            ? 'planner.daily_surplus'.tr
+                            : goal == MealPlannerHealthGoal.maintainHealth
+                            ? 'planner.daily_balance'.tr
+                            : _plannerLabel('planner.moderate_deficit', 'Moderate deficit')}\n$calorieGap kcal/day',
                     const Color(0xFFE9FAEE),
                     AppColors.primaryGreen,
                   ),
@@ -1277,9 +1307,23 @@ class _MealPlannerViewState extends State<MealPlannerView>
             ? Get.find<WeightLossProjectionController>()
             : null;
     final forecast = projectionController?.forecast.value;
-    final loss = forecast?.projectedWeightLossKg.toStringAsFixed(1);
     final weeks = ((forecast?.timeframeDays ?? 28) / 7).ceil();
     final goal = controller.healthGoal.value;
+    final projectedChange =
+        forecast == null
+            ? null
+            : forecast.projectedEndWeightKg - forecast.currentWeightKg;
+    final goalProgressText =
+        projectedChange == null
+            ? null
+            : switch (goal) {
+              MealPlannerHealthGoal.gainWeight =>
+                '${_plannerLabel('planner.gain', 'Gain')} +${projectedChange.clamp(0, double.infinity).toStringAsFixed(1)} kg · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
+              MealPlannerHealthGoal.maintainHealth =>
+                '${_plannerLabel('planner.maintain', 'Maintain')} · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
+              MealPlannerHealthGoal.loseWeight =>
+                '${_plannerLabel('planner.lose', 'Lose')} ${projectedChange.abs().toStringAsFixed(1)} kg · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
+            };
     final goalLabel = switch (goal) {
       MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
       MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
@@ -1338,11 +1382,9 @@ class _MealPlannerViewState extends State<MealPlannerView>
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      if (loss != null &&
-                          goal == MealPlannerHealthGoal.loseWeight)
+                      if (goalProgressText != null)
                         Text(
-                          '${_plannerLabel('planner.lose', 'Lose')} $loss kg · '
-                          '$weeks ${_plannerLabel('planner.weeks_left', 'weeks left')}',
+                          goalProgressText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

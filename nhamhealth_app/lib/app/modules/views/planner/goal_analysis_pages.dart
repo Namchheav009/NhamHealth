@@ -29,7 +29,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _controller.showAnalysisGoal();
+        _controller.showGoalAnalysis();
       }
     });
   }
@@ -88,7 +88,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                       child: RefreshIndicator(
                         color: _accent,
                         onRefresh:
-                            () => _controller.showAnalysisGoal(
+                            () => _controller.showGoalAnalysis(
                               forceRefresh: true,
                             ),
                         child: ListView(
@@ -265,8 +265,7 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                         Obx(
                           () => Text(
                             Get.find<MealPlannerController>()
-                                    .hasAnalyzedWeightLoss
-                                    .value
+                                    .hasAnalyzedCurrentGoal
                                 ? 'planner.analysis_ready'.tr
                                 : 'planner.analysis_preview'.tr,
                             style: const TextStyle(

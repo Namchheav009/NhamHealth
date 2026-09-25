@@ -66,6 +66,34 @@ public class PlannerMeal {
     private BigDecimal carbsGrams = BigDecimal.ZERO;
     @Column(name = "fat_grams", nullable = false)
     private BigDecimal fatGrams = BigDecimal.ZERO;
+    @Column(name = "fiber_grams")
+    private BigDecimal fiberGrams;
+    @Column(name = "sugar_grams")
+    private BigDecimal sugarGrams;
+    @Column(name = "sodium_mg")
+    private BigDecimal sodiumMg;
+    @Column(name = "saturated_fat_grams")
+    private BigDecimal saturatedFatGrams;
+    @Column(name = "serving_size")
+    private BigDecimal servingSize;
+    @Column(name = "serving_unit", length = 30)
+    private String servingUnit;
+    @Column(name = "nutrition_data_quality", nullable = false, length = 20)
+    private String nutritionDataQuality = "UNVERIFIED";
+    @Column(name = "nutrition_source", length = 255)
+    private String nutritionSource;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "planner_meal_diet_types",
+            joinColumns = @JoinColumn(name = "planner_meal_id"),
+            inverseJoinColumns = @JoinColumn(name = "diet_type_id"))
+    private Set<DietType> dietTypes = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "planner_meal_allergens",
+            joinColumns = @JoinColumn(name = "planner_meal_id"),
+            inverseJoinColumns = @JoinColumn(name = "allergen_id"))
+    private Set<Allergen> allergens = new HashSet<>();
     @Column(name = "cooking_time_minutes")
     private Integer cookingTimeMinutes;
     @Column(name = "ingredients_text", columnDefinition = "text")
@@ -270,6 +298,31 @@ public class PlannerMeal {
 
     public void setFatGrams(BigDecimal v) {
         fatGrams = v;
+    }
+
+    public BigDecimal getFiberGrams() { return fiberGrams; }
+    public void setFiberGrams(BigDecimal v) { fiberGrams = v; }
+    public BigDecimal getSugarGrams() { return sugarGrams; }
+    public void setSugarGrams(BigDecimal v) { sugarGrams = v; }
+    public BigDecimal getSodiumMg() { return sodiumMg; }
+    public void setSodiumMg(BigDecimal v) { sodiumMg = v; }
+    public BigDecimal getSaturatedFatGrams() { return saturatedFatGrams; }
+    public void setSaturatedFatGrams(BigDecimal v) { saturatedFatGrams = v; }
+    public BigDecimal getServingSize() { return servingSize; }
+    public void setServingSize(BigDecimal v) { servingSize = v; }
+    public String getServingUnit() { return servingUnit; }
+    public void setServingUnit(String v) { servingUnit = v; }
+    public String getNutritionDataQuality() { return nutritionDataQuality; }
+    public void setNutritionDataQuality(String v) { nutritionDataQuality = v; }
+    public String getNutritionSource() { return nutritionSource; }
+    public void setNutritionSource(String v) { nutritionSource = v; }
+
+    public Set<DietType> getDietTypes() {
+        return dietTypes == null ? Collections.emptySet() : dietTypes;
+    }
+
+    public Set<Allergen> getAllergens() {
+        return allergens == null ? Collections.emptySet() : allergens;
     }
 
     public Integer getCookingTimeMinutes() {

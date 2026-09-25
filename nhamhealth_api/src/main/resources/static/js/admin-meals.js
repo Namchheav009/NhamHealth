@@ -249,7 +249,7 @@ function renderSelectedIngredients() {
             `<option value="${escapeHtml(unit)}" ${unit === currentUnit ? "selected" : ""}>${escapeHtml(unit)}</option>`
         ).join("");
         return `
-        <article class="selected-ingredient" data-ingredient-id="${ingredient.ingredientId}">
+        <article class="selected-ingredient" data-ingredient-id="${ingredient.ingredientId ?? ""}" data-ingredient-index="${index}">
             <div class="selected-ingredient-name"><strong>${escapeHtml(ingredient.ingredientName)}</strong><span>Type: ${escapeHtml(ingredient.ingredientType || "General")}</span><span>Default unit: ${escapeHtml(ingredient.defaultUnit || "Not set")}</span></div>
             <label>Quantity<input data-ingredient-quantity type="number" min="0" step="0.01" value="${ingredient.quantity ?? ""}" placeholder="Optional"></label>
             <label>Measurement unit<select data-ingredient-unit><option value="">Optional</option>${unitOptions}</select></label>
@@ -263,7 +263,10 @@ function renderSelectedIngredients() {
 
 function renderIngredientSearchResults() {
     if (!ingredientSearchMatches.length) {
-        ingredientSearchResults.innerHTML = '<p class="ingredient-search-empty">No ingredients found.</p>';
+        const name = ingredientSearchInput.value.trim();
+        ingredientSearchResults.innerHTML = name
+            ? `<button type="button" role="option" class="ingredient-search-result" data-create-ingredient="true"><strong>Create “${escapeHtml(name)}”</strong><span>New ingredient · It will be saved with this meal</span></button>`
+            : '<p class="ingredient-search-empty">Type an ingredient name to search or create it.</p>';
         return;
     }
     ingredientSearchResults.innerHTML = ingredientSearchMatches.map(ingredient => {
@@ -303,14 +306,31 @@ async function refreshMeasurementUnits() {
 }
 
 function selectedIngredientPayload() {
+    syncSelectedIngredientsFromForm();
     return [...selectedMealIngredients.querySelectorAll(".selected-ingredient")].map(row => ({
-        ingredientId: Number(row.dataset.ingredientId),
+        ingredientId: row.dataset.ingredientId ? Number(row.dataset.ingredientId) : null,
+        ingredientName: selectedIngredients[Number(row.dataset.ingredientIndex)]?.ingredientName || null,
+        ingredientType: selectedIngredients[Number(row.dataset.ingredientIndex)]?.ingredientType || "General",
+        defaultUnit: selectedIngredients[Number(row.dataset.ingredientIndex)]?.defaultUnit
+            || row.querySelector("[data-ingredient-unit]").value.trim() || null,
         quantity: row.querySelector("[data-ingredient-quantity]").value || null,
         unit: row.querySelector("[data-ingredient-unit]").value.trim(),
         preparationNote: row.querySelector("[data-ingredient-note]").value.trim(),
         ingredientNameKm: row.querySelector("[data-ingredient-name-km]").value.trim(),
         preparationNoteKm: row.querySelector("[data-ingredient-note-km]").value.trim()
     }));
+}
+
+function syncSelectedIngredientsFromForm() {
+    [...selectedMealIngredients.querySelectorAll(".selected-ingredient")].forEach(row => {
+        const ingredient = selectedIngredients[Number(row.dataset.ingredientIndex)];
+        if (!ingredient) return;
+        ingredient.quantity = row.querySelector("[data-ingredient-quantity]").value;
+        ingredient.unit = row.querySelector("[data-ingredient-unit]").value;
+        ingredient.preparationNote = row.querySelector("[data-ingredient-note]").value;
+        ingredient.ingredientNameKm = row.querySelector("[data-ingredient-name-km]").value;
+        ingredient.preparationNoteKm = row.querySelector("[data-ingredient-note-km]").value;
+    });
 }
 
 async function openCreateModal() {
@@ -548,8 +568,19 @@ ingredientSearchInput.addEventListener("input", () => {
     ingredientSearchTimer = window.setTimeout(() => loadIngredientSearchResults(ingredientSearchInput.value), 200);
 });
 ingredientSearchResults.addEventListener("click", event => {
-    const button = event.target.closest("[data-ingredient-id]");
+    const button = event.target.closest("[data-ingredient-id], [data-create-ingredient]");
     if (!button || button.disabled) return;
+    syncSelectedIngredientsFromForm();
+    if (button.dataset.createIngredient) {
+        const name = ingredientSearchInput.value.trim();
+        if (!name || selectedIngredients.some(item => item.ingredientName.toLowerCase() === name.toLowerCase())) return;
+        selectedIngredients.push({ ingredientId: null, ingredientName: name, ingredientType: "General", defaultUnit: "", unit: "" });
+        ingredientSearchInput.value = "";
+        ingredientSearchMatches = [];
+        renderSelectedIngredients();
+        renderIngredientSearchResults();
+        return;
+    }
     const ingredient = ingredientSearchMatches.find(item => String(item.ingredientId) === button.dataset.ingredientId);
     if (!ingredient || selectedIngredients.some(item => item.ingredientId === ingredient.ingredientId)) return;
     selectedIngredients.push({
@@ -563,6 +594,7 @@ ingredientSearchResults.addEventListener("click", event => {
 selectedMealIngredients.addEventListener("click", event => {
     const button = event.target.closest("[data-remove-ingredient]");
     if (!button) return;
+    syncSelectedIngredientsFromForm();
     selectedIngredients.splice(Number(button.dataset.removeIngredient), 1);
     renderSelectedIngredients();
     renderIngredientSearchResults();

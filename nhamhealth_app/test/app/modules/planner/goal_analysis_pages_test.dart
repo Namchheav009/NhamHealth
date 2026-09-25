@@ -22,7 +22,11 @@ void main() {
   }) async {
     final controller = Get.put(WeightLossProjectionController());
     final forecast = WeightLossForecast.fallback(
-      goal: MealPlannerHealthGoal.loseWeight,
+      goal: switch (direction) {
+        'GAIN' => MealPlannerHealthGoal.gainWeight,
+        'MAINTAIN' => MealPlannerHealthGoal.maintainHealth,
+        _ => MealPlannerHealthGoal.loseWeight,
+      },
       hasPlannedMeals: true,
       age: 28,
       heightCm: 170,
@@ -35,7 +39,7 @@ void main() {
       activityLevel: 'MODERATE',
       hasBiometricProfile: true,
     );
-    controller.weightLossForecast.value = forecast;
+    controller.goalForecastCache.value = forecast;
     controller.forecast.value = forecast;
     controller.isLoading.value = false;
 

@@ -189,6 +189,12 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _projectionHeroCard(context, forecast),
+        if (controller.hasGoalRecommendation) ...[
+          const SizedBox(height: 12),
+          _goalRecommendationCard(context, forecast),
+        ],
+        const SizedBox(height: 12),
+        _profileContextCard(context, forecast),
         const SizedBox(height: 12),
         _energyBalanceCard(context, forecast),
       ],
@@ -520,11 +526,6 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: context.appMutedText,
-                size: 22,
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -680,9 +681,12 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
       children:
           WeightLossProjectionController.availableTimeframes.map((days) {
             final isSelected = controller.selectedTimeframeDays.value == days;
-            final label = 'planner.timeframe_day_short'.trParams({
-              'count': '$days',
-            });
+            final label = switch (days) {
+              7 => 'planner.timeframe_one_week'.tr,
+              30 => 'planner.timeframe_one_month'.tr,
+              90 => 'planner.timeframe_three_months'.tr,
+              _ => 'planner.timeframe_day_short'.trParams({'count': '$days'}),
+            };
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -728,6 +732,99 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
               ),
             );
           }).toList(),
+    );
+  }
+
+  Widget _goalRecommendationCard(
+    BuildContext context,
+    WeightLossForecast forecast,
+  ) {
+    final recommendation = controller.recommendedGoal;
+    if (recommendation == null) return const SizedBox.shrink();
+    final goalLabel = switch (recommendation) {
+      MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
+      MealPlannerHealthGoal.maintainHealth =>
+        'planner.goal_maintain_health'.tr,
+      MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
+    };
+
+    return Container(
+      key: const ValueKey('weight-goal-recommendation-card'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.appSoftGreen,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.24),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.health_and_safety_outlined,
+                color: AppColors.primaryGreen,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'planner.recommended_goal'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      goalLabel,
+                      style: const TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      forecast.weightDirectionMessageKey.tr,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 11.5,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            key: const ValueKey('apply-recommended-weight-goal'),
+            onPressed:
+                controller.isLoading.value
+                    ? null
+                    : controller.applyRecommendedGoal,
+            icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+            label: Text('planner.apply_recommended_goal'.tr),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(44),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(13),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -916,8 +1013,6 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     );
   }
 
-  // Retained for a possible dedicated health-context page.
-  // ignore: unused_element
   Widget _profileContextCard(
     BuildContext context,
     WeightLossForecast forecast,

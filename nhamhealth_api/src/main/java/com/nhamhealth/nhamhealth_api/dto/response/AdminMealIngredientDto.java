@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record AdminMealIngredientDto(
         Integer ingredientId,
         String ingredientName,
+        String ingredientType,
         String defaultUnit,
         BigDecimal quantity,
         String unit,

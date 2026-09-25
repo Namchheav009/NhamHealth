@@ -17,8 +17,8 @@ import 'package:nhamhealth_flutter/app/modules/services/wellness/food_recommenda
 import 'package:nhamhealth_flutter/app/modules/views/auth/forgot_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/change_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/profile_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/profile/security_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/wellness/ai_food_view.dart';
-import 'package:nhamhealth_flutter/app/modules/views/wellness/widgets/ai_food_scan_content.dart';
 import 'package:nhamhealth_flutter/app/modules/views/wellness/wellness_view.dart';
 import 'package:nhamhealth_flutter/core/services/app_security_service.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
@@ -194,21 +194,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('change password uses an intro and form tablet split in landscape', (
-    tester,
-  ) async {
-    _setTabletSize(tester);
-    Get.put<ChangePasswordController>(ChangePasswordController());
+  testWidgets(
+    'change password uses an intro and form tablet split in landscape',
+    (tester) async {
+      _setTabletSize(tester);
+      Get.put<ChangePasswordController>(ChangePasswordController());
 
-    await tester.pumpWidget(const GetMaterialApp(home: ChangePasswordView()));
-    await tester.pump();
+      await tester.pumpWidget(const GetMaterialApp(home: ChangePasswordView()));
+      await tester.pump();
 
-    expect(
-      find.byKey(const ValueKey<String>('change-password-tablet-layout')),
-      findsOneWidget,
-    );
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        find.byKey(const ValueKey<String>('change-password-tablet-layout')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'change password uses centered single-column layout on portrait tablet (800x1280)',
@@ -349,7 +350,8 @@ class _ProfileRepository extends ProfileRepository {
 }
 
 class _CommunityRepository extends CommunityRepository {
-  _CommunityRepository(AuthService authService) : super(authService: authService);
+  _CommunityRepository(AuthService authService)
+    : super(authService: authService);
 
   @override
   Future<CommunityPersonProfile> getPersonProfile(int userId) async =>

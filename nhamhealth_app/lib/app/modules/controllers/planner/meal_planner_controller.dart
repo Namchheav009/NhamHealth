@@ -48,6 +48,8 @@ class MealPlannerController extends GetxController {
       'meal_planner_analyzed_weight_loss';
   static const _storageAnalyzedMaintainHealthKey =
       'meal_planner_analyzed_maintain_health';
+  static const _storageAnalyzedGainWeightKey =
+      'meal_planner_analyzed_gain_weight';
   static const _storageGroceryCheckedKey = 'meal_planner_grocery_checked';
   static const _storageWaterKey = 'meal_planner_water';
 
@@ -85,10 +87,17 @@ class MealPlannerController extends GetxController {
   final lastAiAutoFillResult = Rxn<AiAutoFillPlanResponse>();
   final hasAnalyzedWeightLoss = false.obs;
   final hasAnalyzedMaintainHealth = false.obs;
+  final hasAnalyzedGainWeight = false.obs;
+  bool get hasAnalyzedCurrentGoal => switch (healthGoal.value) {
+    MealPlannerHealthGoal.loseWeight => hasAnalyzedWeightLoss.value,
+    MealPlannerHealthGoal.maintainHealth => hasAnalyzedMaintainHealth.value,
+    MealPlannerHealthGoal.gainWeight => hasAnalyzedGainWeight.value,
+  };
   bool get hasAnalyzedBoth =>
       hasAnalyzedWeightLoss.value && hasAnalyzedMaintainHealth.value;
   final lastWeightLossResult = Rxn<AiAutoFillPlanResponse>();
   final lastMaintainHealthResult = Rxn<AiAutoFillPlanResponse>();
+  final lastGainWeightResult = Rxn<AiAutoFillPlanResponse>();
 
   @override
   void onInit() {
@@ -238,12 +247,17 @@ class MealPlannerController extends GetxController {
       final analyzedMaintainKey = await _userScopedKey(
         _storageAnalyzedMaintainHealthKey,
       );
+      final analyzedGainKey = await _userScopedKey(
+        _storageAnalyzedGainWeightKey,
+      );
       final savedAnalyzedLoss = await _storage.read(key: analyzedLossKey);
       final savedAnalyzedMaintain = await _storage.read(
         key: analyzedMaintainKey,
       );
+      final savedAnalyzedGain = await _storage.read(key: analyzedGainKey);
       hasAnalyzedWeightLoss.value = savedAnalyzedLoss == 'true';
       hasAnalyzedMaintainHealth.value = savedAnalyzedMaintain == 'true';
+      hasAnalyzedGainWeight.value = savedAnalyzedGain == 'true';
       await _loadGroceryCheckedState();
     } catch (_) {
       // Secure storage read error ignored
@@ -486,6 +500,7 @@ class MealPlannerController extends GetxController {
     } catch (_) {
       // The current selection remains usable even if secure storage is unavailable.
     }
+    await loadRecommendations(force: true);
   }
 
   Future<void> loadRecommendations({bool force = false}) async {
@@ -494,7 +509,10 @@ class MealPlannerController extends GetxController {
     recommendationsError.value = '';
     try {
       adminRecommendations.assignAll(
-        await _provider.getRecommendations(goal: healthGoal.value),
+        await _provider.getRecommendations(
+          goal: healthGoal.value,
+          preferences: dietaryPreferences.value,
+        ),
       );
     } catch (_) {
       adminRecommendations.clear();
@@ -578,6 +596,7 @@ class MealPlannerController extends GetxController {
       final dayRecs = await _provider.getRecommendations(
         date: date,
         goal: healthGoal.value,
+        preferences: dietaryPreferences.value,
       );
       if (dayRecs.isNotEmpty) {
         for (final rec in dayRecs) {
@@ -955,14 +974,19 @@ class MealPlannerController extends GetxController {
     if (provider == null || planId == null) return;
     isSaving.value = true;
     try {
-      _put(
-        key,
-        await provider.updateMeal(
-          planId,
-          status: status,
-          actualServings: status == MealPlanStatus.eaten ? meal.servings : null,
-        ),
+      final saved = await provider.updateMeal(
+        planId,
+        status: status,
+        actualServings: status == MealPlanStatus.eaten ? meal.servings : null,
       );
+      _put(key, saved);
+      if (status == MealPlanStatus.eaten || status == MealPlanStatus.skipped) {
+        try {
+          await provider.saveFeedback(planId, outcome: status);
+        } catch (_) {
+          // Meal status is the source of truth; feedback can be retried later.
+        }
+      }
       await _refreshNutritionViews(meal.planDate ?? selectedDate);
     } catch (_) {
       _put(key, meal);
@@ -1120,8 +1144,10 @@ class MealPlannerController extends GetxController {
     if (!currentDayOnly) {
       hasAnalyzedWeightLoss.value = false;
       hasAnalyzedMaintainHealth.value = false;
+      hasAnalyzedGainWeight.value = false;
       lastWeightLossResult.value = null;
       lastMaintainHealthResult.value = null;
+      lastGainWeightResult.value = null;
       lastAiAutoFillResult.value = null;
       unawaited(_persistAnalyzedGoals());
     }
@@ -1392,6 +1418,9 @@ class MealPlannerController extends GetxController {
     if (response.goal.toUpperCase() == 'LOSE_WEIGHT') {
       hasAnalyzedWeightLoss.value = true;
       lastWeightLossResult.value = response;
+    } else if (response.goal.toUpperCase() == 'GAIN_WEIGHT') {
+      hasAnalyzedGainWeight.value = true;
+      lastGainWeightResult.value = response;
     } else {
       hasAnalyzedMaintainHealth.value = true;
       lastMaintainHealthResult.value = response;
@@ -1418,6 +1447,7 @@ class MealPlannerController extends GetxController {
       final maintainKey = await _userScopedKey(
         _storageAnalyzedMaintainHealthKey,
       );
+      final gainKey = await _userScopedKey(_storageAnalyzedGainWeightKey);
       await _storage.write(
         key: lossKey,
         value: hasAnalyzedWeightLoss.value ? 'true' : 'false',
@@ -1425,6 +1455,10 @@ class MealPlannerController extends GetxController {
       await _storage.write(
         key: maintainKey,
         value: hasAnalyzedMaintainHealth.value ? 'true' : 'false',
+      );
+      await _storage.write(
+        key: gainKey,
+        value: hasAnalyzedGainWeight.value ? 'true' : 'false',
       );
     } catch (_) {}
   }

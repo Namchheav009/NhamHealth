@@ -16,9 +16,9 @@ class WeightLossProjectionController extends GetxController {
 
   final MealPlannerProvider? _provider;
 
-  final selectedTimeframeDays = 5.obs;
+  final selectedTimeframeDays = 30.obs;
   final forecast = Rxn<WeightLossForecast>();
-  final weightLossForecast = Rxn<WeightLossForecast>();
+  final goalForecastCache = Rxn<WeightLossForecast>();
   final activeAnalysisGoal = Rx<MealPlannerHealthGoal>(
     MealPlannerHealthGoal.loseWeight,
   );
@@ -34,14 +34,14 @@ class WeightLossProjectionController extends GetxController {
   bool _forecastRefreshQueued = false;
   int _forecastRequestId = 0;
 
-  static const List<int> availableTimeframes = [3, 4, 5, 6, 7];
+  static const List<int> availableTimeframes = [7, 30, 90];
 
   @override
   void onInit() {
     super.onInit();
     if (Get.isRegistered<MealPlannerController>()) {
       final planner = Get.find<MealPlannerController>();
-      activeAnalysisGoal.value = MealPlannerHealthGoal.loseWeight;
+      activeAnalysisGoal.value = planner.healthGoal.value;
       _healthGoalWorker = ever<MealPlannerHealthGoal>(
         planner.healthGoal,
         (_) => _scheduleForecastRefresh(),
@@ -120,18 +120,7 @@ class WeightLossProjectionController extends GetxController {
       if (requestId == _forecastRequestId) {
         requiresProfileReview.value = false;
         forecast.value = result;
-        weightLossForecast.value = result;
-        final bmiGoal = switch (result.resolvedWeightDirection) {
-          'GAIN' => MealPlannerHealthGoal.gainWeight,
-          'LOSE' => MealPlannerHealthGoal.loseWeight,
-          _ => MealPlannerHealthGoal.maintainHealth,
-        };
-        activeAnalysisGoal.value = bmiGoal;
-        if (planner != null && planner.healthGoal.value != bmiGoal) {
-          unawaited(
-            planner.applyBmiWeightDirection(result.resolvedWeightDirection),
-          );
-        }
+        goalForecastCache.value = result;
       }
     } on MealPlannerProviderException catch (e) {
       if (requestId == _forecastRequestId) {
@@ -150,16 +139,47 @@ class WeightLossProjectionController extends GetxController {
     }
   }
 
-  /// Shows the Weight Loss analysis, using its cached forecast when available.
-  Future<void> showAnalysisGoal({bool forceRefresh = false}) async {
-    activeAnalysisGoal.value = MealPlannerHealthGoal.loseWeight;
-    final cached = weightLossForecast.value;
+  /// Shows the analysis for the currently selected goal using cached data when possible.
+  Future<void> showGoalAnalysis({bool forceRefresh = false}) async {
+    if (Get.isRegistered<MealPlannerController>()) {
+      activeAnalysisGoal.value =
+          Get.find<MealPlannerController>().healthGoal.value;
+    }
+    final cached = goalForecastCache.value;
     if (!forceRefresh && cached != null) {
       forecast.value = cached;
       return;
     }
     if (cached == null) forecast.value = null;
     await loadForecast(forceRefresh: forceRefresh);
+  }
+
+  MealPlannerHealthGoal? get recommendedGoal {
+    final result = forecast.value;
+    if (result == null || !result.hasBiometricProfile) return null;
+    return switch (result.recommendedDirection) {
+      'GAIN' => MealPlannerHealthGoal.gainWeight,
+      'LOSE' => MealPlannerHealthGoal.loseWeight,
+      'MAINTAIN' => MealPlannerHealthGoal.maintainHealth,
+      _ => null,
+    };
+  }
+
+  bool get hasGoalRecommendation {
+    if (!Get.isRegistered<MealPlannerController>()) return false;
+    final recommendation = recommendedGoal;
+    return recommendation != null &&
+        recommendation != Get.find<MealPlannerController>().healthGoal.value;
+  }
+
+  Future<void> applyRecommendedGoal() async {
+    if (!Get.isRegistered<MealPlannerController>()) return;
+    final recommendation = recommendedGoal;
+    if (recommendation == null) return;
+    final planner = Get.find<MealPlannerController>();
+    await planner.setHealthGoal(recommendation);
+    activeAnalysisGoal.value = recommendation;
+    await loadForecast(forceRefresh: true);
   }
 
   void setTimeframeDays(int days) {
@@ -254,7 +274,8 @@ class WeightLossProjectionController extends GetxController {
       final preferences =
           plannerCtrl?.dietaryPreferences.value ??
           const MealPlannerDietaryPreferences();
-      if (preferences.medicalFlags.contains('PREGNANT_OR_BREASTFEEDING')) {
+      if (goal == MealPlannerHealthGoal.loseWeight &&
+          preferences.medicalFlags.contains('PREGNANT_OR_BREASTFEEDING')) {
         if (context.mounted) {
           AppAlert.toast(
             context: context,

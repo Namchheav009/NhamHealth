@@ -1157,6 +1157,23 @@ void main() {
     expect(meal3.imageUrl, 'assets/images/meals/chicken.jpg');
   });
 
+  test('PlannedMeal.fromJson splits legacy combined planner content', () {
+    final meal = PlannedMeal.fromJson({
+      'plannerMealId': 10,
+      'name': 'Banana Peanut Butter Oatmeal',
+      'ingredients': [
+        {'name': '60g oats; 1 banana; 250ml milk; 1 tbsp peanut butter'},
+      ],
+      'instructions': ['Add oats; Add milk; Simmer and serve'],
+    });
+
+    expect(meal.ingredientDetails, hasLength(4));
+    expect(meal.ingredientDetails.first.name, 'oats');
+    expect(meal.ingredientDetails.first.quantity, 60);
+    expect(meal.ingredientDetails.first.unit, 'g');
+    expect(meal.instructions, hasLength(3));
+  });
+
   test(
     'plannerImageUrl resolves localhost, relative paths, and assets properly',
     () {

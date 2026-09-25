@@ -184,6 +184,31 @@ void main() {
       expect(controller.lastWeightLossResult.value, isNull);
     });
 
+    test('gain analysis is tracked independently from maintenance', () {
+      final controller = MealPlannerController();
+      const response = AiAutoFillPlanResponse(
+        createdPlans: [],
+        filledCount: 0,
+        dailyPlannedCalories: 2400,
+        dailyDeficit: -300,
+        tdee: 2100,
+        bmr: 1500,
+        projectedWeeklyLossKg: 0.27,
+        timeframeDays: 30,
+        totalProjectedLossKg: 1.2,
+        aiRationale: 'Balanced surplus for gradual gain.',
+        goal: 'GAIN_WEIGHT',
+        modelName: 'clinical-rule-fallback',
+      );
+
+      controller.applyAiAutoFillResult(response);
+
+      expect(controller.hasAnalyzedGainWeight.value, isTrue);
+      expect(controller.hasAnalyzedMaintainHealth.value, isFalse);
+      expect(controller.hasAnalyzedWeightLoss.value, isFalse);
+      expect(controller.lastGainWeightResult.value, same(response));
+    });
+
     test(
       'autoFillPlan calls provider.aiAutoFillPlan and updates plans and lastAiAutoFillResult',
       () async {

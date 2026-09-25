@@ -150,6 +150,45 @@ void main() {
       expect(forecast.dailyDeficitCalories, 0);
       expect(forecast.paceStatus, 'BALANCED');
     });
+
+    test('gain fallback uses a surplus and projects weight upward', () {
+      final forecast = WeightLossForecast.fallback(
+        currentWeightKg: 52,
+        goal: MealPlannerHealthGoal.gainWeight,
+        timeframeDays: 30,
+      );
+
+      expect(forecast.shouldGainWeight, isTrue);
+      expect(forecast.dailyDeficitCalories, lessThan(0));
+      expect(forecast.projectedWeightLossKg, 0);
+      expect(forecast.projectedEndWeightKg, greaterThan(52));
+      expect(forecast.isSurplus, isTrue);
+    });
+
+    test('gain-specific pace statuses map to clear UI labels', () {
+      final forecast = WeightLossForecast.fromJson({
+        ...WeightLossForecast.fallback(
+          goal: MealPlannerHealthGoal.gainWeight,
+        ).toJson(),
+        'paceStatus': 'GAIN_OPTIMAL',
+      });
+
+      expect(forecast.isOptimal, isTrue);
+      expect(forecast.paceStatusKey, 'planner.pace_gain_optimal');
+    });
+
+    test('selected gain goal is distinct from BMI recommendation', () {
+      final forecast = WeightLossForecast.fromJson({
+        ...WeightLossForecast.fallback(
+          goal: MealPlannerHealthGoal.gainWeight,
+        ).toJson(),
+        'effectiveGoal': 'GAIN_WEIGHT',
+        'recommendedWeightDirection': 'MAINTAIN',
+      });
+
+      expect(forecast.shouldGainWeight, isTrue);
+      expect(forecast.recommendedDirection, 'MAINTAIN');
+    });
   });
 
   group('WeightLossProjectionController Tests', () {
@@ -228,8 +267,8 @@ void main() {
             jsonEncode({
               'currentWeightKg': 70.0,
               'targetWeightKg': 67.0,
-              'projectedWeightLossKg': int.parse(days) == 14 ? 1.2 : 2.4,
-              'projectedEndWeightKg': int.parse(days) == 14 ? 68.8 : 67.6,
+              'projectedWeightLossKg': int.parse(days) == 90 ? 4.8 : 2.4,
+              'projectedEndWeightKg': int.parse(days) == 90 ? 65.2 : 67.6,
               'bmrCalories': 1600.0,
               'tdeeCalories': 2400.0,
               'dailyPlannedCalories': 1800.0,
@@ -262,16 +301,46 @@ void main() {
       expect(controller.forecast.value, isNotNull);
       expect(controller.forecast.value!.projectedWeightLossKg, 2.4);
 
-      // Change timeframe to 14 days
-      controller.setTimeframeDays(14);
+      expect(controller.selectedTimeframeDays.value, 30);
+
+      // Change to the long-term competition/demo outlook.
+      controller.setTimeframeDays(90);
       await controller.loadForecast();
 
-      expect(controller.selectedTimeframeDays.value, 14);
-      expect(controller.forecast.value!.projectedWeightLossKg, 1.2);
+      expect(controller.selectedTimeframeDays.value, 90);
+      expect(controller.forecast.value!.projectedWeightLossKg, 4.8);
 
       // Tab switching
       controller.setSelectedTab(1);
       expect(controller.selectedTab.value, 1);
+    });
+
+    test('recommended BMI goal requires explicit user confirmation', () async {
+      final planner = Get.put(MealPlannerController());
+      planner.healthGoal.value = MealPlannerHealthGoal.loseWeight;
+      final response = WeightLossForecast.fallback(
+        goal: MealPlannerHealthGoal.maintainHealth,
+        hasBiometricProfile: true,
+        bmi: 22.0,
+        recommendedWeightDirection: 'MAINTAIN',
+      );
+      final provider = MealPlannerProvider(
+        authService: _FakeAuthService(),
+        client: MockClient(
+          (_) async => http.Response(jsonEncode(response.toJson()), 200),
+        ),
+      );
+      final controller = WeightLossProjectionController(provider: provider);
+
+      await controller.loadForecast();
+
+      expect(planner.healthGoal.value, MealPlannerHealthGoal.loseWeight);
+      expect(controller.hasGoalRecommendation, isTrue);
+
+      await controller.applyRecommendedGoal();
+
+      expect(planner.healthGoal.value, MealPlannerHealthGoal.maintainHealth);
+      expect(controller.hasGoalRecommendation, isFalse);
     });
   });
 
@@ -355,7 +424,7 @@ void main() {
       expect(find.text('Complete your health profile'), findsOneWidget);
     });
 
-    testWidgets('legacy maintenance selection still shows Weight Loss', (
+    testWidgets('maintenance selection keeps a maintenance forecast', (
       tester,
     ) async {
       final planner = Get.put(MealPlannerController());
@@ -391,9 +460,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Weight Loss Forecast'), findsOneWidget);
-      expect(find.text('Health Maintenance Outlook'), findsNothing);
-      expect(find.text('Maintain Your Balance'), findsNothing);
+      expect(find.text('Weight Maintenance Forecast'), findsOneWidget);
+      expect(find.text('Weight Loss Forecast'), findsNothing);
     });
 
     testWidgets('renders forecast inline without a second page scaffold', (
@@ -507,6 +575,9 @@ void main() {
       expect(find.textContaining('−2.3 kg'), findsOneWidget);
       expect(find.textContaining('75.0 kg'), findsOneWidget);
       expect(find.textContaining('72.7 kg'), findsOneWidget);
+      expect(find.text('1 week'), findsOneWidget);
+      expect(find.text('1 month'), findsOneWidget);
+      expect(find.text('3 months'), findsOneWidget);
 
       // Check Energy Deficit
       expect(find.textContaining('550 kcal'), findsOneWidget);
@@ -658,9 +729,10 @@ void main() {
     );
 
     testWidgets(
-      'legacy Maintain Health analysis cannot change the Weight Loss view',
+      'maintain-health analysis preserves the selected planner goal',
       (tester) async {
         final planner = Get.put(MealPlannerController());
+        await planner.initPlanner();
         planner.hasAnalyzedWeightLoss.value = false;
         planner.hasAnalyzedMaintainHealth.value = true;
         planner.healthGoal.value = MealPlannerHealthGoal.maintainHealth;
@@ -696,14 +768,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Legacy flags must never expose the removed goal.
         expect(find.byKey(const ValueKey('dual-goal-switcher')), findsNothing);
-        expect(find.text('Weight Loss Forecast'), findsOneWidget);
-        expect(find.text('Health Maintenance Outlook'), findsNothing);
-        expect(find.text('Maintain Your Balance'), findsNothing);
+        expect(find.text('Weight Maintenance Forecast'), findsOneWidget);
+        expect(find.text('Weight Loss Forecast'), findsNothing);
         expect(requestedGoals, isNotEmpty);
         expect(requestedGoals, contains('MAINTAIN_HEALTH'));
-        expect(requestedGoals.last, 'LOSE_WEIGHT');
+        expect(requestedGoals.last, 'MAINTAIN_HEALTH');
         expect(
           find.byKey(const ValueKey('dual-goal-comparison-card')),
           findsNothing,

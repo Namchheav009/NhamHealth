@@ -184,6 +184,7 @@ public class MealAdminService {
                 .findByMealMealIdOrderByDisplayOrderAsc(mealId).stream()
                 .map(ingredient -> new AdminMealIngredientDto(
                         ingredient.getIngredient().getIngredientId(), ingredient.getIngredient().getIngredientName(),
+                        ingredient.getIngredient().getIngredientType(),
                         ingredient.getIngredient().getDefaultUnit(), ingredient.getQuantity(), ingredient.getUnit(),
                         ingredient.getPreparationNote(),
                         ingredientTranslations.findByIngredientIngredientIdAndLanguageCode(
@@ -342,11 +343,10 @@ public class MealAdminService {
         List<MealIngredient> mealIngredients = new java.util.ArrayList<>();
         for (int index = 0; index < request.ingredients().size(); index++) {
             var requestedIngredient = request.ingredients().get(index);
-            if (!selectedIngredientIds.add(requestedIngredient.ingredientId())) {
+            Ingredient ingredient = resolveIngredient(requestedIngredient);
+            if (!selectedIngredientIds.add(ingredient.getIngredientId())) {
                 throw new IllegalArgumentException("Each ingredient can only be added once");
             }
-            Ingredient ingredient = ingredientRepository.findById(requestedIngredient.ingredientId())
-                    .orElseThrow(() -> new IllegalArgumentException("Selected ingredient was not found"));
             MealIngredient mealIngredient = new MealIngredient();
             mealIngredient.setMeal(savedMeal);
             mealIngredient.setIngredient(ingredient);
@@ -386,6 +386,25 @@ public class MealAdminService {
                 mealIngredientTranslations.save(translation);
             }
         }
+    }
+
+    private Ingredient resolveIngredient(com.nhamhealth.nhamhealth_api.dto.request.AdminMealIngredientRequest request) {
+        if (request.ingredientId() != null) {
+            return ingredientRepository.findById(request.ingredientId())
+                    .orElseThrow(() -> new IllegalArgumentException("Selected ingredient was not found"));
+        }
+        String name = blankToNull(request.ingredientName());
+        if (name == null) {
+            throw new IllegalArgumentException("Choose an ingredient or enter a new ingredient name");
+        }
+        return ingredientRepository.findByIngredientNameIgnoreCase(name).orElseGet(() -> {
+            Ingredient ingredient = new Ingredient();
+            ingredient.setIngredientName(name);
+            ingredient.setIngredientType(blankToNull(request.ingredientType()) == null
+                    ? "General" : request.ingredientType().trim());
+            ingredient.setDefaultUnit(blankToNull(request.defaultUnit()));
+            return ingredientRepository.save(ingredient);
+        });
     }
 
     private void saveMealTranslation(Meal meal, AdminMealRequest request) {

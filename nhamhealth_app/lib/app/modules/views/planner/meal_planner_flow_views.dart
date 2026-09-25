@@ -800,6 +800,41 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                                                 .toList(),
                                       ),
                                     ),
+                                  if (meal.dietTypes.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
+                                      child: Wrap(
+                                        spacing: 5,
+                                        runSpacing: 4,
+                                        children: meal.dietTypes
+                                            .take(2)
+                                            .map(
+                                              (diet) => Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 7,
+                                                  vertical: 2.5,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primaryGreen
+                                                      .withValues(alpha: 0.10),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  diet
+                                                      .replaceAll('_', ' ')
+                                                      .toLowerCase(),
+                                                  style: const TextStyle(
+                                                    color: AppColors.primaryGreen,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                            .toList(growable: false),
+                                      ),
+                                    ),
                                   Text(
                                     '🔥 ${meal.calories} ${'planner.kcal'.tr}   🏋 ${meal.proteinGrams.toStringAsFixed(0)}g ${'planner.protein'.tr}${meal.cookingTimeMinutes == null ? '' : '   ◷ ${meal.cookingTimeMinutes} ${'planner.minutes_short'.tr}'}',
                                     maxLines: 2,
@@ -810,6 +845,33 @@ class _PlannerMealListViewState extends State<PlannerMealListView> {
                                       height: 1.3,
                                     ),
                                   ),
+                                  if (meal.whyRecommended.isNotEmpty) ...[
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      meal.whyRecommended,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: context.appMutedText,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                  if (meal.allergens.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '⚠ ${meal.allergens.take(3).map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Color(0xFFB45309),
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

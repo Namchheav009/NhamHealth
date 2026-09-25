@@ -147,8 +147,17 @@ class MealPlannerProvider {
     DateTime? date,
     String? dayOfWeek,
     MealPlannerHealthGoal goal = MealPlannerHealthGoal.loseWeight,
+    MealPlannerDietaryPreferences preferences =
+        const MealPlannerDietaryPreferences(),
   }) {
-    final query = <String, String>{'lang': _lang, 'goal': goal.apiValue};
+    final query = <String, String>{
+      'lang': _lang,
+      'goal': goal.apiValue,
+      'diet': preferences.diet.apiValue,
+    };
+    if (preferences.allergens.isNotEmpty) {
+      query['allergens'] = preferences.allergens.join(',');
+    }
     if (dayOfWeek != null && dayOfWeek.isNotEmpty) {
       query['dayOfWeek'] = dayOfWeek;
     } else if (date != null) {
@@ -308,6 +317,41 @@ class MealPlannerProvider {
     return payload
         .map((item) => PlannedMeal.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
+  }
+
+  Future<void> saveFeedback(
+    int planId, {
+    required MealPlanStatus outcome,
+    int? rating,
+    int? hungerBefore,
+    int? fullnessAfter,
+    String? skipReason,
+    String? comment,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/v1/meal-plans/$planId/feedback',
+    );
+    final response = await _client
+        .put(
+          uri,
+          headers: await _headers(),
+          body: jsonEncode({
+            'outcome': outcome.name.toUpperCase(),
+            if (rating != null) 'rating': rating,
+            if (hungerBefore != null) 'hungerBefore': hungerBefore,
+            if (fullnessAfter != null) 'fullnessAfter': fullnessAfter,
+            if (skipReason?.trim().isNotEmpty == true)
+              'skipReason': skipReason!.trim(),
+            if (comment?.trim().isNotEmpty == true) 'comment': comment!.trim(),
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MealPlannerProviderException(
+        'Unable to save meal feedback.',
+        statusCode: response.statusCode,
+      );
+    }
   }
 
   Future<void> deleteMeals(List<int> planIds) async {

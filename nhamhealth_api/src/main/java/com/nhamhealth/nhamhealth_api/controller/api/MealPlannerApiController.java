@@ -5,7 +5,9 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +25,10 @@ import com.nhamhealth.nhamhealth_api.dto.request.MealPlanBulkDeleteRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanBulkStatusRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanRequest;
 import com.nhamhealth.nhamhealth_api.dto.request.MealPlanUpdateRequest;
+import com.nhamhealth.nhamhealth_api.dto.request.MealPlanFeedbackRequest;
+import com.nhamhealth.nhamhealth_api.dto.response.MealPlanFeedbackResponse;
 import com.nhamhealth.nhamhealth_api.dto.response.MealPlanResponse;
+import com.nhamhealth.nhamhealth_api.service.meal.MealPlanFeedbackService;
 import com.nhamhealth.nhamhealth_api.service.meal.MealPlannerService;
 
 import jakarta.validation.Valid;
@@ -32,9 +37,16 @@ import jakarta.validation.Valid;
 @RequestMapping({ "/api/v1/meal-plans", "/api/meal-plans" })
 public class MealPlannerApiController {
     private final MealPlannerService planner;
+    private final MealPlanFeedbackService feedback;
+
+    @Autowired
+    public MealPlannerApiController(MealPlannerService planner, MealPlanFeedbackService feedback) {
+        this.planner = planner;
+        this.feedback = feedback;
+    }
 
     public MealPlannerApiController(MealPlannerService planner) {
-        this.planner = planner;
+        this(planner, null);
     }
 
     @GetMapping
@@ -100,6 +112,21 @@ public class MealPlannerApiController {
     public ResponseEntity<Void> remove(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer id) {
         planner.remove(userId(jwt), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/feedback")
+    public MealPlanFeedbackResponse saveFeedback(@AuthenticationPrincipal Jwt jwt, @PathVariable Integer id,
+            @Valid @RequestBody MealPlanFeedbackRequest request) {
+        if (feedback == null) throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Feedback unavailable.");
+        return feedback.save(userId(jwt), id, request);
+    }
+
+    @GetMapping("/{id}/feedback")
+    public ResponseEntity<MealPlanFeedbackResponse> feedback(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer id) {
+        if (feedback == null) return ResponseEntity.notFound().build();
+        MealPlanFeedbackResponse value = feedback.get(userId(jwt), id);
+        return value == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(value);
     }
 
     private Integer userId(Jwt jwt) {

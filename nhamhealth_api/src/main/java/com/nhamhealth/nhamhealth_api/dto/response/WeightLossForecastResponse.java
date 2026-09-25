@@ -17,6 +17,7 @@ public record WeightLossForecastResponse(
         BigDecimal healthyWeightMaxKg,
         String bmiStatus,
         String recommendedWeightDirection,
+        String effectiveGoal,
         String activityLevel,
         boolean hasBiometricProfile,
         boolean energyEstimateUsesDefaults,

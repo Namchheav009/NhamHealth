@@ -37,6 +37,55 @@ class PlannerIngredient {
       unit: '${json['unit'] ?? ''}'.trim(),
     );
   }
+
+  static List<PlannerIngredient> parseMany(dynamic value) {
+    if (value is Map) {
+      final json = Map<String, dynamic>.from(value);
+      final name = '${json['name'] ?? ''}'.trim();
+      if (!name.contains(RegExp(r'[;\r\n]'))) {
+        final item = PlannerIngredient.fromJson(json);
+        return item.name.isEmpty ? const [] : [item];
+      }
+      return _parseLegacyText(name);
+    }
+    return _parseLegacyText('$value');
+  }
+
+  static List<PlannerIngredient> _parseLegacyText(String text) {
+    final amountPattern = RegExp(
+      r'^\s*(\d+(?:\.\d+)?)\s*(kg|mg|g|ml|l|tsp|tbsp|cups?|pieces?|pcs?)?\s+(.+?)\s*$',
+      caseSensitive: false,
+    );
+    return text
+        .split(RegExp(r'[;\r\n]+'))
+        .map((raw) => raw.trim())
+        .where((raw) => raw.isNotEmpty)
+        .map((raw) {
+          final pipe = raw.split('|').map((part) => part.trim()).toList();
+          if (pipe.length > 1) {
+            return PlannerIngredient(
+              name: pipe.first,
+              quantity: double.tryParse(pipe[1]) ?? 0,
+              unit: pipe.length > 2 ? pipe[2] : '',
+            );
+          }
+          final match = amountPattern.firstMatch(raw);
+          if (match == null) return PlannerIngredient(name: raw);
+          final rawUnit = (match.group(2) ?? '').toLowerCase();
+          final unit = switch (rawUnit) {
+            'pieces' || 'pcs' || 'pc' => 'piece',
+            'cups' => 'cup',
+            _ => rawUnit,
+          };
+          return PlannerIngredient(
+            name: match.group(3)!.trim(),
+            quantity: double.tryParse(match.group(1)!) ?? 0,
+            unit: unit,
+          );
+        })
+        .where((item) => item.name.isNotEmpty)
+        .toList(growable: false);
+  }
 }
 
 class PlannedMeal {
@@ -56,6 +105,16 @@ class PlannedMeal {
     this.proteinGrams = 0,
     this.carbsGrams = 0,
     this.fatGrams = 0,
+    this.fiberGrams = 0,
+    this.sugarGrams = 0,
+    this.sodiumMg = 0,
+    this.saturatedFatGrams = 0,
+    this.servingSize,
+    this.servingUnit = '',
+    this.nutritionDataQuality = 'UNVERIFIED',
+    this.dietTypes = const [],
+    this.allergens = const [],
+    this.whyRecommended = '',
     this.categoryId,
     this.categoryIds = const [],
     this.category = '',
@@ -76,6 +135,16 @@ class PlannedMeal {
   final double proteinGrams;
   final double carbsGrams;
   final double fatGrams;
+  final double fiberGrams;
+  final double sugarGrams;
+  final double sodiumMg;
+  final double saturatedFatGrams;
+  final double? servingSize;
+  final String servingUnit;
+  final String nutritionDataQuality;
+  final List<String> dietTypes;
+  final List<String> allergens;
+  final String whyRecommended;
   final double servings;
   final MealPlanStatus status;
   final DateTime? completedAt;
@@ -115,6 +184,16 @@ class PlannedMeal {
     proteinGrams: proteinGrams,
     carbsGrams: carbsGrams,
     fatGrams: fatGrams,
+    fiberGrams: fiberGrams,
+    sugarGrams: sugarGrams,
+    sodiumMg: sodiumMg,
+    saturatedFatGrams: saturatedFatGrams,
+    servingSize: servingSize,
+    servingUnit: servingUnit,
+    nutritionDataQuality: nutritionDataQuality,
+    dietTypes: dietTypes,
+    allergens: allergens,
+    whyRecommended: whyRecommended,
     servings: servings ?? this.servings,
     status: status ?? this.status,
     completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
@@ -141,7 +220,7 @@ class PlannedMeal {
         '${json['mealType'] ?? json['mealSlot'] ?? ''}'.toLowerCase();
     final dayName = '${json['dayOfWeek'] ?? ''}'.toUpperCase();
     final details = (json['ingredients'] as List<dynamic>? ?? const [])
-        .map(PlannerIngredient.fromJson)
+        .expand(PlannerIngredient.parseMany)
         .where((item) => item.name.isNotEmpty)
         .toList(growable: false);
     return PlannedMeal(
@@ -157,6 +236,22 @@ class PlannedMeal {
       proteinGrams: (json['proteinGrams'] as num?)?.toDouble() ?? 0,
       carbsGrams: (json['carbsGrams'] as num?)?.toDouble() ?? 0,
       fatGrams: (json['fatGrams'] as num?)?.toDouble() ?? 0,
+      fiberGrams: (json['fiberGrams'] as num?)?.toDouble() ?? 0,
+      sugarGrams: (json['sugarGrams'] as num?)?.toDouble() ?? 0,
+      sodiumMg: (json['sodiumMg'] as num?)?.toDouble() ?? 0,
+      saturatedFatGrams:
+          (json['saturatedFatGrams'] as num?)?.toDouble() ?? 0,
+      servingSize: (json['servingSize'] as num?)?.toDouble(),
+      servingUnit: '${json['servingUnit'] ?? ''}'.trim(),
+      nutritionDataQuality:
+          '${json['nutritionDataQuality'] ?? 'UNVERIFIED'}'.trim(),
+      dietTypes: (json['dietTypes'] as List<dynamic>? ?? const [])
+          .map((e) => '$e')
+          .toList(growable: false),
+      allergens: (json['allergens'] as List<dynamic>? ?? const [])
+          .map((e) => '$e')
+          .toList(growable: false),
+      whyRecommended: '${json['whyRecommended'] ?? ''}'.trim(),
       servings: (json['servings'] as num?)?.toDouble() ?? 1,
       status: MealPlanStatus.values.firstWhere(
         (status) =>
@@ -179,10 +274,11 @@ class PlannedMeal {
       description: '${json['description'] ?? ''}'.trim(),
       cookingTimeMinutes: (json['cookingTimeMinutes'] as num?)?.toInt(),
       difficulty: '${json['difficulty'] ?? ''}'.trim(),
-      instructions:
-          (json['instructions'] as List<dynamic>? ?? const [])
-              .map((e) => '$e')
-              .toList(),
+      instructions: (json['instructions'] as List<dynamic>? ?? const [])
+          .expand((value) => '$value'.split(RegExp(r'[;\r\n]+')))
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(growable: false),
       tags:
           (json['tags'] as List<dynamic>? ?? const [])
               .map((e) => '$e')

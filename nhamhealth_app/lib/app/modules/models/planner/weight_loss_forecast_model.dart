@@ -101,6 +101,7 @@ class WeightLossForecast {
     this.healthyWeightMaxKg,
     this.bmiStatus = 'UNKNOWN',
     this.recommendedWeightDirection = 'UNKNOWN',
+    this.effectiveGoal = '',
     this.activityLevel = 'UNKNOWN',
     this.hasBiometricProfile = false,
     this.energyEstimateUsesDefaults = false,
@@ -132,6 +133,7 @@ class WeightLossForecast {
   final double? healthyWeightMaxKg;
   final String bmiStatus;
   final String recommendedWeightDirection;
+  final String effectiveGoal;
   final String activityLevel;
   final bool hasBiometricProfile;
   final bool energyEstimateUsesDefaults;
@@ -154,9 +156,10 @@ class WeightLossForecast {
   final String aiAnalysisSummary;
   final bool hasPlannedMeals;
 
-  bool get isSurplus => dailyDeficitCalories <= 0 || paceStatus == 'SURPLUS';
-  bool get isOptimal => paceStatus == 'OPTIMAL';
-  bool get isRapid => paceStatus == 'RAPID';
+  bool get isSurplus => dailyDeficitCalories < 0 || paceStatus == 'SURPLUS';
+  bool get isOptimal =>
+      paceStatus == 'OPTIMAL' || paceStatus == 'GAIN_OPTIMAL';
+  bool get isRapid => paceStatus == 'RAPID' || paceStatus == 'GAIN_RAPID';
   bool get hasBmiContext => hasBiometricProfile && bmi != null;
 
   double? get resolvedProjectedBmi {
@@ -189,6 +192,14 @@ class WeightLossForecast {
   }
 
   String get resolvedWeightDirection {
+    final goal = effectiveGoal.toUpperCase();
+    if (goal == 'GAIN_WEIGHT') return 'GAIN';
+    if (goal == 'MAINTAIN_HEALTH') return 'MAINTAIN';
+    if (goal == 'LOSE_WEIGHT') return 'LOSE';
+    return recommendedDirection;
+  }
+
+  String get recommendedDirection {
     final direction = recommendedWeightDirection.toUpperCase();
     if (direction == 'GAIN' || direction == 'MAINTAIN' || direction == 'LOSE') {
       return direction;
@@ -241,6 +252,10 @@ class WeightLossForecast {
     'OPTIMAL' => 'planner.pace_optimal',
     'STEADY' => 'planner.pace_steady',
     'RAPID' => 'planner.pace_rapid',
+    'GAIN_BELOW_TARGET' => 'planner.pace_gain_below_target',
+    'GAIN_STEADY' => 'planner.pace_gain_steady',
+    'GAIN_OPTIMAL' => 'planner.pace_gain_optimal',
+    'GAIN_RAPID' => 'planner.pace_gain_rapid',
     'SURPLUS' => 'planner.pace_surplus',
     _ => 'planner.pace_balanced',
   };
@@ -255,6 +270,7 @@ class WeightLossForecast {
     'healthyWeightMaxKg': healthyWeightMaxKg,
     'bmiStatus': bmiStatus,
     'recommendedWeightDirection': recommendedWeightDirection,
+    'effectiveGoal': effectiveGoal,
     'activityLevel': activityLevel,
     'hasBiometricProfile': hasBiometricProfile,
     'energyEstimateUsesDefaults': energyEstimateUsesDefaults,
@@ -314,6 +330,7 @@ class WeightLossForecast {
       bmiStatus: (json['bmiStatus'] as String?) ?? 'UNKNOWN',
       recommendedWeightDirection:
           (json['recommendedWeightDirection'] as String?) ?? 'UNKNOWN',
+      effectiveGoal: (json['effectiveGoal'] as String?) ?? '',
       activityLevel: (json['activityLevel'] as String?) ?? 'UNKNOWN',
       hasBiometricProfile: json['hasBiometricProfile'] == true,
       energyEstimateUsesDefaults: json['energyEstimateUsesDefaults'] == true,
@@ -360,9 +377,23 @@ class WeightLossForecast {
     bool hasPlannedMeals = false,
   }) {
     final isWeightLoss = goal == MealPlannerHealthGoal.loseWeight;
-    final effectiveDeficit = isWeightLoss ? dailyDeficit : 0.0;
-    final loss = (effectiveDeficit * timeframeDays) / 7700.0;
-    final pace = (effectiveDeficit * 7.0) / 7700.0;
+    final isWeightGain = goal == MealPlannerHealthGoal.gainWeight;
+    final energyGap =
+        isWeightLoss
+            ? dailyDeficit
+            : isWeightGain
+            ? -300.0
+            : 0.0;
+    final weightChange = (-energyGap * timeframeDays) / 7700.0;
+    final weeklyChange = (-energyGap * 7.0) / 7700.0;
+    final resolvedDirection =
+        recommendedWeightDirection.toUpperCase() != 'UNKNOWN'
+            ? recommendedWeightDirection
+            : isWeightGain
+            ? 'GAIN'
+            : isWeightLoss
+            ? 'LOSE'
+            : 'MAINTAIN';
     return WeightLossForecast(
       currentWeightKg: currentWeightKg,
       age: age,
@@ -372,28 +403,45 @@ class WeightLossForecast {
       healthyWeightMinKg: healthyWeightMinKg,
       healthyWeightMaxKg: healthyWeightMaxKg,
       bmiStatus: bmiStatus,
-      recommendedWeightDirection: recommendedWeightDirection,
+      recommendedWeightDirection: resolvedDirection,
+      effectiveGoal: goal.apiValue,
       activityLevel: activityLevel,
       hasBiometricProfile: hasBiometricProfile,
       energyEstimateUsesDefaults: energyEstimateUsesDefaults,
-      targetWeightKg:
+      targetWeightKg: isWeightLoss
+          ? (currentWeightKg - 3.0).clamp(35.0, 300.0)
+          : isWeightGain
+          ? (currentWeightKg + 3.0).clamp(35.0, 300.0)
+          : currentWeightKg,
+      projectedWeightLossKg:
           isWeightLoss
-              ? (currentWeightKg - 3.0).clamp(35.0, 300.0)
-              : currentWeightKg,
-      projectedWeightLossKg: double.parse(loss.toStringAsFixed(2)),
+              ? double.parse((-weightChange).toStringAsFixed(2))
+              : 0.0,
       projectedEndWeightKg: double.parse(
-        (currentWeightKg - loss).toStringAsFixed(1),
+        (currentWeightKg + weightChange).toStringAsFixed(1),
       ),
       bmrCalories: 1650.0,
       tdeeCalories: 2450.0,
-      dailyPlannedCalories: isWeightLoss ? 1950.0 : 2450.0,
-      dailyDeficitCalories: effectiveDeficit,
+      dailyPlannedCalories:
+          isWeightLoss
+              ? 1950.0
+              : isWeightGain
+              ? 2750.0
+              : 2450.0,
+      dailyDeficitCalories: energyGap,
       timeframeDays: timeframeDays,
-      weeklyPaceKg: double.parse(pace.toStringAsFixed(2)),
-      paceStatus: isWeightLoss ? 'OPTIMAL' : 'BALANCED',
+      weeklyPaceKg: double.parse(weeklyChange.abs().toStringAsFixed(2)),
+      paceStatus:
+          isWeightLoss
+              ? 'OPTIMAL'
+              : isWeightGain
+              ? 'SURPLUS'
+              : 'BALANCED',
       paceDescription:
           isWeightLoss
               ? 'A moderate calorie target that prioritizes protein and variety.'
+              : isWeightGain
+              ? 'A modest calorie surplus supports gradual weight gain.'
               : 'Energy intake is aligned with maintenance needs for stable weight.',
       calorieWarning: false,
       calorieWarningMessage: '',
@@ -402,6 +450,8 @@ class WeightLossForecast {
       aiAnalysisSummary:
           isWeightLoss
               ? 'Your planned meals support a moderate calorie deficit.'
+              : isWeightGain
+              ? 'Your planned meals support a gradual calorie surplus.'
               : 'Your planned meals support balanced energy and weight maintenance.',
       hasPlannedMeals: hasPlannedMeals,
     );

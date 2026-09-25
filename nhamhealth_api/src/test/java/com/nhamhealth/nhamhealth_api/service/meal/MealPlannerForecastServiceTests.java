@@ -191,6 +191,60 @@ class MealPlannerForecastServiceTests {
         }
 
         @Test
+        void previewsAHealthySurplusForGainWeight() {
+                Integer userId = 110;
+                LocalDate start = LocalDate.of(2026, 9, 21);
+                WellnessProfile profile = new WellnessProfile();
+                profile.setAgeCached((short) 25);
+                profile.setHeightCm(new BigDecimal("175"));
+                profile.setWeightKg(new BigDecimal("52"));
+                profile.setActivityLevel("MODERATE");
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+                when(mealPlanRepository.findAllByUserUserIdAndPlanDateBetweenOrderByPlanDateAscMealTypeAsc(
+                                eq(userId), eq(start), any())).thenReturn(List.of());
+
+                WeightLossForecastResponse response = forecastService.calculateForecast(
+                                userId, 30, start, "en", "GAIN_WEIGHT");
+
+                assertEquals("GAIN", response.recommendedWeightDirection());
+                assertEquals("GAIN_WEIGHT", response.effectiveGoal());
+                assertEquals("GAIN_OPTIMAL", response.paceStatus());
+                assertEquals(new BigDecimal("-300"), response.dailyDeficitCalories());
+                assertEquals(new BigDecimal("0.00"), response.projectedWeightLossKg());
+                assertTrue(response.projectedEndWeightKg().compareTo(response.currentWeightKg()) > 0);
+                assertTrue(response.paceDescription().contains("Moderate gain"));
+        }
+
+        @Test
+        void gainWeightExplainsWhenPlannedMealsAreBelowTarget() {
+                Integer userId = 111;
+                LocalDate start = LocalDate.of(2026, 9, 21);
+                WellnessProfile profile = new WellnessProfile();
+                profile.setAgeCached((short) 27);
+                profile.setHeightCm(new BigDecimal("170"));
+                profile.setWeightKg(new BigDecimal("54"));
+                profile.setActivityLevel("LIGHT");
+                when(wellnessProfileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+
+                PlannerMeal meal = new PlannerMeal();
+                meal.setCalories(new BigDecimal("1400"));
+                MealPlan plan = new MealPlan();
+                plan.setPlanDate(start);
+                plan.setPlannerMeal(meal);
+                plan.setServings(BigDecimal.ONE);
+                when(mealPlanRepository.findAllByUserUserIdAndPlanDateBetweenOrderByPlanDateAscMealTypeAsc(
+                                eq(userId), eq(start), any())).thenReturn(List.of(plan));
+
+                WeightLossForecastResponse response = forecastService.calculateForecast(
+                                userId, 30, start, "en", "GAIN_WEIGHT");
+
+                assertEquals("GAIN_BELOW_TARGET", response.paceStatus());
+                assertTrue(response.dailyDeficitCalories().doubleValue() > 0);
+                assertEquals(response.currentWeightKg(), response.projectedEndWeightKg());
+                assertTrue(response.paceDescription().contains("does not yet provide a calorie surplus"));
+        }
+
+        @Test
         void rejectsWeightLossAutoFillForUsersUnder18() {
                 Integer userId = 107;
                 WellnessProfile profile = new WellnessProfile();

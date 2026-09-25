@@ -110,11 +110,18 @@
   }
 
   function parsePlannerIngredients(english = "", khmer = "") {
-    const kmLines = khmer.split(/\r?\n/);
-    return english.split(/\r?\n/).map((line, index) => {
+    const splitIngredients = value => String(value || "").split(/[;\r\n]+/).map(item => item.trim()).filter(Boolean);
+    const amountPattern = /^\s*(\d+(?:\.\d+)?)\s*(kg|mg|g|ml|l|tsp|tbsp|cups?|pieces?|pcs?)?\s+(.+?)\s*$/i;
+    const kmLines = splitIngredients(khmer);
+    return splitIngredients(english).map((line, index) => {
       const [name = "", quantity = "", unit = "", inlineKm = ""] = line.split("|").map(part => part.trim());
       const [kmName = ""] = (kmLines[index] || "").split("|").map(part => part.trim());
-      return { name, quantity, unit, nameKm: inlineKm || kmName, type: "", defaultUnit: unit };
+      if (line.includes("|")) return { name, quantity, unit, nameKm: inlineKm || kmName, type: "", defaultUnit: unit };
+      const match = line.match(amountPattern);
+      const kmMatch = kmName.match(amountPattern);
+      return match
+        ? { name: match[3].trim(), quantity: match[1], unit: match[2] || "", nameKm: kmMatch ? kmMatch[3].trim() : kmName, type: "", defaultUnit: match[2] || "" }
+        : { name: line, quantity: "", unit: "", nameKm: kmMatch ? kmMatch[3].trim() : kmName, type: "", defaultUnit: "" };
     }).filter(ingredient => ingredient.name);
   }
 
@@ -1050,6 +1057,28 @@
       const result = await request("/admin/meal-planner/meals/backfill-ingredients", "POST");
       const failed = result.failed?.length ? ` ${result.failed.length} meals could not be generated.` : "";
       await alerts.success("Ingredient generation complete", `${result.updatedCount} meals updated; ${result.skipped} already had ingredients.${failed}`);
+      window.location.reload();
+    } catch (error) {
+      await alerts.error(error.message);
+      button.disabled = false;
+      button.innerHTML = label;
+    }
+  });
+
+  document.getElementById("normalizePlannerIngredients")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const confirmed = await alerts.confirmDelete({
+      title: "Organize all planner ingredients?",
+      text: "Combined ingredient text will be split into individual ingredients, linked to the ingredient catalog, and saved in a structured format.",
+      confirmButtonText: "Organize all",
+    });
+    if (!confirmed) return;
+    button.disabled = true;
+    const label = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Organizing...';
+    try {
+      const result = await request("/admin/meal-planner/meals/normalize-ingredients", "POST");
+      await alerts.success("Ingredients organized", `${result.mealsUpdated} meals updated, ${result.ingredientRows} ingredient links saved, and ${result.ingredientsCreated} catalog ingredients created.`);
       window.location.reload();
     } catch (error) {
       await alerts.error(error.message);

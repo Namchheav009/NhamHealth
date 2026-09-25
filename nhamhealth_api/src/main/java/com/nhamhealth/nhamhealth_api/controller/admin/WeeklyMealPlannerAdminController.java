@@ -39,6 +39,7 @@ import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.service.user.ProfileImageStorageService;
 import com.nhamhealth.nhamhealth_api.service.meal.PlannerMealIngredientBackfillService;
+import com.nhamhealth.nhamhealth_api.service.meal.PlannerIngredientNormalizationService;
 
 import jakarta.validation.Valid;
 
@@ -53,6 +54,7 @@ public class WeeklyMealPlannerAdminController {
     private final MealCategoryRepository mealCategories;
     private final ProfileImageStorageService profileImageStorageService;
     private final PlannerMealIngredientBackfillService ingredientBackfillService;
+    private final PlannerIngredientNormalizationService ingredientNormalizationService;
 
     public WeeklyMealPlannerAdminController(
             WeeklyMealRecommendationRepository recommendations,
@@ -60,13 +62,15 @@ public class WeeklyMealPlannerAdminController {
             MealPlanRepository mealPlans,
             MealCategoryRepository mealCategories,
             ProfileImageStorageService profileImageStorageService,
-            PlannerMealIngredientBackfillService ingredientBackfillService) {
+            PlannerMealIngredientBackfillService ingredientBackfillService,
+            PlannerIngredientNormalizationService ingredientNormalizationService) {
         this.recommendations = recommendations;
         this.plannerMeals = plannerMeals;
         this.mealPlans = mealPlans;
         this.mealCategories = mealCategories;
         this.profileImageStorageService = profileImageStorageService;
         this.ingredientBackfillService = ingredientBackfillService;
+        this.ingredientNormalizationService = ingredientNormalizationService;
     }
 
     @GetMapping("/admin/meal-planner")
@@ -129,6 +133,7 @@ public class WeeklyMealPlannerAdminController {
             PlannerMeal meal = new PlannerMeal();
             applyMeal(meal, request);
             meal = plannerMeals.save(meal);
+            ingredientNormalizationService.sync(meal);
             createRecommendationsForEveryDay(meal);
             return ResponseEntity.ok(mealResponse(meal));
         } catch (Exception ex) {
@@ -158,6 +163,7 @@ public class WeeklyMealPlannerAdminController {
                 return bad(error);
             applyMeal(meal, request);
             meal = plannerMeals.save(meal);
+            ingredientNormalizationService.sync(meal);
             createRecommendationsForEveryDay(meal);
             return ResponseEntity.ok(mealResponse(meal));
         } catch (Exception ex) {
@@ -174,6 +180,17 @@ public class WeeklyMealPlannerAdminController {
                 "updatedCount", result.updated().size(),
                 "skipped", result.skipped(),
                 "failed", result.failed()));
+    }
+
+    @PostMapping("/admin/meal-planner/meals/normalize-ingredients")
+    @ResponseBody
+    public ResponseEntity<?> normalizeIngredients() {
+        var result = ingredientNormalizationService.normalizeAll();
+        return ResponseEntity.ok(Map.of(
+                "mealsUpdated", result.mealsUpdated(),
+                "ingredientRows", result.ingredientRows(),
+                "ingredientsCreated", result.ingredientsCreated(),
+                "skippedMeals", result.skippedMeals()));
     }
 
     @DeleteMapping("/admin/meal-planner/meals/{id}")

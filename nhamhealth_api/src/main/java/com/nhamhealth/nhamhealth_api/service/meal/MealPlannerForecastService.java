@@ -249,7 +249,30 @@ public class MealPlannerForecastService {
         // 6. Goal-aware status and description
         String paceStatus;
         String paceDescription;
-        if (!isWeightLoss && Math.abs(dailyDeficit) <= 200.0) {
+        if (isWeightGain) {
+            double dailySurplus = Math.max(0.0, -dailyDeficit);
+            if (dailySurplus <= 50.0) {
+                paceStatus = "GAIN_BELOW_TARGET";
+                paceDescription = isKhmer
+                        ? "ផែនការរបស់អ្នកមិនទាន់មានកាឡូរីលើសគ្រប់គ្រាន់សម្រាប់ការឡើងទម្ងន់ទេ។ បន្ថែមអាហារមានតុល្យភាព និងសម្បូរសារធាតុចិញ្ចឹម។"
+                        : "Your plan does not yet provide a calorie surplus for weight gain. Add balanced, nutrient-dense meals before increasing portions.";
+            } else if (weeklyPaceKg < 0.15) {
+                paceStatus = "GAIN_STEADY";
+                paceDescription = isKhmer
+                        ? String.format("ការប៉ាន់ស្មានឡើងទម្ងន់បន្តិចម្តងៗ %.2f គ.ក្រ/សប្តាហ៍។ លទ្ធផលពិតអាចខុសគ្នា។", weeklyPaceKg)
+                        : String.format("Gradual gain estimate: %.2f kg/week. Actual results may differ.", weeklyPaceKg);
+            } else if (weeklyPaceKg <= 0.5) {
+                paceStatus = "GAIN_OPTIMAL";
+                paceDescription = isKhmer
+                        ? String.format("ការប៉ាន់ស្មានឡើងទម្ងន់កម្រិតមធ្យម %.2f គ.ក្រ/សប្តាហ៍ ដោយផ្អែកលើផែនការរបស់អ្នក។", weeklyPaceKg)
+                        : String.format("Moderate gain estimate: %.2f kg/week based on your current plan.", weeklyPaceKg);
+            } else {
+                paceStatus = "GAIN_RAPID";
+                paceDescription = isKhmer
+                        ? String.format("ការប៉ាន់ស្មានឡើងទម្ងន់ %.2f គ.ក្រ/សប្តាហ៍ លឿនខ្លាំង។ សូមពិនិត្យទំហំអាហារ និងពិគ្រោះអ្នកជំនាញ។", weeklyPaceKg)
+                        : String.format("Gain estimate is rapid (%.2f kg/week). Review portions and consider professional guidance.", weeklyPaceKg);
+            }
+        } else if (!isWeightLoss && Math.abs(dailyDeficit) <= 200.0) {
             paceStatus = "BALANCED";
             paceDescription = isKhmer
                     ? "ផែនការរបស់អ្នកស្ថិតជិតតម្រូវការថាមពលប្រចាំថ្ងៃ ដែលសមស្របសម្រាប់រក្សាទម្ងន់ និងថាមពលឱ្យថេរ។"
@@ -361,6 +384,7 @@ public class MealPlannerForecastService {
                 healthyWeightMaxKg,
                 bmiStatus(age, bmi),
                 recommendedWeightDirection,
+                effectiveGoal,
                 hasBiometricProfile
                         ? (hasReportedActivityLevel ? activityLevel : "MODERATE_ESTIMATE")
                         : "UNKNOWN",

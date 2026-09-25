@@ -213,7 +213,7 @@ class WeeklyMealPlannerApiControllerTests {
                 WeightLossForecastResponse mockForecast = new WeightLossForecastResponse(
                                 new BigDecimal("75.0"), 28, new BigDecimal("175.0"), new BigDecimal("24.5"),
                                 new BigDecimal("23.7"), new BigDecimal("56.7"), new BigDecimal("76.3"),
-                                "HEALTHY", "MAINTAIN", "MODERATE", true, false,
+                                "HEALTHY", "MAINTAIN", "LOSE_WEIGHT", "MODERATE", true, false,
                                 new BigDecimal("72.0"), new BigDecimal("2.50"),
                                 new BigDecimal("72.5"), new BigDecimal("1650"), new BigDecimal("2400"),
                                 new BigDecimal("1800"), new BigDecimal("600"), 28, new BigDecimal("0.55"),
