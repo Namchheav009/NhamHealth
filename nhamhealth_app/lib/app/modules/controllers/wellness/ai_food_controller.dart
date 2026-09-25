@@ -525,6 +525,9 @@ class AiFoodController extends GetxController {
           sugar: food.sugar,
         );
       }
+      if (Get.isRegistered<MealPlannerController>()) {
+        Get.find<MealPlannerController>().loadDailyNutrition(today);
+      }
       wasAdded.value = true;
       await AppAlert.actionSuccess(
         title:

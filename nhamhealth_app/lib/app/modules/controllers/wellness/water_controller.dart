@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import '../../../widgets/app_alert.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/profile/profile_repository.dart';
+import '../home/home_controller.dart';
+import '../planner/meal_planner_controller.dart';
+import 'wellness_controller.dart';
 
 class WaterController extends GetxController {
   WaterController({
@@ -88,6 +91,7 @@ class WaterController extends GetxController {
         date: date,
       );
       _applyDashboard(dashboard);
+      _notifyNutritionSync(dashboard);
       await AppAlert.success(
         title: 'wellness.water_added_today',
         message: (selectedGlasses.value == 1
@@ -126,4 +130,32 @@ class WaterController extends GetxController {
 
   static DateTime _dateOnly(DateTime value) =>
       DateTime(value.year, value.month, value.day);
+
+  void _notifyNutritionSync(ProfileDashboardModel dashboard) {
+    if (Get.isRegistered<WellnessController>()) {
+      final wellness = Get.find<WellnessController>();
+      if (_sameDay(wellness.selectedDate.value, date)) {
+        wellness.showSavedNutrition(dashboard, date: date);
+      }
+    }
+    if (Get.isRegistered<HomeController>()) {
+      final home = Get.find<HomeController>();
+      home.addNutritionToToday(
+        calories: 0,
+        protein: 0,
+        water: selectedWaterAmount,
+        date: date,
+      );
+      if (_sameDay(home.selectedDay.value, date)) {
+        home.loadDashboard();
+      }
+    }
+    if (Get.isRegistered<MealPlannerController>()) {
+      final planner = Get.find<MealPlannerController>();
+      planner.loadDailyNutrition(date);
+    }
+  }
+
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }

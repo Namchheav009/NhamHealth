@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,6 +9,8 @@ import '../../../widgets/app_alert.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../models/wellness/wellness_summary_model.dart';
 import '../../repositories/profile/profile_repository.dart';
+import '../home/home_controller.dart';
+import '../planner/meal_planner_controller.dart';
 
 class WellnessController extends GetxController {
   WellnessController({ProfileRepository? profileRepository})
@@ -89,6 +93,9 @@ class WellnessController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    if (Get.arguments is DateTime) {
+      selectedDate.value = Get.arguments as DateTime;
+    }
     loadDailyWellness();
   }
 
@@ -121,6 +128,20 @@ class WellnessController extends GetxController {
     selectedDate.value = DateTime(date.year, date.month, date.day);
     isLoading.value = false;
     _applyDashboard(dashboard);
+    _notifyCrossControllers(date);
+  }
+
+  void _notifyCrossControllers(DateTime date) {
+    if (Get.isRegistered<HomeController>()) {
+      final home = Get.find<HomeController>();
+      if (_sameDay(home.selectedDay.value, date)) {
+        unawaited(home.loadDashboard());
+      }
+    }
+    if (Get.isRegistered<MealPlannerController>()) {
+      final planner = Get.find<MealPlannerController>();
+      unawaited(planner.loadDailyNutrition(date));
+    }
   }
 
   /// Applies a temporary local nutrition change while the meal-status request
@@ -297,6 +318,7 @@ class WellnessController extends GetxController {
     if (route == null) return;
     await Get.toNamed<void>(route, arguments: selectedDate.value);
     await loadDailyWellness();
+    _notifyCrossControllers(selectedDate.value);
   }
 
   // =========================
@@ -306,6 +328,7 @@ class WellnessController extends GetxController {
   Future<void> openMealAutoFill() async {
     await Get.toNamed<void>(AppRoutes.aiFood);
     await loadDailyWellness();
+    _notifyCrossControllers(selectedDate.value);
   }
 
   void addNutrition({

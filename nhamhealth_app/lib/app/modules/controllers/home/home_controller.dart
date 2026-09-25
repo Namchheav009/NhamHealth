@@ -20,6 +20,8 @@ import '../../models/meals/meal_model.dart';
 import '../../repositories/home/home_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../services/auth/google_auth_service.dart';
+import '../planner/meal_planner_controller.dart';
+import '../wellness/wellness_controller.dart';
 
 class HomeController extends GetxController {
   HomeController({required this.repository, this.realtimeEvents});
@@ -229,9 +231,10 @@ class HomeController extends GetxController {
     double water = 0,
     double fiber = 0,
     double sugar = 0,
+    DateTime? date,
   }) {
-    final today = DateTime.now();
-    final key = _dayKey(today);
+    final targetDate = date ?? selectedDay.value;
+    final key = _dayKey(targetDate);
     final current = _summariesByDay[key] ?? _emptySummary;
     _summariesByDay[key] = DailySummaryModel(
       calories: _increment(current.calories, calories.toDouble()),
@@ -252,7 +255,12 @@ class HomeController extends GetxController {
     try {
       HapticFeedback.lightImpact();
     } catch (_) {}
-    addNutritionToToday(calories: 0, protein: 0, water: glasses);
+    addNutritionToToday(
+      calories: 0,
+      protein: 0,
+      water: glasses,
+      date: selectedDay.value,
+    );
     try {
       final auth =
           Get.isRegistered<AuthService>()
@@ -266,6 +274,16 @@ class HomeController extends GetxController {
         water: glasses,
         date: selectedDay.value,
       );
+      if (Get.isRegistered<WellnessController>()) {
+        final wellness = Get.find<WellnessController>();
+        if (_sameDay(wellness.selectedDate.value, selectedDay.value)) {
+          unawaited(wellness.loadDailyWellness());
+        }
+      }
+      if (Get.isRegistered<MealPlannerController>()) {
+        final planner = Get.find<MealPlannerController>();
+        unawaited(planner.loadDailyNutrition(selectedDay.value));
+      }
       AppAlert.success(
         title: 'wellness.water_added_today',
         message: 'wellness.water_count_added_one'.trParams({
@@ -278,6 +296,9 @@ class HomeController extends GetxController {
       isQuickLoggingWater.value = false;
     }
   }
+
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   void _showSelectedDay() {
     final currentDashboard = dashboard.value;
@@ -431,11 +452,12 @@ class HomeController extends GetxController {
   }
 
   Future<void> openWellnessDetails() async {
-    await Get.toNamed<void>(AppRoutes.wellness);
+    await Get.toNamed<void>(AppRoutes.wellness, arguments: selectedDay.value);
     await loadDashboard();
   }
 
-  void openWaterDetails() => Get.toNamed<void>(AppRoutes.water);
+  void openWaterDetails() =>
+      Get.toNamed<void>(AppRoutes.water, arguments: selectedDay.value);
 
   bool _isNavigatingMealPlanner = false;
   Future<void> openMealPlanner() async {
@@ -443,6 +465,7 @@ class HomeController extends GetxController {
     _isNavigatingMealPlanner = true;
     try {
       await Get.toNamed<void>(AppRoutes.mealPlanner);
+      await loadDashboard();
     } finally {
       _isNavigatingMealPlanner = false;
     }

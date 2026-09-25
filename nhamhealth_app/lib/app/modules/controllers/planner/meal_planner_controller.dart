@@ -13,6 +13,7 @@ import '../../../widgets/app_alert.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
+import '../../models/profile/profile_dashboard_model.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 import '../../repositories/meals/meal_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
@@ -70,6 +71,7 @@ class MealPlannerController extends GetxController {
   final plans = <String, List<PlannedMeal>>{}.obs;
   final adminRecommendations = <PlannedMeal>[].obs;
   final dailyWaterGlasses = 0.obs;
+  final dailyDashboard = Rxn<ProfileDashboardModel>();
   final checkedGroceryKeys = <String>{}.obs;
   final isLoading = true.obs;
   final isLoadingRecommendations = true.obs;
@@ -328,6 +330,26 @@ class MealPlannerController extends GetxController {
     0,
     (sum, meal) => sum + meal.fatGrams * meal.servings,
   );
+  int get totalCalories =>
+      (dailyDashboard.value?.calories?.current ?? eatenCalories.toDouble())
+          .round();
+  int get totalCaloriesGoal =>
+      (dailyDashboard.value?.calories?.goal ?? 2000.0).round();
+  double get totalProtein =>
+      dailyDashboard.value?.protein?.current ?? eatenProtein;
+  double get totalProteinGoal =>
+      dailyDashboard.value?.protein?.goal ?? 120.0;
+  double get totalCarbs =>
+      dailyDashboard.value?.carbs?.current ?? eatenCarbs;
+  double get totalCarbsGoal =>
+      dailyDashboard.value?.carbs?.goal ?? 205.0;
+  double get totalFat =>
+      dailyDashboard.value?.fat?.current ?? eatenFat;
+  double get totalFatGoal =>
+      dailyDashboard.value?.fat?.goal ?? 78.0;
+  int get totalWaterGoal =>
+      (dailyDashboard.value?.water?.goal ?? dailyWaterGoalGlasses.toDouble())
+          .round();
   int get completedSlots =>
       selectedMeals.map((meal) => meal.slot).toSet().length;
   int get eatenMeals => selectedEatenMeals.length;
@@ -1046,6 +1068,7 @@ class MealPlannerController extends GetxController {
   }
 
   Future<void> _refreshNutritionViews(DateTime date) async {
+    unawaited(loadWaterIntake(date));
     if (Get.isRegistered<WellnessController>()) {
       final wellness = Get.find<WellnessController>();
       if (_dateKey(wellness.selectedDate.value) == _dateKey(date)) {
@@ -1056,6 +1079,21 @@ class MealPlannerController extends GetxController {
       final home = Get.find<HomeController>();
       if (_dateKey(home.selectedDay.value) == _dateKey(date)) {
         await home.loadDashboard();
+      }
+    }
+  }
+
+  void _notifyNutritionSync(DateTime date) {
+    if (Get.isRegistered<WellnessController>()) {
+      final wellness = Get.find<WellnessController>();
+      if (_dateKey(wellness.selectedDate.value) == _dateKey(date)) {
+        unawaited(wellness.loadDailyWellness());
+      }
+    }
+    if (Get.isRegistered<HomeController>()) {
+      final home = Get.find<HomeController>();
+      if (_dateKey(home.selectedDay.value) == _dateKey(date)) {
+        unawaited(home.loadDashboard());
       }
     }
   }
@@ -1267,10 +1305,14 @@ class MealPlannerController extends GetxController {
   }
 
   // --- Water Intake Tracker ---
+  Future<void> loadDailyNutrition([DateTime? date]) =>
+      loadWaterIntake(date ?? selectedDate);
+
   Future<void> loadWaterIntake(DateTime date) async {
     if (_profileRepository != null) {
       try {
         final dashboard = await _profileRepository.getDashboard(date: date);
+        dailyDashboard.value = dashboard;
         dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
           0,
           20,
@@ -1304,10 +1346,12 @@ class MealPlannerController extends GetxController {
         water: 1,
         date: selectedDate,
       );
+      dailyDashboard.value = dashboard;
       dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
         0,
         20,
       );
+      _notifyNutritionSync(selectedDate);
       return;
     }
     dailyWaterGlasses.value++;

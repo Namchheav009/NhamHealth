@@ -1519,12 +1519,15 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   icon: AppNutrientTheme.waterIcon,
                   iconColor: AppNutrientTheme.waterColor,
                   value: '${controller.dailyWaterGlasses.value}',
-                  target: '${MealPlannerController.dailyWaterGoalGlasses}',
+                  target: '${controller.totalWaterGoal}',
                   label: 'common.water'.tr,
                   unit: 'common.glasses'.tr,
                   progress:
-                      controller.dailyWaterGlasses.value /
-                      MealPlannerController.dailyWaterGoalGlasses,
+                      controller.totalWaterGoal <= 0
+                          ? 0.0
+                          : (controller.dailyWaterGlasses.value /
+                                  controller.totalWaterGoal)
+                              .clamp(0.0, 1.0),
                   onTap: controller.openWaterTracker,
                 ),
                 const SizedBox(width: 16),
@@ -1532,11 +1535,16 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   context,
                   icon: AppNutrientTheme.caloriesIcon,
                   iconColor: AppNutrientTheme.caloriesColor,
-                  value: '${controller.eatenCalories}',
-                  target: '2000',
+                  value: '${controller.totalCalories}',
+                  target: '${controller.totalCaloriesGoal}',
                   label: 'planner.kcal'.tr,
                   unit: 'planner.kcal'.tr,
-                  progress: controller.eatenCalories / 2000,
+                  progress:
+                      controller.totalCaloriesGoal <= 0
+                          ? 0.0
+                          : (controller.totalCalories /
+                                  controller.totalCaloriesGoal)
+                              .clamp(0.0, 1.0),
                   progressKey: const ValueKey('planner-daily-progress'),
                 ),
                 const SizedBox(width: 16),
@@ -1544,33 +1552,46 @@ class _MealPlannerViewState extends State<MealPlannerView>
                   context,
                   icon: AppNutrientTheme.proteinIcon,
                   iconColor: AppNutrientTheme.proteinColor,
-                  value: controller.eatenProtein.toStringAsFixed(0),
-                  target: '120',
+                  value: controller.totalProtein.toStringAsFixed(0),
+                  target: controller.totalProteinGoal.toStringAsFixed(0),
                   label: 'planner.protein'.tr,
                   unit: 'g',
-                  progress: controller.eatenProtein / 120,
+                  progress:
+                      controller.totalProteinGoal <= 0
+                          ? 0.0
+                          : (controller.totalProtein /
+                                  controller.totalProteinGoal)
+                              .clamp(0.0, 1.0),
                 ),
                 const SizedBox(width: 16),
                 _macroCard(
                   context,
                   icon: AppNutrientTheme.carbsIcon,
                   iconColor: AppNutrientTheme.carbsColor,
-                  value: controller.eatenCarbs.toStringAsFixed(0),
-                  target: '250',
+                  value: controller.totalCarbs.toStringAsFixed(0),
+                  target: controller.totalCarbsGoal.toStringAsFixed(0),
                   label: 'planner.carbs'.tr,
                   unit: 'g',
-                  progress: controller.eatenCarbs / 250,
+                  progress:
+                      controller.totalCarbsGoal <= 0
+                          ? 0.0
+                          : (controller.totalCarbs / controller.totalCarbsGoal)
+                              .clamp(0.0, 1.0),
                 ),
                 const SizedBox(width: 16),
                 _macroCard(
                   context,
                   icon: AppNutrientTheme.fatIcon,
                   iconColor: AppNutrientTheme.fatColor,
-                  value: controller.eatenFat.toStringAsFixed(0),
-                  target: '78',
+                  value: controller.totalFat.toStringAsFixed(0),
+                  target: controller.totalFatGoal.toStringAsFixed(0),
                   label: 'planner.fat'.tr,
                   unit: 'g',
-                  progress: controller.eatenFat / 78,
+                  progress:
+                      controller.totalFatGoal <= 0
+                          ? 0.0
+                          : (controller.totalFat / controller.totalFatGoal)
+                              .clamp(0.0, 1.0),
                 ),
               ],
             ),
@@ -1663,8 +1684,8 @@ class _MealPlannerViewState extends State<MealPlannerView>
   Widget _waterTrackerCard(BuildContext context) {
     const waterBlue = Color(0xFF0284C7);
     final count = controller.dailyWaterGlasses.value;
-    final total = MealPlannerController.dailyWaterGoalGlasses;
-    final progress = (count / total).clamp(0.0, 1.0);
+    final total = controller.totalWaterGoal;
+    final progress = total <= 0 ? 0.0 : (count / total).clamp(0.0, 1.0);
     final isGoalReached = count >= total;
 
     return Container(
