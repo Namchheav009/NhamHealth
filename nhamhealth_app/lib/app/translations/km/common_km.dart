@@ -15,6 +15,7 @@ const Map<String, String> commonKm = {
   'common.reset': 'កំណត់ឡើងវិញ',
   'common.filter': 'តម្រង',
   'common.apply_filter': 'អនុវត្តតម្រង',
+  'common.add': 'បន្ថែម',
   'common.add_more': 'បន្ថែមទៀត',
   'common.dismiss_notification': 'បិទការជូនដំណឹង',
   'common.clear_search': 'លុបការស្វែងរក',

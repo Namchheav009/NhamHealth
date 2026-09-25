@@ -84,6 +84,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   late int _currentStep;
   late CommunityPostVisibility _visibility;
   late final TextEditingController _ingredientSearchController;
+  late final TextEditingController _ingredientAmountController;
+  late final TextEditingController _currentStepInputController;
+  String _selectedUnit = 'g';
+  bool _showIngredientSuggestions = false;
   final FocusNode _ingredientNameFocusNode = FocusNode();
   final FocusNode _ingredientAmountFocusNode = FocusNode();
 
@@ -103,6 +107,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
     _servings = TextEditingController(text: post?.servings?.toString() ?? '');
     _ingredientSearchController = TextEditingController();
+    _ingredientAmountController = TextEditingController();
+    _currentStepInputController = TextEditingController();
     _description.addListener(_refreshBasicInfoState);
     _time.addListener(_refreshBasicInfoState);
     _servings.addListener(_refreshBasicInfoState);
@@ -349,6 +355,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     _time.dispose();
     _servings.dispose();
     _ingredientSearchController.dispose();
+    _ingredientAmountController.dispose();
+    _currentStepInputController.dispose();
     _ingredientNameFocusNode.dispose();
     _ingredientAmountFocusNode.dispose();
     for (final item in _ingredients) {
@@ -477,6 +485,33 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           : 'community.positive_value'.trParams({'label': label.trOrSelf});
 
   Future<void> _submit() async {
+    final searchName = _ingredientSearchController.text.trim();
+    final newName = _newIngredient.name.text.trim();
+    final name = searchName.isNotEmpty ? searchName : newName;
+    final amountText =
+        _ingredientAmountController.text.trim().isNotEmpty
+            ? _ingredientAmountController.text.trim()
+            : _newIngredient.amount.text.trim();
+    final amount = num.tryParse(amountText);
+    if (name.isNotEmpty && amount != null && amount > 0) {
+      _ingredients.add(
+        _IngredientInput(
+          name: name,
+          amount: amountText,
+          unit: _selectedUnit,
+        ),
+      );
+      _ingredientSearchController.clear();
+      _ingredientAmountController.clear();
+      _newIngredient.name.clear();
+      _newIngredient.amount.clear();
+    }
+    final stepText = _currentStepInputController.text.trim();
+    if (stepText.isNotEmpty) {
+      _steps.add(TextEditingController(text: stepText));
+      _currentStepInputController.clear();
+    }
+
     setState(() => _showValidation = true);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
@@ -514,8 +549,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           // the community description.
           mealName: _titleFromDescription(_description.text),
           description: _description.text.trim(),
-          cookingTimeMinutes: int.parse(_time.text),
-          servings: int.parse(_servings.text),
+          cookingTimeMinutes: int.tryParse(_time.text.trim()) ?? 0,
+          servings: int.tryParse(_servings.text.trim()) ?? 1,
           difficulty: _difficulty,
           ingredients: ingredients,
           steps: List.generate(
@@ -573,53 +608,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     });
   }
 
-  void _continueToSteps() {
-    final name = _newIngredient.name.text.trim();
-    final amount = num.tryParse(_newIngredient.amount.text.trim());
-    if (name.isNotEmpty && amount != null && amount > 0) {
-      _addIngredient();
-    }
-    FocusScope.of(context).unfocus();
-    setState(() => _currentStep = 2);
-  }
-
-  void _addIngredient() {
-    final name = _newIngredient.name.text.trim();
-    final amount = num.tryParse(_newIngredient.amount.text.trim());
-    if (name.isEmpty || amount == null || amount <= 0) {
-      Get.snackbar(
-        'community.add_ingredient_details'.tr,
-        'community.ingredient_details_help'.tr,
-      );
-      return;
-    }
-    _ingredientSearchDebounce?.cancel();
-    _ingredientSearchVersion++;
-    setState(() {
-      _ingredients.add(
-        _IngredientInput(
-          name: name,
-          amount: _newIngredient.amount.text.trim(),
-          unit: _newIngredient.unit,
-        ),
-      );
-      _newIngredient.name.clear();
-      _newIngredient.amount.clear();
-      _newIngredient.unit = 'g';
-      _ingredientSuggestions = const [];
-    });
-    FocusScope.of(context).unfocus();
-  }
-
   void _searchIngredients(String rawQuery) {
     _ingredientSearchDebounce?.cancel();
     final query = rawQuery.trim();
     final requestVersion = ++_ingredientSearchVersion;
     if (query.isEmpty) {
-      setState(() => _ingredientSuggestions = const []);
+      setState(() {
+        _ingredientSuggestions = const [];
+        _showIngredientSuggestions = false;
+      });
       return;
     }
-    setState(() => _ingredientSuggestions = const []);
+    setState(() => _showIngredientSuggestions = true);
     _ingredientSearchDebounce = Timer(
       const Duration(milliseconds: 250),
       () async {
@@ -639,12 +639,25 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   void _selectIngredient(IngredientSuggestion ingredient) {
     setState(() {
+      _ingredientSearchController.text = ingredient.name;
       _newIngredient.name.text = ingredient.name;
       if (ingredient.defaultUnit.isNotEmpty) {
+        _selectedUnit = ingredient.defaultUnit;
         _newIngredient.unit = ingredient.defaultUnit;
       }
-      _ingredientSearchController.clear();
       _ingredientSuggestions = const [];
+      _showIngredientSuggestions = false;
+    });
+    FocusScope.of(context).unfocus();
+    _ingredientAmountFocusNode.requestFocus();
+  }
+
+  void _selectCustomIngredient(String name) {
+    setState(() {
+      _ingredientSearchController.text = name;
+      _newIngredient.name.text = name;
+      _ingredientSuggestions = const [];
+      _showIngredientSuggestions = false;
     });
     FocusScope.of(context).unfocus();
     _ingredientAmountFocusNode.requestFocus();
@@ -840,6 +853,212 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         item.amount.text = amountController.text.trim();
         item.unit = selectedUnit;
       });
+    }
+  }
+
+  Future<void> _showAddCustomIngredientSheet() async {
+    final nameController = TextEditingController(
+      text: _ingredientSearchController.text.trim(),
+    );
+    final amountController = TextEditingController(
+      text: _ingredientAmountController.text.trim(),
+    );
+    var selectedUnit = _selectedUnit;
+    final formKey = GlobalKey<FormState>();
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => StatefulBuilder(
+            builder:
+                (context, setSheetState) => SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      16,
+                      20,
+                      MediaQuery.viewInsetsOf(sheetContext).bottom + 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: sheetContext.appSurfaceLow,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(28),
+                      ),
+                    ),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              height: 4,
+                              width: 38,
+                              decoration: BoxDecoration(
+                                color: sheetContext.appStrongBorder,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'community.add_custom_ingredient'.tr,
+                            style: TextStyle(
+                              color: sheetContext.appText,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: nameController,
+                            autofocus: true,
+                            decoration: _decoration(
+                              hint: 'community.ingredient_name_placeholder'.tr,
+                            ),
+                            validator:
+                                (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                        ? 'community.ingredient_details_help'.tr
+                                        : null,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  controller: amountController,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  decoration: _decoration(
+                                    hint: 'community.amount_placeholder'.tr,
+                                  ),
+                                  validator: (v) {
+                                    final n = num.tryParse(v?.trim() ?? '');
+                                    if (n == null || n <= 0) {
+                                      return 'community.ingredient_details_help'
+                                          .tr;
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: InkWell(
+                                  onTap: () async {
+                                    final chosen =
+                                        await _showIngredientUnitPicker(
+                                          selectedUnit,
+                                        );
+                                    if (chosen != null &&
+                                        sheetContext.mounted) {
+                                      setSheetState(
+                                        () => selectedUnit = chosen,
+                                      );
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: InputDecorator(
+                                    decoration: _decoration(),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            selectedUnit,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: sheetContext.appText,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: sheetContext.appMutedText,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.pop(sheetContext, false),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: sheetContext.appMutedText,
+                                ),
+                                child: Text('common.cancel'.tr),
+                              ),
+                              const SizedBox(width: 10),
+                              FilledButton(
+                                onPressed: () {
+                                  if (formKey.currentState!.validate()) {
+                                    Navigator.pop(sheetContext, true);
+                                  }
+                                },
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: green,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 11,
+                                  ),
+                                ),
+                                child: Text(
+                                  'common.add'.tr,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+          ),
+    );
+
+    if (saved == true && mounted) {
+      final name = nameController.text.trim();
+      final amount = amountController.text.trim();
+      if (name.isNotEmpty && num.tryParse(amount) != null) {
+        setState(() {
+          _ingredients.add(
+            _IngredientInput(name: name, amount: amount, unit: selectedUnit),
+          );
+          _ingredientSearchController.clear();
+          _ingredientAmountController.clear();
+          _newIngredient.name.clear();
+          _newIngredient.amount.clear();
+          _ingredientSuggestions = const [];
+          _showIngredientSuggestions = false;
+        });
+      }
     }
   }
 
@@ -1247,84 +1466,132 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: context.appBackground,
-        body: AppBackground(
-          lightDecoration: BoxDecoration(color: context.appBackground),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    hPad,
-                    AppSpacing.pageTop,
-                    hPad,
-                    0,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxWidth),
-                      child: _editorHeader(),
-                    ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: AppBackground(
+                child: const SizedBox.expand(),
+              ),
+            ),
+            // Ambient soft mint glow on top right
+            Positioned(
+              right: -40,
+              top: 10,
+              child: IgnorePointer(
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF0AAA55).withValues(alpha: 0.08),
                   ),
                 ),
-                Expanded(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxWidth),
-                      child: Form(
-                        key: _formKey,
-                        autovalidateMode:
-                            _showValidation
-                                ? AutovalidateMode.onUserInteraction
-                                : AutovalidateMode.disabled,
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isLandscape =
-                                MediaQuery.orientationOf(context) ==
-                                Orientation.landscape;
-                            final isWide =
-                                isLandscape &&
-                                constraints.maxWidth >=
-                                    AppSpacing.twoColumnBreakpoint;
-                            return ListView(
-                              key: ValueKey(
-                                'community-post-editor-scroll-$_currentStep',
-                              ),
-                              physics: const BouncingScrollPhysics(),
-                              keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior.onDrag,
-                              padding: EdgeInsets.fromLTRB(
-                                hPad,
-                                4,
-                                hPad,
-                                28,
-                              ),
-                              children: [
-                                _progressHeader(),
-                                const SizedBox(height: 8),
-                                const SizedBox(height: 12),
-                                if (_currentStep == 0)
-                                  _buildStep1Content(context, isWide: isWide)
-                                else if (_currentStep == 1)
-                                  _buildIngredientsStep(context, isWide: isWide)
-                                else
-                                  _buildHowToCookStep(context, isWide: isWide),
-                                const SizedBox(height: 32),
-                              ],
-                            );
-                          },
+              ),
+            ),
+            // Ambient soft rose/peach glow on middle left
+            Positioned(
+              left: -50,
+              top: 300,
+              child: IgnorePointer(
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFF43F5E).withValues(alpha: 0.06),
+                  ),
+                ),
+              ),
+            ),
+            // Ambient soft mint glow on bottom right
+            Positioned(
+              right: -50,
+              bottom: 80,
+              child: IgnorePointer(
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF0AAA55).withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      hPad,
+                      AppSpacing.pageTop,
+                      hPad,
+                      0,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: _editorHeader(),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: Form(
+                          key: _formKey,
+                          autovalidateMode:
+                              _showValidation
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isLandscape =
+                                  MediaQuery.orientationOf(context) ==
+                                  Orientation.landscape;
+                              final isWide =
+                                  isLandscape &&
+                                  constraints.maxWidth >=
+                                      AppSpacing.twoColumnBreakpoint;
+                              return ListView(
+                                key: ValueKey(
+                                  'community-post-editor-scroll-$_currentStep',
+                                ),
+                                physics: const BouncingScrollPhysics(),
+                                keyboardDismissBehavior:
+                                    ScrollViewKeyboardDismissBehavior.onDrag,
+                                padding: EdgeInsets.fromLTRB(
+                                  hPad,
+                                  4,
+                                  hPad,
+                                  28,
+                                ),
+                                children: [
+                                  _progressHeader(),
+                                  const SizedBox(height: 16),
+                                  if (_currentStep == 0)
+                                    _buildStep1Content(context, isWide: isWide)
+                                  else
+                                    _buildStep2Content(context, isWide: isWide),
+                                  const SizedBox(height: 32),
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                _editorActionBar(
-                  horizontalPadding: hPad,
-                  maxWidth: maxWidth,
-                ),
-              ],
+                  _editorActionBar(
+                    horizontalPadding: hPad,
+                    maxWidth: maxWidth,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -1334,18 +1601,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     required double horizontalPadding,
     required double maxWidth,
   }) {
-    final isDark = context.appIsDark;
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: context.appElevatedSurface,
-        border: Border(
-          top: BorderSide(
-            color: context.appBorder.withValues(alpha: isDark ? .35 : .7),
-            width: 1,
-          ),
-        ),
-      ),
+      color: Colors.transparent,
       child: SafeArea(
         top: false,
         child: Center(
@@ -1366,40 +1624,40 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _bottomActions(BuildContext context) {
     if (_currentStep == 0) {
-      return _navigationButton();
-    }
-    final isStep1 = _currentStep == 1;
-    if (isStep1) {
-      return Row(
+      return Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          TextButton(
-            key: const ValueKey('community-skip-button-1'),
-            onPressed:
-                _submitting ? null : () => setState(() => _currentStep = 2),
-            style: TextButton.styleFrom(
-              foregroundColor: context.appMutedText,
-              minimumSize: const Size(0, 52),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          _navigationButton(),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton(
+              key: const ValueKey('community-continue-button-0'),
+              onPressed: _submitting ? null : _submit,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: green,
+                side: BorderSide(color: green.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
               ),
-            ),
-            child: Text(
-              'community.skip_for_now'.tr,
-              style: TextStyle(
-                color: context.appMutedText,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.post == null
+                        ? 'community.post_meal'.tr
+                        : 'common.save_changes'.tr,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.check_rounded, size: 18),
+                ],
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _primaryActionButton(
-              buttonKey: ValueKey('community-continue-button-$_currentStep'),
-              label: 'community.continue_to_steps'.tr,
-              icon: Icons.arrow_forward_rounded,
-              onPressed: _submitting ? null : _continueToSteps,
             ),
           ),
         ],
@@ -1409,9 +1667,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       buttonKey: ValueKey('community-continue-button-$_currentStep'),
       label:
           widget.post == null
-              ? 'meals.publish_meal'.tr
+              ? 'community.post_meal'.tr
               : 'common.save_changes'.tr,
-      icon: Icons.send_rounded,
+      icon: Icons.chevron_right_rounded,
       onPressed: _submitting ? null : _submit,
     );
   }
@@ -1434,7 +1692,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         disabledForegroundColor: context.appMutedText,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(30),
         ),
       ),
       child:
@@ -1456,13 +1714,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Icon(icon, size: 18),
+                  const SizedBox(width: 6),
+                  Icon(icon, size: 22),
                 ],
               ),
     ),
@@ -1481,7 +1739,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         disabledForegroundColor: context.appMutedText,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(30),
         ),
       ),
       child:
@@ -1503,13 +1761,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 18),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.chevron_right_rounded, size: 22),
                 ],
               ),
     ),
@@ -1519,8 +1777,9 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     height: AppBackButton.layoutSize,
     child: Row(
       children: [
-        AppBackButton(
-          buttonKey: const ValueKey('community-editor-back-button'),
+        IconButton(
+          key: const ValueKey('community-editor-back-button'),
+          icon: const Icon(Icons.arrow_back_rounded, color: green, size: 24),
           onPressed: _submitting ? null : _handleBack,
         ),
         Expanded(
@@ -1538,19 +1797,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ),
           ),
         ),
-        const SizedBox(width: AppBackButton.layoutSize),
+        const SizedBox(width: 48),
       ],
     ),
   );
 
   void _handleBack() {
-    if (_currentStep == 2) {
-      setState(() {
-        _currentStep = 1;
-        _showValidation = false;
-      });
-      return;
-    }
     if (_currentStep == 1) {
       setState(() {
         _currentStep = 0;
@@ -1562,28 +1814,25 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   }
 
   Widget _progressHeader() {
-    final progress1 = _currentStep == 0 ? 0.0 : 1.0;
-    final progress2 = _currentStep <= 1 ? 0.0 : 1.0;
+    final isStep1 = _currentStep == 0;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Flexible(
-          child: _progressStep(
-            1,
-            'community.basic_info',
-            isActive: _currentStep == 0,
-            isComplete: _currentStep >= 1,
-            onTap: () {
-              if (_currentStep > 0 && !_submitting) {
-                setState(() => _currentStep = 0);
-              }
-            },
-          ),
+        _progressStep(
+          1,
+          'community.basic_info',
+          isActive: isStep1,
+          isComplete: !isStep1,
+          onTap: () {
+            if (!isStep1 && !_submitting) {
+              setState(() => _currentStep = 0);
+            }
+          },
         ),
         Expanded(
           child: Container(
-            height: 3.5,
-            margin: const EdgeInsets.symmetric(horizontal: 6),
+            height: 4,
+            margin: const EdgeInsets.symmetric(horizontal: 10),
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(99),
@@ -1593,7 +1842,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               alignment: Alignment.centerLeft,
               child: AnimatedFractionallySizedBox(
                 duration: const Duration(milliseconds: 250),
-                widthFactor: progress1,
+                widthFactor: isStep1 ? 0.5 : 1.0,
                 heightFactor: 1.0,
                 child: Container(
                   decoration: BoxDecoration(
@@ -1605,51 +1854,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ),
           ),
         ),
-        Flexible(
-          child: _progressStep(
-            2,
-            'community.ingredients',
-            isActive: _currentStep == 1,
-            isComplete: _currentStep >= 2,
-            onTap: () {
-              if (_currentStep == 2 && !_submitting) {
-                setState(() => _currentStep = 1);
-              }
-            },
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 3.5,
-            margin: const EdgeInsets.symmetric(horizontal: 6),
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(99),
-              color: context.appBorder,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AnimatedFractionallySizedBox(
-                duration: const Duration(milliseconds: 250),
-                widthFactor: progress2,
-                heightFactor: 1.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(99),
-                    color: green,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Flexible(
-          child: _progressStep(
-            3,
-            'community.how_to_cook',
-            isActive: _currentStep == 2,
-            isComplete: false,
-          ),
+        _progressStep(
+          2,
+          'community.ingredients',
+          isActive: !isStep1,
+          isComplete: false,
         ),
       ],
     );
@@ -1657,7 +1866,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _progressStep(
     int number,
-    String label, {
+    String labelKey, {
     required bool isActive,
     bool isComplete = false,
     VoidCallback? onTap,
@@ -1692,7 +1901,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         color: Colors.white,
                       )
                       : Text(
-                        '',
+                        '$number',
                         style: TextStyle(
                           color:
                               isHighlighted
@@ -1705,7 +1914,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ),
             const SizedBox(height: 5),
             Text(
-              label.tr,
+              labelKey.tr,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -1714,7 +1923,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                     isHighlighted
                         ? (context.appIsDark ? const Color(0xFF86EFAC) : green)
                         : context.appMutedText,
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: isHighlighted ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
@@ -1929,16 +2138,17 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _descriptionField() => _field(
     _description,
-    'Description',
-    hint: 'Tell the community about this meal',
-    icon: Icons.notes_rounded,
-    lines: 3,
-    maxLength: 4000,
-    keyboard: TextInputType.multiline,
+    'community.meal_name'.tr,
+    hint: 'Ex. Salad',
+    icon: Icons.restaurant_rounded,
+    inputIcon: Icons.restaurant_rounded,
+    lines: 1,
+    maxLength: 150,
     validator:
-        (v) => v == null || v.trim().isEmpty
-            ? 'Please add a description.'
-            : null,
+        (v) =>
+            v == null || v.trim().isEmpty
+                ? 'community.meal_name_required'.tr
+                : null,
   );
 
   Widget _timeAndServingsRow() => Row(
@@ -1947,9 +2157,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         child: _field(
           _time,
           'Cooking time',
-          hint: '45',
+          hint: 'Ex. 40',
           suffix: 'min',
           icon: Icons.schedule_rounded,
+          inputIcon: Icons.schedule_rounded,
           keyboard: TextInputType.number,
           validator: (v) => _positive(v, 'Cooking time'),
         ),
@@ -1959,8 +2170,10 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         child: _field(
           _servings,
           'Servings',
-          hint: '2',
+          hint: '1',
+          suffix: 'servings',
           icon: Icons.group_outlined,
+          inputIcon: Icons.group_outlined,
           keyboard: TextInputType.number,
           validator: (v) => _positive(v, 'Servings'),
         ),
@@ -1973,16 +2186,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     children: [
       Row(
         children: [
-          DecoratedBox(
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: context.appSoftGreen,
               shape: BoxShape.circle,
             ),
-            child: const SizedBox(
-              width: 22,
-              height: 22,
-              child: Icon(Icons.tune_rounded, color: green, size: 13),
-            ),
+            child: const Icon(Icons.tune_rounded, color: green, size: 13),
           ),
           const SizedBox(width: 7),
           Text(
@@ -2001,7 +2213,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           _difficultyCard(
             'EASY',
             Icons.sentiment_satisfied_alt_rounded,
-            const Color(0xFF00A651),
+            green,
           ),
           const SizedBox(width: 8),
           _difficultyCard(
@@ -2033,12 +2245,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           decoration: BoxDecoration(
             color:
                 selected
-                    ? activeColor.withValues(alpha: isDark ? 0.22 : 0.12)
+                    ? (value == 'EASY'
+                        ? (isDark
+                            ? const Color(0xFF143020)
+                            : const Color(0xFFEAF8F0))
+                        : activeColor.withValues(alpha: isDark ? 0.22 : 0.12))
                     : context.appElevatedSurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: selected ? activeColor : context.appBorder,
-              width: selected ? 1.6 : 1,
+              color:
+                  selected
+                      ? (value == 'EASY' ? green : activeColor)
+                      : context.appBorder,
+              width: selected ? 1.5 : 1,
             ),
             boxShadow: selected ? null : context.appTileShadow,
           ),
@@ -2048,13 +2267,19 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               Icon(
                 icon,
                 size: 19,
-                color: selected ? activeColor : context.appMutedText,
+                color:
+                    selected
+                        ? (value == 'EASY' ? green : activeColor)
+                        : context.appMutedText,
               ),
               const SizedBox(width: 6),
               Text(
                 value[0] + value.substring(1).toLowerCase(),
                 style: TextStyle(
-                  color: selected ? activeColor : context.appText,
+                  color:
+                      selected
+                          ? (value == 'EASY' ? green : activeColor)
+                          : context.appText,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   fontSize: 13.5,
                 ),
@@ -2066,89 +2291,18 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
-  Widget _buildIngredientsStep(BuildContext context, {required bool isWide}) {
+  Widget _buildStep2Content(BuildContext context, {required bool isWide}) {
     if (isWide) {
       return Column(
         key: const ValueKey<String>('community-post-editor-step2-wide'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader(
-            title: 'community.ingredients'.tr,
-            subtitle: 'community.ingredients_subtitle'.tr,
-            icon: Icons.shopping_basket_outlined,
-            optional: true,
-          ),
-          const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 flex: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _ingredientTipCard(),
-                    const SizedBox(height: 14),
-                    _ingredientSearchField(),
-                    const SizedBox(height: 12),
-                    _ingredientInputCard(),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(flex: 5, child: _ingredientsListSection()),
-            ],
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      key: const ValueKey<String>('community-post-editor-step2-single'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(
-          title: 'community.ingredients'.tr,
-          subtitle: 'community.ingredients_subtitle'.tr,
-          icon: Icons.shopping_basket_outlined,
-          optional: true,
-        ),
-        const SizedBox(height: 10),
-        _ingredientTipCard(),
-        const SizedBox(height: 14),
-        _ingredientSearchField(),
-        const SizedBox(height: 12),
-        _ingredientInputCard(),
-        const SizedBox(height: 16),
-        _ingredientsListSection(),
-      ],
-    );
-  }
-
-  Widget _buildHowToCookStep(BuildContext context, {required bool isWide}) {
-    if (isWide) {
-      return Column(
-        key: const ValueKey<String>('community-post-editor-how-to-cook-wide'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionHeader(
-                      title: 'community.how_to_cook'.tr,
-                      subtitle: 'community.how_to_cook_subtitle'.tr,
-                      icon: Icons.menu_book_rounded,
-                      optional: true,
-                    ),
-                    const SizedBox(height: 10),
-                    _cookingStepsListSection(),
-                  ],
-                ),
+                child: _ingredientsSection(),
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -2156,6 +2310,8 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _howToCookSection(),
+                    const SizedBox(height: 18),
                     _tagsSection(),
                     const SizedBox(height: 18),
                     _audienceSection(),
@@ -2169,20 +2325,15 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     }
 
     return Column(
-      key: const ValueKey<String>('community-post-editor-how-to-cook-single'),
+      key: const ValueKey<String>('community-post-editor-step2-single'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(
-          title: 'community.how_to_cook'.tr,
-          subtitle: 'community.how_to_cook_subtitle'.tr,
-          icon: Icons.menu_book_rounded,
-          optional: true,
-        ),
-        const SizedBox(height: 10),
-        _cookingStepsListSection(),
-        const SizedBox(height: 18),
+        _ingredientsSection(),
+        const SizedBox(height: 20),
+        _howToCookSection(),
+        const SizedBox(height: 20),
         _tagsSection(),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         _audienceSection(),
       ],
     );
@@ -2193,10 +2344,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     required String subtitle,
     required IconData icon,
     bool optional = false,
+    Widget? trailing,
   }) => Padding(
-    padding: const EdgeInsets.only(top: 6, bottom: 8),
+    padding: const EdgeInsets.only(top: 4, bottom: 8),
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           width: 36,
@@ -2212,22 +2364,24 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   Text(
                     title,
                     style: TextStyle(
                       color: context.appText,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  if (optional) ...[
-                    const SizedBox(width: 8),
+                  if (optional)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 3,
+                        horizontal: 8,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
                         color: context.appSoftGreen,
@@ -2237,12 +2391,11 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                         'community.optional'.tr,
                         style: const TextStyle(
                           color: green,
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ],
                 ],
               ),
               const SizedBox(height: 2),
@@ -2259,572 +2412,557 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
             ],
           ),
         ),
+        if (trailing != null) ...[
+          const SizedBox(width: 8),
+          trailing,
+        ],
       ],
     ),
   );
 
-  Widget _ingredientTipCard() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    decoration: BoxDecoration(
-      color:
-          context.appIsDark ? const Color(0xFF132A1C) : const Color(0xFFF0FDF4),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color:
-            context.appIsDark
-                ? const Color(0xFF1E4620)
-                : const Color(0xFFDCFCE7),
-      ),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color:
-                context.appIsDark
-                    ? const Color(0xFF1A3E26)
-                    : const Color(0xFFDCFCE7),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.lightbulb_outline_rounded,
-            color: green,
-            size: 18,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            'community.ingredient_tip'.tr,
-            style: TextStyle(
-              color:
-                  context.appIsDark
-                      ? const Color(0xFF86EFAC)
-                      : const Color(0xFF15803D),
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+  Widget _ingredientsSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _sectionHeader(
+        title: 'community.ingredients'.tr,
+        subtitle: 'community.ingredients_help'.tr,
+        icon: Icons.shopping_basket_outlined,
+        optional: true,
+        trailing: InkWell(
+          key: const ValueKey('community-add-custom-ingredient-button'),
+          onTap: _showAddCustomIngredientSheet,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: context.appSoftGreen,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: green.withValues(alpha: .3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add_rounded, size: 14, color: green),
+                const SizedBox(width: 4),
+                Text(
+                  'community.custom_ingredient'.tr,
+                  style: const TextStyle(
+                    color: green,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      ],
-    ),
-  );
-
-  Widget _ingredientSearchField() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
+      ),
+      const SizedBox(height: 8),
       TextFormField(
+        key: const ValueKey('community-ingredient-search-input'),
         controller: _ingredientSearchController,
         onChanged: _searchIngredients,
+        onTap: () {
+          if (_ingredientSearchController.text.trim().isNotEmpty) {
+            setState(() => _showIngredientSuggestions = true);
+          }
+        },
         decoration: _decoration(
-          hint: 'community.search_ingredients_hint'.tr,
+          hint: 'community.search_grocery_hint'.tr,
+          prefixIcon: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(Icons.search_rounded, size: 20),
+          ),
         ).copyWith(
-          prefixIcon: const Icon(Icons.search_rounded, size: 20),
           suffixIcon:
               _ingredientSearchController.text.isNotEmpty
                   ? IconButton(
                     icon: const Icon(Icons.clear_rounded, size: 18),
                     onPressed: () {
                       _ingredientSearchController.clear();
-                      setState(() => _ingredientSuggestions = const []);
+                      setState(() {
+                        _ingredientSuggestions = const [];
+                        _showIngredientSuggestions = false;
+                      });
                     },
                   )
                   : null,
         ),
         textInputAction: TextInputAction.search,
       ),
-      if (_ingredientSuggestions.isNotEmpty) ...[
+      if (_showIngredientSuggestions &&
+          (_ingredientSuggestions.isNotEmpty ||
+              _ingredientSearchController.text.trim().isNotEmpty)) ...[
         const SizedBox(height: 8),
         _ingredientSuggestionPanel(),
       ],
-    ],
-  );
-
-  Widget _ingredientInputCard() => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: context.appBorder),
-      boxShadow: context.appTileShadow,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'community.ingredient_name'.tr,
-          style: TextStyle(
-            color: context.appText,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: _newIngredient.name,
-          focusNode: _ingredientNameFocusNode,
-          decoration: _decoration(
-            hint: 'community.ingredient_name_placeholder'.tr,
-          ),
-          textInputAction: TextInputAction.next,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'community.amount_label'.tr,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+      const SizedBox(height: 10),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'community.amount_label'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _newIngredient.amount,
-                    focusNode: _ingredientAmountFocusNode,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _decoration(
-                      hint: 'community.amount_placeholder'.tr,
-                    ),
-                    textInputAction: TextInputAction.done,
-                    onChanged: (_) => setState(() {}),
-                    onFieldSubmitted: (_) => _addIngredient(),
+                ),
+                const SizedBox(height: 5),
+                TextFormField(
+                  key: const ValueKey('community-ingredient-amount-input'),
+                  controller: _ingredientAmountController,
+                  focusNode: _ingredientAmountFocusNode,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
                   ),
-                ],
-              ),
+                  decoration: _decoration(
+                    hint: 'community.amount_placeholder'.tr,
+                  ),
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _onAddIngredientTapped(),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'community.unit_label'.tr,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'community.unit_label'.tr,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 6),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () async {
-                        final chosen = await _showIngredientUnitPicker(
-                          _newIngredient.unit,
-                        );
-                        if (chosen != null && mounted) {
-                          setState(() => _newIngredient.unit = chosen);
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(15),
-                      child: InputDecorator(
-                        decoration: _decoration(),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _newIngredient.unit,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: context.appText,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                ),
+                const SizedBox(height: 5),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      final chosen = await _showIngredientUnitPicker(
+                        _selectedUnit,
+                      );
+                      if (chosen != null && mounted) {
+                        setState(() {
+                          _selectedUnit = chosen;
+                          _newIngredient.unit = chosen;
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(15),
+                    child: InputDecorator(
+                      decoration: _decoration(),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedUnit,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: context.appText,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: context.appMutedText,
-                              size: 18,
-                            ),
-                          ],
-                        ),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: context.appMutedText,
+                            size: 18,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 1),
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: FilledButton(
-                  key: const ValueKey('community-add-ingredient'),
-                  onPressed: _submitting ? null : _addIngredient,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: green,
-                    disabledBackgroundColor: context.appMutedSurface,
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: context.appMutedText,
-                    elevation: 0,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 1),
+            child: SizedBox(
+              height: 48,
+              child: FilledButton(
+                key: const ValueKey('community-add-ingredient'),
+                onPressed: _onAddIngredientTapped,
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.appSoftGreen,
+                  foregroundColor: green,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  child: const Icon(Icons.add_rounded, size: 24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_rounded, size: 18, color: green),
+                    const SizedBox(width: 4),
+                    Text(
+                      'common.add'.tr,
+                      style: const TextStyle(
+                        color: green,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
-      ],
-    ),
-  );
-
-  Widget _ingredientsListSection() {
-    if (_ingredients.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+          ),
+        ],
+      ),
+      if (_ingredients.isNotEmpty) ...[
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'community.ingredients_list'.tr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.appSoftGreen,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '()',
-                      style: TextStyle(
-                        color: context.appColorScheme.primary,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
+            Text(
+              '${'community.added_ingredients'.tr} (${_ingredients.length})',
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(width: 8),
-            TextButton.icon(
-              onPressed: () {
+            InkWell(
+              onTap: () {
                 for (final item in _ingredients) {
                   item.dispose();
                 }
                 setState(_ingredients.clear);
               },
-              icon: const Icon(Icons.delete_outline_rounded, size: 16),
-              label: Text('community.clear_all'.tr),
-              style: TextButton.styleFrom(
-                foregroundColor: green,
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: Text(
+                  'community.clear_all'.tr,
+                  style: const TextStyle(
+                    color: green,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
-          itemCount: _ingredients.length,
-          onReorderItem: (oldIndex, newIndex) {
-            setState(() {
-              final item = _ingredients.removeAt(oldIndex);
-              _ingredients.insert(newIndex, item);
-            });
-          },
-          itemBuilder: (context, index) {
-            final item = _ingredients[index];
-            return Container(
-              key: ValueKey('ingredient-row-${item.hashCode}-$index'),
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: context.appElevatedSurface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: context.appBorder),
-                boxShadow: context.appTileShadow,
-              ),
-              child: Row(
-                children: [
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(
-                        Icons.drag_indicator_rounded,
-                        color: context.appMutedText,
-                        size: 20,
-                      ),
+        ..._ingredients.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return Container(
+            key: ValueKey('ingredient-row-${item.hashCode}-$index'),
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: context.appElevatedSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.appBorder),
+              boxShadow: context.appTileShadow,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: context.appSoftGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${index + 1}',
+                    style: const TextStyle(
+                      color: green,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      item.name.text,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.appText,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${item.amount.text} ${item.unit}',
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item.name.text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: context.appMutedText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      color: context.appText,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    tooltip: 'community.edit_ingredient'.tr,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 34,
-                      height: 34,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: () => _editIngredient(index),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
+                ),
+                Text(
+                  '${item.amount.text} ${item.unit}',
+                  style: TextStyle(
                     color: context.appMutedText,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                   ),
-                  IconButton(
-                    tooltip: 'community.remove_item'.trParams({
-                      'name': item.name.text,
-                    }),
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 34,
-                      height: 34,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      item.dispose();
-                      setState(() => _ingredients.removeAt(index));
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    color: context.appMutedText,
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'community.edit_ingredient'.tr,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
                   ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 6),
-        _addAnotherIngredientButton(),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _editIngredient(index),
+                  icon: const Icon(Icons.edit_outlined, size: 17),
+                  color: context.appMutedText,
+                ),
+                IconButton(
+                  tooltip: 'community.remove_item'.trParams({
+                    'name': item.name.text,
+                  }),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    item.dispose();
+                    setState(() => _ingredients.removeAt(index));
+                  },
+                  icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                  color: const Color(0xFFEF4444),
+                ),
+              ],
+            ),
+          );
+        }),
       ],
-    );
-  }
-
-  Widget _addAnotherIngredientButton() => SizedBox(
-    width: double.infinity,
-    height: 48,
-    child: OutlinedButton.icon(
-      key: const ValueKey('community-add-another-ingredient'),
-      onPressed: () {
-        _ingredientNameFocusNode.requestFocus();
-      },
-      icon: const Icon(Icons.add_rounded, size: 20, color: green),
-      label: Text(
-        'community.add_another_ingredient'.tr,
-        style: const TextStyle(
-          color: green,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: green, width: 1.4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    ),
-  );
-
-  Widget _cookingStepsListSection() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      if (_steps.isNotEmpty) ...[
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
-          itemCount: _steps.length,
-          onReorderItem: (oldIndex, newIndex) {
-            setState(() {
-              final item = _steps.removeAt(oldIndex);
-              _steps.insert(newIndex, item);
-            });
-          },
-          itemBuilder: (context, index) {
-            final stepController = _steps[index];
-            return Container(
-              key: ValueKey('step-row-${stepController.hashCode}-$index'),
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              decoration: BoxDecoration(
-                color: context.appElevatedSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: context.appBorder),
-                boxShadow: context.appTileShadow,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, right: 6),
-                    child: ReorderableDragStartListener(
-                      index: index,
-                      child: Icon(
-                        Icons.drag_indicator_rounded,
-                        color: context.appMutedText,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 28,
-                    height: 28,
-                    margin: const EdgeInsets.only(top: 2, right: 10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: context.appSoftGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '${index + 1}',
-                      style: const TextStyle(
-                        color: green,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        stepController.text,
-                        style: TextStyle(
-                          color: context.appText,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'community.edit_step'.tr,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 34,
-                      height: 34,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: () => _showAddOrEditStepSheet(index: index),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    color: context.appMutedText,
-                  ),
-                  IconButton(
-                    tooltip: 'community.remove_step'.trParams({
-                      'number': '${index + 1}',
-                    }),
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 34,
-                      height: 34,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      stepController.dispose();
-                      setState(() => _steps.removeAt(index));
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    color: context.appMutedText,
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 2),
-      ],
-      _addAnotherStepButton(),
     ],
   );
 
-  Widget _addAnotherStepButton() => SizedBox(
-    width: double.infinity,
-    height: 48,
-    child: OutlinedButton.icon(
-      key: const ValueKey('community-add-another-step'),
-      onPressed: () => _showAddOrEditStepSheet(),
-      icon: const Icon(Icons.add_rounded, size: 20, color: green),
-      label: Text(
-        'community.add_another_step'.tr,
-        style: const TextStyle(
-          color: green,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
+  void _onAddIngredientTapped() {
+    final searchName = _ingredientSearchController.text.trim();
+    final newName = _newIngredient.name.text.trim();
+    final name = searchName.isNotEmpty ? searchName : newName;
+    final amountText =
+        _ingredientAmountController.text.trim().isNotEmpty
+            ? _ingredientAmountController.text.trim()
+            : _newIngredient.amount.text.trim();
+    final amount = num.tryParse(amountText);
+    if (name.isEmpty || amount == null || amount <= 0) {
+      Get.snackbar(
+        'community.add_ingredient_details'.tr,
+        'community.ingredient_details_help'.tr,
+      );
+      return;
+    }
+    setState(() {
+      _ingredients.add(
+        _IngredientInput(name: name, amount: amountText, unit: _selectedUnit),
+      );
+      _ingredientSearchController.clear();
+      _ingredientAmountController.clear();
+      _newIngredient.name.clear();
+      _newIngredient.amount.clear();
+      _ingredientSuggestions = const [];
+      _showIngredientSuggestions = false;
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  Widget _howToCookSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _sectionHeader(
+        title: 'community.how_to_cook'.tr,
+        subtitle: 'community.cooking_steps_help'.tr,
+        icon: Icons.restaurant_menu_rounded,
+        optional: true,
+      ),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: context.appBorder),
+          boxShadow: context.appTileShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Step ${_steps.length + 1}',
+              style: TextStyle(
+                color: context.appText,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              key: const ValueKey('community-new-cooking-step-input'),
+              controller: _currentStepInputController,
+              minLines: 3,
+              maxLines: 5,
+              decoration: _decoration(
+                hint: 'community.describe_cooking_step'.tr,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                height: 38,
+                child: FilledButton(
+                  key: const ValueKey('community-add-another-step'),
+                  onPressed: _onAddStepToListTapped,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: context.appSoftGreen,
+                    foregroundColor: green,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.add_rounded, size: 16, color: green),
+                      const SizedBox(width: 4),
+                      Text(
+                        'community.add_step_to_list'.tr,
+                        style: const TextStyle(
+                          color: green,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: green, width: 1.4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    ),
+      if (_steps.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        ..._steps.asMap().entries.map((entry) {
+          final index = entry.key;
+          final stepController = entry.value;
+          return Container(
+            key: ValueKey('step-row-${stepController.hashCode}-$index'),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: context.appElevatedSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.appBorder),
+              boxShadow: context.appTileShadow,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  margin: const EdgeInsets.only(top: 2, right: 10),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: green,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      stepController.text,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'community.edit_step'.tr,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _showAddOrEditStepSheet(index: index),
+                  icon: const Icon(Icons.edit_outlined, size: 17),
+                  color: context.appMutedText,
+                ),
+                IconButton(
+                  tooltip: 'community.remove_step'.trParams({
+                    'number': '${index + 1}',
+                  }),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    stepController.dispose();
+                    setState(() => _steps.removeAt(index));
+                  },
+                  icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                  color: const Color(0xFFEF4444),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    ],
   );
+
+  void _onAddStepToListTapped() {
+    final text = _currentStepInputController.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _steps.add(TextEditingController(text: text));
+      _currentStepInputController.clear();
+    });
+    FocusScope.of(context).unfocus();
+  }
 
   Widget _tagsSection() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _sectionHeader(
         title: 'community.tags_optional'.tr,
-        subtitle: 'community.tags_subtitle'.tr,
+        subtitle: 'community.tags_help'.tr,
         icon: Icons.sell_outlined,
       ),
       const SizedBox(height: 8),
@@ -2844,44 +2982,77 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           runSpacing: 8,
           children: [
             ..._tags.where((tag) => _selectedTags.contains(tag.id)).map((tag) {
-              return FilterChip(
-                label: Text(tag.name),
-                selected: true,
-                showCheckmark: false,
-                deleteIcon: const Icon(Icons.close_rounded, size: 16),
-                onDeleted: () => setState(() => _selectedTags.remove(tag.id)),
-                backgroundColor: context.appElevatedSurface,
-                selectedColor: context.appSelectedSurface,
-                labelStyle: TextStyle(
-                  color: context.appColorScheme.primary,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
                 ),
-                side: BorderSide(
-                  color: context.appColorScheme.primary.withValues(alpha: .5),
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: green.withValues(alpha: 0.3)),
                 ),
-                shape: const StadiumBorder(),
-                onSelected:
-                    _submitting
-                        ? null
-                        : (_) => setState(() => _selectedTags.remove(tag.id)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '#${tag.name}',
+                      style: const TextStyle(
+                        color: green,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    InkWell(
+                      onTap:
+                          _submitting
+                              ? null
+                              : () => setState(
+                                () => _selectedTags.remove(tag.id),
+                              ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 15,
+                        color: green,
+                      ),
+                    ),
+                  ],
+                ),
               );
             }),
-            ActionChip(
-              key: const ValueKey('community-add-tag'),
-              avatar: const Icon(Icons.add_rounded, size: 16, color: green),
-              label: Text('community.add_tag'.tr),
-              backgroundColor: context.appElevatedSurface,
-              side: BorderSide(
-                color: context.appColorScheme.primary.withValues(alpha: .5),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const ValueKey('community-add-tag'),
+                onTap: _submitting ? null : _showTagPicker,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: green, width: 1.2),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.add_rounded, size: 16, color: green),
+                      const SizedBox(width: 4),
+                      Text(
+                        'community.add_tag'.tr,
+                        style: const TextStyle(
+                          color: green,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              shape: const StadiumBorder(),
-              labelStyle: TextStyle(
-                color: context.appColorScheme.primary,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-              ),
-              onPressed: _submitting ? null : _showTagPicker,
             ),
           ],
         ),
@@ -2897,31 +3068,42 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
         subtitle: 'community.who_can_see_it_subtitle'.tr,
         icon: Icons.visibility_outlined,
       ),
-      Row(
-        children: [
-          Expanded(
-            child: _audienceCard(
+      const SizedBox(height: 8),
+      Container(
+        decoration: BoxDecoration(
+          color: context.appElevatedSurface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: context.appBorder),
+          boxShadow: context.appTileShadow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            _audienceTile(
               visibility: CommunityPostVisibility.public,
               title: 'Public',
               subtitle: 'community.public_audience_desc'.tr,
               icon: Icons.public_rounded,
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _audienceCard(
+            Divider(
+              height: 1,
+              indent: 58,
+              endIndent: 16,
+              color: context.appBorder,
+            ),
+            _audienceTile(
               visibility: CommunityPostVisibility.followers,
               title: 'Followers',
               subtitle: 'community.followers_audience_desc'.tr,
               icon: Icons.person_outline_rounded,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ],
   );
 
-  Widget _audienceCard({
+  Widget _audienceTile({
     required CommunityPostVisibility visibility,
     required String title,
     required String subtitle,
@@ -2932,78 +3114,53 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => setState(() => _visibility = visibility),
-        borderRadius: BorderRadius.circular(18),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 110,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color:
-                selected
-                    ? (context.appIsDark
-                        ? const Color(0xFF143020)
-                        : const Color(0xFFF0FDF4))
-                    : context.appElevatedSurface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: selected ? green : context.appBorder,
-              width: selected ? 1.6 : 1.0,
-            ),
-            boxShadow: selected ? null : context.appTileShadow,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: selected ? green : context.appSoftGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 17,
-                      color: selected ? Colors.white : green,
-                    ),
-                  ),
-                  Icon(
-                    selected
-                        ? Icons.radio_button_checked_rounded
-                        : Icons.radio_button_off_rounded,
-                    color: selected ? green : context.appBorder,
-                    size: 20,
-                  ),
-                ],
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 19, color: green),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: context.appText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.appMutedText,
-                      fontSize: 10.5,
-                      height: 1.2,
+                    const SizedBox(height: 1),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 11.5,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                color: selected ? green : context.appBorder,
+                size: 20,
               ),
             ],
           ),
@@ -3266,13 +3423,32 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       }
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'community.meal_category'.tr,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: context.appSoftGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.restaurant_rounded, color: green, size: 13),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                'community.meal_category'.tr,
+                style: TextStyle(
+                  color: context.appText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Material(
@@ -3281,41 +3457,42 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
               decoration: BoxDecoration(
                 color:
                     selectedCategory == null
-                        ? context.appSubtleSurface
+                        ? context.appElevatedSurface
                         : context.appSelectedSurface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: selectedCategory == null ? context.appBorder : green,
+                  width: selectedCategory == null ? 1 : 1.4,
                 ),
+                boxShadow: context.appTileShadow,
               ),
               child: InkWell(
                 onTap: _submitting ? null : _showMealCategoryPicker,
                 borderRadius: BorderRadius.circular(16),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: 14,
+                    vertical: 12,
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 36,
-                        height: 36,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color:
                               selectedCategory == null
-                                  ? context.appElevatedSurface
+                                  ? context.appSoftGreen
                                   : green,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           _mealCategoryIcon(selectedCategory?.name ?? ''),
-                          color:
-                              selectedCategory == null ? green : Colors.white,
-                          size: 19,
+                          color: selectedCategory == null ? green : Colors.white,
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 11),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3330,6 +3507,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                         ? context.appText
                                         : context.appColorScheme.primary,
                                 fontWeight: FontWeight.w800,
+                                fontSize: 14,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -3339,15 +3517,16 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
                                   : 'common.tap_to_change'.tr,
                               style: TextStyle(
                                 color: context.appMutedText,
-                                fontSize: 12,
+                                fontSize: 11.5,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: context.appMutedText,
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: green,
+                        size: 24,
                       ),
                     ],
                   ),
@@ -3525,12 +3704,13 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     String? hint,
     String? suffix,
     IconData? icon,
+    IconData? inputIcon,
     int lines = 1,
     int? maxLength,
     TextInputType? keyboard,
     String? Function(String?)? validator,
   }) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.only(bottom: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3570,19 +3750,43 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
           maxLength: maxLength,
           keyboardType: keyboard,
           validator: validator,
-          decoration: _decoration(hint: hint, suffix: suffix),
+          decoration: _decoration(
+            hint: hint,
+            suffix: suffix,
+            prefixIcon:
+                inputIcon != null
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(width: 14),
+                        Icon(inputIcon, size: 19, color: context.appMutedText),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 1,
+                          height: 20,
+                          color: context.appBorder,
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                    )
+                    : null,
+          ),
         ),
       ],
     ),
   );
+
   InputDecoration _decoration({
     String? hint,
     String? suffix,
+    Widget? prefixIcon,
   }) => InputDecoration(
     hintText: hint,
     suffixText: suffix,
+    prefixIcon: prefixIcon,
+    prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
     filled: true,
-    fillColor: context.appField,
+    fillColor: context.appElevatedSurface,
     hintStyle: TextStyle(color: context.appMutedText),
     suffixStyle: TextStyle(
       color: context.appMutedText,
@@ -3746,39 +3950,91 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     return selected;
   }
 
-  Widget _ingredientSuggestionPanel() => Container(
-    constraints: const BoxConstraints(maxHeight: 180),
-    decoration: BoxDecoration(
-      color: context.appElevatedSurface,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: context.appColorScheme.primary.withValues(alpha: .4),
+  Widget _ingredientSuggestionPanel() {
+    final query = _ingredientSearchController.text.trim();
+    final hasExactMatch = _ingredientSuggestions.any(
+      (s) => s.name.trim().toLowerCase() == query.toLowerCase(),
+    );
+    final showCustomOption = query.isNotEmpty && !hasExactMatch;
+    final totalCount =
+        _ingredientSuggestions.length + (showCustomOption ? 1 : 0);
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 190),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: context.appColorScheme.primary.withValues(alpha: .4),
+        ),
+        boxShadow: context.appTileShadow,
       ),
-      boxShadow: context.appTileShadow,
-    ),
-    child: ListView.separated(
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      itemCount: _ingredientSuggestions.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final ingredient = _ingredientSuggestions[index];
-        return ListTile(
-          dense: true,
-          leading: const Icon(Icons.restaurant_rounded, color: green, size: 20),
-          title: Text(ingredient.name),
-          trailing:
-              ingredient.defaultUnit.isEmpty
-                  ? null
-                  : Text(
-                    ingredient.defaultUnit,
-                    style: TextStyle(color: context.appMutedText),
+      child: ListView.separated(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        itemCount: totalCount,
+        separatorBuilder: (_, _) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          if (showCustomOption && index == 0) {
+            return Material(
+              color: Colors.transparent,
+              child: ListTile(
+                dense: true,
+                leading: Container(
+                  width: 26,
+                  height: 26,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: context.appSoftGreen,
+                    shape: BoxShape.circle,
                   ),
-          onTap: () => _selectIngredient(ingredient),
-        );
-      },
-    ),
-  );
+                  child: const Icon(Icons.add_rounded, color: green, size: 16),
+                ),
+                title: Text(
+                  'community.use_custom_ingredient'.trParams({'name': query}),
+                  style: const TextStyle(
+                    color: green,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                trailing: Text(
+                  'community.custom_ingredient'.tr,
+                  style: TextStyle(color: context.appMutedText, fontSize: 11),
+                ),
+                onTap: () => _selectCustomIngredient(query),
+              ),
+            );
+          }
+          final ingredientIndex = showCustomOption ? index - 1 : index;
+          final ingredient = _ingredientSuggestions[ingredientIndex];
+          return Material(
+            color: Colors.transparent,
+            child: ListTile(
+              dense: true,
+              leading:
+                  const Icon(Icons.restaurant_rounded, color: green, size: 20),
+              title: Text(
+                ingredient.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13.5,
+                ),
+              ),
+              trailing:
+                  ingredient.defaultUnit.isEmpty
+                      ? null
+                      : Text(
+                        ingredient.defaultUnit,
+                        style: TextStyle(color: context.appMutedText),
+                      ),
+              onTap: () => _selectIngredient(ingredient),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _PhotoSourceTile extends StatelessWidget {

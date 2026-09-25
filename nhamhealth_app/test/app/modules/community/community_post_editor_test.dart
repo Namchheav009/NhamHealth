@@ -75,22 +75,7 @@ void main() {
         await tester.tap(find.text('Continue to ingredients'));
         await tester.pumpAndSettle();
 
-        // Step 1 -> Step 2
-        await tester.scrollUntilVisible(
-          find.text('Continue to steps'),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.ensureVisible(find.text('Continue to steps'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Continue to steps'));
-        await tester.pumpAndSettle();
-        await tester.ensureVisible(
-          find.byKey(const ValueKey('community-add-tag')),
-        );
-        await tester.pumpAndSettle();
-
-        // Step 2: Add Tag
+        // Step 1: Add Tag directly in the unified second step
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('community-add-tag')),
           300,
@@ -118,7 +103,7 @@ void main() {
           await tester.tap(find.text('Done (1)'));
           await tester.pumpAndSettle();
         }
-        expect(find.widgetWithText(FilterChip, 'Fresh'), findsOneWidget);
+        expect(find.text('#Fresh'), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('community-add-tag')),
@@ -159,20 +144,6 @@ void main() {
     expect(find.text('New meal'), findsOneWidget);
     expect(find.text('Add a cover photo'), findsOneWidget);
     expect(tester.getSize(find.byType(Form)).height, greaterThan(0));
-    for (final element in find.byType(Text).evaluate()) {
-      final t = element.widget as Text;
-      print('FOUND_TEXT: ${t.data ?? '<null>'}');
-    }
-    for (final element
-        in find
-            .descendant(
-              of: find.byKey(const ValueKey('community-post-editor-scroll-0')),
-              matching: find.byType(Text),
-            )
-            .evaluate()) {
-      final t = element.widget as Text;
-      print('SCROLL_0_TEXT: ');
-    }
     expect(find.text('Continue to ingredients'), findsWidgets);
 
     await tester.ensureVisible(find.text('Choose a category'));
@@ -188,18 +159,18 @@ void main() {
 
     expect(find.text('New meal'), findsOneWidget);
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Tell the community about this meal'),
+      find.widgetWithText(TextFormField, 'Ex. Salad'),
       'Healthy lunch',
     );
     await tester.drag(find.byType(ListView), const Offset(0, -260));
     await tester.pump();
     await tester.scrollUntilVisible(
-      find.widgetWithText(TextFormField, '45'),
+      find.widgetWithText(TextFormField, 'Ex. 40'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.enterText(find.widgetWithText(TextFormField, '45'), '30');
-    await tester.enterText(find.widgetWithText(TextFormField, '2'), '2');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Ex. 40'), '30');
+    await tester.enterText(find.widgetWithText(TextFormField, '1'), '2');
     await tester.ensureVisible(find.text('Continue to ingredients'));
     await tester.scrollUntilVisible(
       find.text('Continue to ingredients'),
@@ -209,63 +180,45 @@ void main() {
     await tester.tap(find.text('Continue to ingredients'));
     await tester.pumpAndSettle();
 
-    // Step 1: Ingredients
+    // Step 2: Ingredients & How to Cook
     expect(find.text('Ingredients'), findsWidgets);
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'e.g. Brown rice'),
+      find.byKey(const ValueKey('community-ingredient-search-input')),
       'Chicken',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'e.g. 200'),
+      find.byKey(const ValueKey('community-ingredient-amount-input')),
       '300',
     );
     await tester.tap(find.byKey(const ValueKey('community-add-ingredient')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Continue to steps'));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Continue to steps'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Continue to steps'));
-    await tester.pumpAndSettle();
 
-    // Step 2: How to Cook
     expect(find.text('How to Cook'), findsWidgets);
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('community-add-another-step')),
+      find.byKey(const ValueKey('community-new-cooking-step-input')),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const ValueKey('community-add-another-step')));
-    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const ValueKey('community-new-cooking-step-input')),
       'Serve with fresh herbs.',
     );
-    await tester.tap(find.byKey(const ValueKey('community-save-step-button')));
+    await tester.tap(find.byKey(const ValueKey('community-add-another-step')));
     await tester.pumpAndSettle();
+
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('community-add-another-step')),
+      find.byKey(const ValueKey('community-new-cooking-step-input')),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const ValueKey('community-add-another-step')));
-    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const ValueKey('community-new-cooking-step-input')),
       'Prepare and cook the chicken.',
     );
-    await tester.tap(find.byKey(const ValueKey('community-save-step-button')));
+    await tester.tap(find.byKey(const ValueKey('community-add-another-step')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Publish Meal'));
-    await tester.scrollUntilVisible(
-      find.text('Publish Meal'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Publish Meal'));
+
+    await tester.tap(find.text('Post meal'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -338,23 +291,6 @@ void main() {
     await tester.tap(find.text('Continue to ingredients'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Continue to steps'));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Continue to steps'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Continue to steps'));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.text('Save Changes'));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Save Changes'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
     await tester.tap(find.text('Save Changes'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -406,19 +342,19 @@ void main() {
       await tester.enterText(
         find.widgetWithText(
           TextFormField,
-          'Tell the community about this meal',
+          'Ex. Salad',
         ),
         'Simple Quick Meal',
       );
       await tester.drag(find.byType(ListView), const Offset(0, -260));
       await tester.pump();
       await tester.scrollUntilVisible(
-        find.widgetWithText(TextFormField, '45'),
+        find.widgetWithText(TextFormField, 'Ex. 40'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.enterText(find.widgetWithText(TextFormField, '45'), '15');
-      await tester.enterText(find.widgetWithText(TextFormField, '2'), '1');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Ex. 40'), '15');
+      await tester.enterText(find.widgetWithText(TextFormField, '1'), '1');
 
       await tester.ensureVisible(find.text('Continue to ingredients'));
       await tester.scrollUntilVisible(
@@ -429,23 +365,9 @@ void main() {
       await tester.tap(find.text('Continue to ingredients'));
       await tester.pumpAndSettle();
 
-      // Step 1: Ingredients - Skip for now without adding ingredients
+      // Step 2: Ingredients & How to Cook - both optional, so post immediately
       expect(find.text('Ingredients'), findsWidgets);
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('community-skip-button-1')),
-      );
-      await tester.tap(find.byKey(const ValueKey('community-skip-button-1')));
-      await tester.pumpAndSettle();
-
-      // Step 2: How to Cook - Publish immediately without adding cooking steps
-      expect(find.text('How to Cook'), findsWidgets);
-      await tester.ensureVisible(find.text('Publish Meal'));
-      await tester.scrollUntilVisible(
-        find.text('Publish Meal'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('Publish Meal'));
+      await tester.tap(find.text('Post meal'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -459,6 +381,203 @@ void main() {
       expect(submitted!.mealName, 'Simple Quick Meal');
       expect(submitted!.ingredients, isEmpty);
       expect(submitted!.steps, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'users can post directly from Step 1 without inputting ingredients and cooking steps',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      CommunityPostDraft? submitted;
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: CommunityPostEditorPage(
+            authorName: 'Nham Member',
+            authorAvatarUrl: '',
+            onSubmit: (draft) async => submitted = draft,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Choose a category'));
+      await tester.scrollUntilVisible(
+        find.text('Choose a category'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Choose a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Main dishes').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex. Salad'),
+        'Quick Breakfast Bowl',
+      );
+      await tester.drag(find.byType(ListView), const Offset(0, -260));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.widgetWithText(TextFormField, 'Ex. 40'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.enterText(find.widgetWithText(TextFormField, 'Ex. 40'), '10');
+      await tester.enterText(find.widgetWithText(TextFormField, '1'), '1');
+
+      // Tapping the Post meal button directly on Step 1
+      final postMealButton = find.byKey(
+        const ValueKey<String>('community-continue-button-0'),
+      );
+      expect(postMealButton, findsOneWidget);
+      await tester.tap(postMealButton);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Meal published'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('app-action-alert-confirm')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(submitted, isNotNull);
+      expect(submitted!.mealName, 'Quick Breakfast Bowl');
+      expect(submitted!.ingredients, isEmpty);
+      expect(submitted!.steps, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'users can add custom ingredients by themselves via suggestion and modal sheet',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      CommunityPostDraft? submitted;
+      await tester.pumpWidget(
+        GetMaterialApp(
+          translations: AppTranslations(),
+          locale: const Locale('en', 'US'),
+          home: CommunityPostEditorPage(
+            authorName: 'Nham Member',
+            authorAvatarUrl: '',
+            onSubmit: (draft) async => submitted = draft,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Choose a category'));
+      await tester.scrollUntilVisible(
+        find.text('Choose a category'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Choose a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Main dishes').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex. Salad'),
+        'Healthy Homemade Bowl',
+      );
+      await tester.drag(find.byType(ListView), const Offset(0, -260));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.widgetWithText(TextFormField, 'Ex. 40'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.enterText(find.widgetWithText(TextFormField, 'Ex. 40'), '25');
+      await tester.enterText(find.widgetWithText(TextFormField, '1'), '2');
+
+      await tester.ensureVisible(find.text('Continue to ingredients'));
+      await tester.scrollUntilVisible(
+        find.text('Continue to ingredients'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Continue to ingredients'));
+      await tester.pumpAndSettle();
+
+      // 1. Add custom ingredient via inline search box custom suggestion
+      await tester.enterText(
+        find.byKey(const ValueKey('community-ingredient-search-input')),
+        'Tofu',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add "Tofu" as custom ingredient'), findsOneWidget);
+      await tester.tap(find.text('Add "Tofu" as custom ingredient'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('community-ingredient-amount-input')),
+        '150',
+      );
+      await tester.tap(find.byKey(const ValueKey('community-add-ingredient')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tofu'), findsOneWidget);
+
+      // 2. Add custom ingredient via modal sheet
+      await tester.tap(
+        find.byKey(const ValueKey('community-add-custom-ingredient-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add custom ingredient'), findsOneWidget);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.widgetWithText(TextFormField, 'e.g. Brown rice'),
+        ),
+        'Mushrooms',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.widgetWithText(TextFormField, 'e.g. 200'),
+        ),
+        '100',
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.widgetWithText(FilledButton, 'Add'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mushrooms'), findsOneWidget);
+
+      // Submit and verify
+      await tester.tap(find.text('Post meal'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Meal published'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('app-action-alert-confirm')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(submitted, isNotNull);
+      expect(submitted!.ingredients, hasLength(2));
+      expect(submitted!.ingredients[0].ingredientName, 'Tofu');
+      expect(submitted!.ingredients[0].amount, 150);
+      expect(submitted!.ingredients[1].ingredientName, 'Mushrooms');
+      expect(submitted!.ingredients[1].amount, 100);
       expect(tester.takeException(), isNull);
     },
   );

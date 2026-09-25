@@ -148,18 +148,30 @@ const Map<String, String> communityKm = {
   'community.ingredients_and_steps': 'គ្រឿងផ្សំ និងជំហាន',
   'community.share_your_meal': 'តោះចែករំលែកអាហាររបស់អ្នក!',
   'community.basic_info_help': 'បន្ថែមព័ត៌មានមូលដ្ឋានអំពីអាហាររបស់អ្នក',
+  'community.meal_name': 'ឈ្មោះអាហារ',
   'community.meal_name_required': 'ត្រូវការឈ្មោះអាហារ។',
   'community.categories_load_error': 'មិនអាចផ្ទុកប្រភេទអាហារបានទេ។',
   'community.prefill_from_favorites_short': 'បំពេញពីចំណូលចិត្ត',
   'community.ingredients_help':
       'ជាជម្រើស — បន្ថែមគ្រឿងផ្សំ ប្រសិនបើអ្នកចង់ចែករំលែករូបមន្តពេញលេញ។',
-  'community.optional': 'មិនទាមទារ',
+  'community.optional': 'ជាជម្រើស',
   'community.ingredients_subtitle':
       'បន្ថែមគ្រឿងផ្សំសម្រាប់រូបមន្តរបស់អ្នកប្រសិនបើអ្នកចង់។ អ្នកអាចរំលងជំហាននេះបានជានិច្ច។',
   'community.ingredient_tip':
       'គន្លឹះ៖ សូមបញ្ជាក់ឱ្យបានច្បាស់លាស់តាមដែលអាចធ្វើទៅបាន (ឧ. "អង្ករសំរូប" ជំនួសឱ្យគ្រាន់តែ "អង្ករ")។',
   'community.search_ingredients_hint':
       'ស្វែងរកគ្រឿងផ្សំ (ឧ. សាច់មាន់, អង្ករ, ខ្ទឹមបារាំង)',
+  'community.search_grocery_hint':
+      'ស្វែងរកអាហារ គន្លឹះ ឬគ្រឿងទេសសុខភាព',
+  'community.custom_ingredient': 'គ្រឿងផ្សំផ្ទាល់ខ្លួន',
+  'community.add_custom_ingredient': 'បន្ថែមគ្រឿងផ្សំផ្ទាល់ខ្លួន',
+  'community.use_custom_ingredient': 'បន្ថែម "@name" ជាគ្រឿងផ្សំផ្ទាល់ខ្លួន',
+  'community.describe_cooking_step': 'ពិពណ៌នាអំពីជំហានចម្អិននេះ',
+  'community.add_step_to_list': 'បន្ថែមជំហានទៅបញ្ជី',
+  'community.added_ingredients': 'គ្រឿងផ្សំដែលបានបន្ថែម',
+  'community.added_steps': 'ជំហានដែលបានបន្ថែម',
+  'community.post_meal': 'បង្ហោះអាហារ',
+  'community.tags_help': 'ជួយមនុស្សស្វែងរកអាហាររបស់អ្នក។',
   'community.ingredient_name': 'ឈ្មោះគ្រឿងផ្សំ',
   'community.ingredient_name_placeholder': 'ឧ. អង្ករសំរូប',
   'community.amount_label': 'បរិមាណ',

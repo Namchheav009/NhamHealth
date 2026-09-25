@@ -744,7 +744,8 @@ class MultiItemPlateCard extends StatelessWidget {
                   ),
                 ),
                 value: item.isSelected,
-                activeColor: green,
+                activeTrackColor: green,
+                activeThumbColor: Colors.white,
                 onChanged: (_) {
                   controller.togglePlateItem(index);
                   Navigator.pop(sheetContext);

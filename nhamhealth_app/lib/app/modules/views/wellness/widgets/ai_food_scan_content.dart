@@ -33,7 +33,6 @@ class AiFoodScanContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 820;
         final horizontalPadding =
             AppSpacing.isTabletFor(context)
                 ? AppSpacing.tabletPageHorizontal

@@ -15,6 +15,7 @@ const Map<String, String> commonEn = {
   'common.reset': 'Reset',
   'common.filter': 'Filter',
   'common.apply_filter': 'Apply Filter',
+  'common.add': 'Add',
   'common.add_more': 'Add more',
   'common.dismiss_notification': 'Dismiss notification',
   'common.clear_search': 'Clear search',
