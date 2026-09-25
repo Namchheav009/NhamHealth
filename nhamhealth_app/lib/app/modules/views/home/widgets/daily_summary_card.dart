@@ -203,8 +203,6 @@ class DailySummaryCard extends GetView<HomeController> {
                             data: nutrients[index].$1,
                             icon: nutrients[index].$2,
                             iconColor: nutrients[index].$3,
-                            showActionIndicator:
-                                nutrients[index].$1.title == 'common.water',
                             onTap:
                                 nutrients[index].$1.title == 'common.water'
                                     ? controller.openWaterDetails

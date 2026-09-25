@@ -123,6 +123,47 @@ class WellnessController extends GetxController {
     _applyDashboard(dashboard);
   }
 
+  /// Applies a temporary local nutrition change while the meal-status request
+  /// is in flight. The next successful dashboard load replaces these values
+  /// with the server totals, so retries cannot accumulate duplicate amounts.
+  void applyMealNutritionDelta({
+    required DateTime date,
+    required double calories,
+    required double protein,
+    required double carbs,
+    required double fat,
+  }) {
+    if (!_sameDay(selectedDate.value, date)) return;
+    _applyDelta('Calories', calories);
+    _applyDelta('Protein', protein);
+    _applyDelta('Carbohydrates', carbs);
+    _applyDelta('Fat', fat);
+  }
+
+  void _applyDelta(String name, double delta) {
+    final index = nutrients.indexWhere((item) => item.name == name);
+    if (index < 0) return;
+    final item = nutrients[index];
+    final current = double.tryParse(item.current) ?? 0;
+    final target = double.tryParse(item.target) ?? 0;
+    final updated = (current + delta).clamp(0, double.infinity).toDouble();
+    nutrients[index] = WellnessSummaryModel(
+      name: item.name,
+      current: _number(updated),
+      target: item.target,
+      unit: item.unit,
+      percentage: target <= 0 ? 0 : ((updated / target) * 100).round(),
+      icon: item.icon,
+      color: item.color,
+      isLimit: item.isLimit,
+    );
+  }
+
+  bool _sameDay(DateTime first, DateTime second) =>
+      first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
+
   void _applyDashboard(ProfileDashboardModel dashboard) {
     _setNutrient(
       'Calories',

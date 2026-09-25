@@ -44,10 +44,18 @@ const Map<String, String> wellnessKm = {
   'wellness.carbohydrates_detail_page': 'ព័ត៌មានកាបូអ៊ីដ្រាត',
   'wellness.daily_title': 'សុខភាពប្រចាំថ្ងៃ',
   'wellness.your_daily_summary': 'សង្ខេបសុខភាពថ្ងៃនេះ',
+  'wellness.log_water': 'កត់ត្រាទឹក',
+  'wellness.log_water_description':
+      'តាមដានបរិមាណទឹក និងរក្សាជាតិទឹកពេញមួយថ្ងៃ។',
+  'wellness.open_water_tracker': 'បើកកម្មវិធីតាមដានទឹក',
+  'wellness.water_log': 'កំណត់ត្រាទឹក',
   'wellness.fiber_detail_page': 'ព័ត៌មានជាតិសរសៃ',
   'wellness.protein_detail_page': 'ព័ត៌មានប្រូតេអ៊ីន',
   'wellness.sugar_detail_page': 'ព័ត៌មានជាតិស្ករ',
   'wellness.choose_amount': 'ជ្រើសរើសបរិមាណ',
+  'wellness.custom_amount': 'បរិមាណផ្ទាល់ខ្លួន',
+  'wellness.custom_amount_help': 'តើអ្នកបានផឹកទឹកប៉ុន្មាន?',
+  'wellness.use_custom_amount': 'ប្រើ @amount មល',
   'wellness.1_glass_is_about_250_ml': '១ កែវ ប្រហែល ២៥០ មីលីលីត្រ',
   'wellness.glass': 'កែវ',
   'wellness.glasses_remaining_fragment': 'កែវទៀតដើម្បីដល់គោលដៅ',
@@ -379,4 +387,11 @@ const Map<String, String> wellnessKm = {
   'wellness.insight_veggie_boost_title': 'បន្ថែមបន្លែបៃតងស្រស់',
   'wellness.insight_veggie_boost_desc':
       'ការបង្កើនបន្លែបន្ថែមជាតិសរសៃ ប៉ូតាស្យូម និងវីតាមីន ដោយមិនបង្កើនកាឡូរីច្រើនឡើយ។',
+  'wellness.link_scan_to_meal_plan': 'នេះជាអាហារក្នុង Meal Plan របស់ខ្ញុំ',
+  'wellness.link_scan_to_meal_plan_help':
+      'ការភ្ជាប់នឹងសម្គាល់ម្ហូបដែលបានជ្រើសថាបានញ៉ាំ និងកត់ត្រាអាហារូបត្ថម្ភតែម្តង។',
+  'wellness.meal_plan_match': 'នឹងភ្ជាប់ទៅ៖ @name',
+  'wellness.meal_plan_slot_empty':
+      'មិនមានម្ហូបដែលបានគ្រោងក្នុងពេលនេះទេ។ សូមជ្រើសពេលផ្សេង ឬបិទការភ្ជាប់។',
+  'wellness.meal_plan_link_unavailable': 'មិនអាចភ្ជាប់ Meal Plan បានទេ',
 };

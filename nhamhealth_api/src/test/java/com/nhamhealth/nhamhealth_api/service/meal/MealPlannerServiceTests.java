@@ -29,12 +29,14 @@ import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.wellness.DailyNutritionService;
 
 class MealPlannerServiceTests {
     private MealPlanRepository plans;
     private PlannerMealRepository plannerMeals;
     private WeeklyMealRecommendationRepository recommendations;
     private UserRepository users;
+    private DailyNutritionService dailyNutrition;
     private MealPlannerService service;
 
     @BeforeEach
@@ -43,7 +45,8 @@ class MealPlannerServiceTests {
         plannerMeals = mock(PlannerMealRepository.class);
         recommendations = mock(WeeklyMealRecommendationRepository.class);
         users = mock(UserRepository.class);
-        service = new MealPlannerService(plans, plannerMeals, recommendations, users);
+        dailyNutrition = mock(DailyNutritionService.class);
+        service = new MealPlannerService(plans, plannerMeals, recommendations, users, dailyNutrition);
     }
 
     private PlannerMeal sampleMeal(Integer id) {

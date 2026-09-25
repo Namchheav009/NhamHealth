@@ -16,6 +16,8 @@ import '../../models/planner/meal_plan.dart';
 import '../../providers/planner/meal_planner_provider.dart';
 import '../../repositories/meals/meal_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
+import '../home/home_controller.dart';
+import '../wellness/wellness_controller.dart';
 
 class MealPlannerController extends GetxController {
   MealPlannerController({
@@ -294,10 +296,27 @@ class MealPlannerController extends GetxController {
       selectedMeals.fold(0, (sum, m) => sum + m.carbsGrams * m.servings);
   double get selectedFat =>
       selectedMeals.fold(0, (sum, m) => sum + m.fatGrams * m.servings);
+  Iterable<PlannedMeal> get selectedEatenMeals =>
+      selectedMeals.where((meal) => meal.status == MealPlanStatus.eaten);
+  int get eatenCalories => selectedEatenMeals.fold(
+    0,
+    (sum, meal) => sum + (meal.calories * meal.servings).round(),
+  );
+  double get eatenProtein => selectedEatenMeals.fold(
+    0,
+    (sum, meal) => sum + meal.proteinGrams * meal.servings,
+  );
+  double get eatenCarbs => selectedEatenMeals.fold(
+    0,
+    (sum, meal) => sum + meal.carbsGrams * meal.servings,
+  );
+  double get eatenFat => selectedEatenMeals.fold(
+    0,
+    (sum, meal) => sum + meal.fatGrams * meal.servings,
+  );
   int get completedSlots =>
       selectedMeals.map((meal) => meal.slot).toSet().length;
-  int get eatenMeals =>
-      selectedMeals.where((meal) => meal.status == MealPlanStatus.eaten).length;
+  int get eatenMeals => selectedEatenMeals.length;
   int get skippedMeals =>
       selectedMeals
           .where((meal) => meal.status == MealPlanStatus.skipped)
@@ -898,6 +917,15 @@ class MealPlannerController extends GetxController {
     final isMarkingSkipped =
         status == MealPlanStatus.skipped &&
         meal.status != MealPlanStatus.skipped;
+    final nutritionDirection =
+        isMarkingEaten
+            ? 1.0
+            : (meal.status == MealPlanStatus.eaten ? -1.0 : 0.0);
+    final nutritionServings =
+        meal.status == MealPlanStatus.eaten
+            ? (meal.actualServings ?? meal.servings)
+            : meal.servings;
+    final mealDate = meal.planDate ?? selectedDate;
     final key = _dateKey(meal.planDate ?? selectedDate);
     final updated = meal.copyWith(
       status: status,
@@ -907,6 +935,12 @@ class MealPlannerController extends GetxController {
       clearActualServings: status != MealPlanStatus.eaten,
     );
     _put(key, updated);
+    _applyWellnessDelta(
+      meal,
+      date: mealDate,
+      servings: nutritionServings,
+      direction: nutritionDirection,
+    );
 
     if (isMarkingEaten) {
       HapticFeedback.lightImpact();
@@ -929,8 +963,15 @@ class MealPlannerController extends GetxController {
           actualServings: status == MealPlanStatus.eaten ? meal.servings : null,
         ),
       );
+      await _refreshNutritionViews(meal.planDate ?? selectedDate);
     } catch (_) {
       _put(key, meal);
+      _applyWellnessDelta(
+        meal,
+        date: mealDate,
+        servings: nutritionServings,
+        direction: -nutritionDirection,
+      );
       await AppAlert.actionError(
         title: 'planner.error'.tr,
         message: 'planner.save_error'.tr,
@@ -938,6 +979,22 @@ class MealPlannerController extends GetxController {
     } finally {
       isSaving.value = false;
     }
+  }
+
+  void _applyWellnessDelta(
+    PlannedMeal meal, {
+    required DateTime date,
+    required double servings,
+    required double direction,
+  }) {
+    if (direction == 0 || !Get.isRegistered<WellnessController>()) return;
+    Get.find<WellnessController>().applyMealNutritionDelta(
+      date: date,
+      calories: meal.calories * servings * direction,
+      protein: meal.proteinGrams * servings * direction,
+      carbs: meal.carbsGrams * servings * direction,
+      fat: meal.fatGrams * servings * direction,
+    );
   }
 
   Future<void> removeMeal(MealPlanSlot slot) async {
@@ -952,6 +1009,7 @@ class MealPlannerController extends GetxController {
     isSaving.value = true;
     try {
       await provider.deleteMeal(planId);
+      await _refreshNutritionViews(meal.planDate ?? selectedDate);
     } catch (_) {
       _put(key, meal);
       await AppAlert.actionError(
@@ -960,6 +1018,21 @@ class MealPlannerController extends GetxController {
       );
     } finally {
       isSaving.value = false;
+    }
+  }
+
+  Future<void> _refreshNutritionViews(DateTime date) async {
+    if (Get.isRegistered<WellnessController>()) {
+      final wellness = Get.find<WellnessController>();
+      if (_dateKey(wellness.selectedDate.value) == _dateKey(date)) {
+        await wellness.loadDailyWellness();
+      }
+    }
+    if (Get.isRegistered<HomeController>()) {
+      final home = Get.find<HomeController>();
+      if (_dateKey(home.selectedDay.value) == _dateKey(date)) {
+        await home.loadDashboard();
+      }
     }
   }
 

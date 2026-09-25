@@ -20,6 +20,7 @@ class WaterController extends GetxController {
   final currentGlasses = 0.0.obs;
   final targetGlasses = 8.0.obs;
   final selectedGlasses = 1.obs;
+  final selectedMillilitersValue = millilitersPerGlass.obs;
   final isLoading = false.obs;
   final isSaving = false.obs;
   final errorMessage = RxnString();
@@ -40,7 +41,8 @@ class WaterController extends GetxController {
   double get remainingGlasses =>
       (targetGlasses.value - currentGlasses.value).clamp(0, double.infinity);
 
-  int get selectedMilliliters => selectedGlasses.value * millilitersPerGlass;
+  int get selectedMilliliters => selectedMillilitersValue.value;
+  double get selectedWaterAmount => selectedMilliliters / millilitersPerGlass;
 
   Future<void> loadWater() async {
     if (isLoading.value) return;
@@ -57,18 +59,30 @@ class WaterController extends GetxController {
 
   void selectGlasses(int value) {
     selectedGlasses.value = value.clamp(1, maximumGlassesPerEntry);
+    selectedMillilitersValue.value =
+        selectedGlasses.value * millilitersPerGlass;
   }
 
-  void decreaseSelection() => selectGlasses(selectedGlasses.value - 1);
+  void selectMilliliters(int value) {
+    final maximum = maximumGlassesPerEntry * millilitersPerGlass;
+    selectedMillilitersValue.value = value.clamp(100, maximum);
+    selectedGlasses.value = (selectedMilliliters / millilitersPerGlass)
+        .round()
+        .clamp(1, maximumGlassesPerEntry);
+  }
 
-  void increaseSelection() => selectGlasses(selectedGlasses.value + 1);
+  void decreaseSelection() =>
+      selectMilliliters(selectedMilliliters - millilitersPerGlass);
+
+  void increaseSelection() =>
+      selectMilliliters(selectedMilliliters + millilitersPerGlass);
 
   Future<void> addSelectedWater() async {
     if (isSaving.value) return;
     isSaving.value = true;
     errorMessage.value = null;
     try {
-      final amount = selectedGlasses.value.toDouble();
+      final amount = selectedWaterAmount;
       final dashboard = await _repository.addDailyNutrition(
         water: amount,
         date: date,
@@ -81,7 +95,7 @@ class WaterController extends GetxController {
                 : 'wellness.water_count_added_many')
             .trParams({'count': '${selectedGlasses.value}'}),
       );
-      selectedGlasses.value = 1;
+      selectGlasses(1);
     } on Object catch (error) {
       final message = _message(
         error,

@@ -215,8 +215,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Matcha Bubble Tea'), findsOneWidget);
-      expect(find.text('2g P  •  12g C  •  3g F'), findsOneWidget);
-      expect(find.text('Portion: Regular'), findsOneWidget);
+      expect(find.text('2g P  •  12g C  •  3g F'), findsNothing);
+      expect(find.text('Portion: Regular'), findsNothing);
       expect(find.text('4 ingredients found'), findsOneWidget);
 
       expect(find.text('Matcha powder'), findsOneWidget);
@@ -235,8 +235,8 @@ void main() {
       expect(find.text('Added sugar'), findsOneWidget);
       expect(find.text('8 g'), findsOneWidget);
 
-      expect(find.text('High confidence'), findsNWidgets(2));
-      expect(find.text('Medium confidence'), findsNWidgets(2));
+      expect(find.textContaining('High confidence'), findsNWidgets(2));
+      expect(find.textContaining('Medium confidence'), findsNWidgets(2));
     },
   );
 

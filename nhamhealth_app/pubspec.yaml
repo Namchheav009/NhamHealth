@@ -110,6 +110,7 @@ flutter:
 
     - assets/images/wellness/ai_robot.png
     - assets/images/wellness/ai_search.png
+    - assets/images/wellness/AI-water.png
     - assets/animations/chatbot.json
     - assets/animations/live_chatbot.json
     - assets/animations/food.json

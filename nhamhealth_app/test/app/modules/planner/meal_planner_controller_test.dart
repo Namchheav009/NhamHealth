@@ -241,6 +241,8 @@ void main() {
     await controller.addMeal(lunch);
 
     expect(controller.adherenceProgress, 0);
+    expect(controller.eatenCalories, 0);
+    expect(controller.eatenProtein, 0);
     await controller.changeStatus(
       controller.mealFor(MealPlanSlot.breakfast)!,
       MealPlanStatus.eaten,
@@ -255,6 +257,15 @@ void main() {
     expect(controller.dailyMealGoal, 4);
     expect(controller.dailyGoalComplete, isFalse);
     expect(controller.adherenceProgress, 0.25);
+    expect(controller.eatenCalories, breakfast.calories);
+    expect(controller.eatenProtein, breakfast.proteinGrams);
+
+    await controller.changeStatus(
+      controller.mealFor(MealPlanSlot.breakfast)!,
+      MealPlanStatus.planned,
+    );
+    expect(controller.eatenCalories, 0);
+    expect(controller.eatenProtein, 0);
   });
 
   test(
@@ -743,9 +754,7 @@ void main() {
       expect(singleSaveCallCount, 0);
       expect(capturedBulkItems.isNotEmpty, isTrue);
       expect(
-        capturedBulkItems.every(
-          (item) => item['weightGoal'] == 'LOSE_WEIGHT',
-        ),
+        capturedBulkItems.every((item) => item['weightGoal'] == 'LOSE_WEIGHT'),
         isTrue,
       );
     },

@@ -46,7 +46,6 @@ class PlateBreakdownView extends StatelessWidget {
                     padding: EdgeInsets.fromLTRB(horizontal, 12, horizontal, 8),
                     child: AppBackHeader(
                       title: 'wellness.plate_items',
-                      subtitle: 'wellness.ai_detected_ingredients_subtitle',
                       backButtonKey: const ValueKey(
                         'plate-breakdown-back-button',
                       ),
@@ -148,9 +147,6 @@ class PlateBreakdownView extends StatelessWidget {
     final displayName = nut.mealName.isNotEmpty ? nut.mealName : nut.name;
     final selectedFile = _ctrl.selectedImage.value;
 
-    // Determine current general portion from plate items
-    final portionLabel = _resolveCurrentPortionLabel();
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -176,7 +172,7 @@ class PlateBreakdownView extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // Meal Name, Macros & AI Badge
+          // Meal Name & AI Badge
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,15 +187,6 @@ class PlateBreakdownView extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: context.appText,
                     letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${nut.protein.round()}g P  •  ${nut.carbs.round()}g C  •  ${nut.fat.round()}g F',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: context.appMutedText,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -234,49 +221,6 @@ class PlateBreakdownView extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Portion Dropdown Pill Button
-          InkWell(
-            onTap: () => _showGlobalPortionSheet(context),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark ? context.appSurface : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color:
-                      isDark
-                          ? const Color(0xFF2E6B47)
-                          : const Color(0xFF86EFAC),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'wellness.portion_prefix'.trParams({
-                      'portion': portionLabel,
-                    }),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? const Color(0xFF4ADE80) : greenDark,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 16,
-                    color: isDark ? const Color(0xFF4ADE80) : greenDark,
-                  ),
-                ],
-              ),
             ),
           ),
         ],
@@ -355,114 +299,6 @@ class PlateBreakdownView extends StatelessWidget {
       child: const Center(
         child: Icon(Icons.restaurant_rounded, color: green, size: 28),
       ),
-    );
-  }
-
-  String _resolveCurrentPortionLabel() {
-    if (_ctrl.plateItems.isEmpty) return 'Regular';
-    final avg =
-        _ctrl.plateItems.fold<double>(
-          0.0,
-          (sum, item) => sum + item.portionMultiplier,
-        ) /
-        _ctrl.plateItems.length;
-
-    if (avg <= 0.6) return 'Small';
-    if (avg <= 1.2) return 'Regular';
-    if (avg <= 1.7) return 'Large';
-    return 'XL';
-  }
-
-  void _showGlobalPortionSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: context.appSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: context.appBorder,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'wellness.choose_plate_size'.tr,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: context.appText,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _portionOptionTile(
-                  context: sheetContext,
-                  label: 'wellness.portion_small_short'.tr,
-                  multiplier: 0.5,
-                  desc: 'wellness.portion_small_desc'.tr,
-                ),
-                _portionOptionTile(
-                  context: sheetContext,
-                  label: 'wellness.portion_regular_short'.tr,
-                  multiplier: 1.0,
-                  desc: 'wellness.portion_regular_desc'.tr,
-                ),
-                _portionOptionTile(
-                  context: sheetContext,
-                  label: 'wellness.portion_large_short'.tr,
-                  multiplier: 1.5,
-                  desc: 'wellness.portion_large_desc'.tr,
-                ),
-                _portionOptionTile(
-                  context: sheetContext,
-                  label: 'wellness.portion_xlarge_short'.tr,
-                  multiplier: 2.0,
-                  desc: 'wellness.portion_xlarge_desc'.tr,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _portionOptionTile({
-    required BuildContext context,
-    required String label,
-    required double multiplier,
-    required String desc,
-  }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        '$label (${multiplier}x)',
-        style: TextStyle(fontWeight: FontWeight.w700, color: context.appText),
-      ),
-      subtitle: Text(
-        desc,
-        style: TextStyle(fontSize: 12, color: context.appMutedText),
-      ),
-      trailing: const Icon(Icons.chevron_right_rounded, color: green),
-      onTap: () {
-        for (var i = 0; i < _ctrl.plateItems.length; i++) {
-          _ctrl.updatePlateItemPortion(i, multiplier);
-        }
-        Navigator.pop(context);
-      },
     );
   }
 }

@@ -42,10 +42,18 @@ const Map<String, String> wellnessEn = {
   'wellness.carbohydrates_detail_page': 'Carbohydrates Detail Page',
   'wellness.daily_title': 'Daily Wellness',
   'wellness.your_daily_summary': 'Your Daily Summary',
+  'wellness.log_water': 'Log water',
+  'wellness.log_water_description':
+      'Track your water intake and stay hydrated throughout the day.',
+  'wellness.open_water_tracker': 'Open Water Tracker',
+  'wellness.water_log': 'Water Log',
   'wellness.fiber_detail_page': 'Fiber Detail Page',
   'wellness.protein_detail_page': 'Protein Detail Page',
   'wellness.sugar_detail_page': 'Sugar Detail Page',
   'wellness.choose_amount': 'Choose amount',
+  'wellness.custom_amount': 'Custom amount',
+  'wellness.custom_amount_help': 'How much water did you drink?',
+  'wellness.use_custom_amount': 'Use @amount ml',
   'wellness.1_glass_is_about_250_ml': '1 glass is about 250 ml',
   'wellness.glass': 'glass',
   'wellness.glasses_remaining_fragment': 'glasses remaining',
@@ -372,6 +380,13 @@ const Map<String, String> wellnessEn = {
   'wellness.insight_veggie_boost_desc':
       'Increasing vegetable portions adds fiber, potassium, and micronutrients while keeping calories light.',
   'wellness.portion_xlarge_short': 'Extra large',
+  'wellness.link_scan_to_meal_plan': 'This is from my meal plan',
+  'wellness.link_scan_to_meal_plan_help':
+      'Linking marks the selected planned meal as eaten and logs nutrition once.',
+  'wellness.meal_plan_match': 'Will link to: @name',
+  'wellness.meal_plan_slot_empty':
+      'There is no planned meal in this slot. Choose another slot or turn linking off.',
+  'wellness.meal_plan_link_unavailable': 'Meal plan link unavailable',
   'wellness.know_what_you_eat_live_healthier':
       'Know what you eat, live healthier',
 };

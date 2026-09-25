@@ -5,30 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7c917152-0bd0-480f-8329-724c521042d1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/bindings/main_tabs_binding.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/main_tabs_view.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/widgets/main_tab_scope.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/main_tabs_view_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/bindings/community/community_binding.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/bindings/community/community_binding.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/home/home_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/home/home_controller.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/meals/meal_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/meals/meal_controller.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/profile/setting_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/profile/setting_controller.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/community/community_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/community/community_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/community/community_report_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/community/community_report_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/planner/meal_planner_flow_views.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/planner/meal_planner_flow_views.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/entity/DailyNutritionSourceLog.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/repository/wellness/DailyNutritionSourceLogRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/nhamhealth_api/src/main/resources/db/migration/V11__add_nutrition_source_logs.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/dto/request/DailyNutritionUpdateRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/dto/request/DailyNutritionUpdateRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/service/meal/MealPlannerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/service/meal/MealPlannerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/service/wellness/DailyNutritionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_api/src/main/java/com/nhamhealth/nhamhealth_api/service/wellness/DailyNutritionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_api/src/test/java/com/nhamhealth/nhamhealth_api/service/meal/MealPlannerServiceTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_api/src/test/java/com/nhamhealth/nhamhealth_api/service/meal/MealPlannerServiceTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/android/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/android/build/reports/problems/problems-report.html" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/android/build/reports/problems/problems-report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/planner/meal_planner_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/planner/meal_planner_controller.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/wellness/ai_food_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/wellness/ai_food_controller.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/wellness/wellness_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/controllers/wellness/wellness_controller.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/repositories/profile/profile_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/repositories/profile/profile_repository.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/planner/meal_planner_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/planner/meal_planner_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/profile/profile_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/profile/profile_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/profile/setting_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/profile/setting_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/routes/app_pages.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/routes/app_pages.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/en/common_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/en/common_en.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/km/common_km.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/km/common_km.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/widgets/app_bottom_navigation.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/widgets/app_bottom_navigation.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/widgets/page_skeleton.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/widgets/page_skeleton.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/planner/meal_planner_view_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/planner/meal_planner_view_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/routes/app_pages_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/routes/app_pages_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/widgets/nham_app_bar_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/widgets/nham_app_bar_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/widgets/shared_main_layout_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/widgets/shared_main_layout_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/wellness/plate_breakdown_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/wellness/plate_breakdown_view.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/wellness/widgets/ai_food_nutrition_result_content.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/modules/views/wellness/widgets/ai_food_nutrition_result_content.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/en/wellness_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/en/wellness_en.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/km/wellness_km.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/lib/app/translations/km/wellness_km.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/planner/meal_planner_controller_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/planner/meal_planner_controller_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/profile/profile_repository_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/profile/profile_repository_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/wellness/ai_food_controller_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/wellness/ai_food_controller_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/wellness/plate_breakdown_view_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/wellness/plate_breakdown_view_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/wellness/wellness_controller_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/nhamhealth_app/test/app/modules/wellness/wellness_controller_test.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,25 +56,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/VISAL-DEV/Downloads/NhamHealth",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/VISAL-DEV/Downloads/NhamHealth&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="7c917152-0bd0-480f-8329-724c521042d1" name="Changes" comment="" />

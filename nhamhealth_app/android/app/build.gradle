@@ -105,25 +105,29 @@ android {
             }
         }
 
-        release {
-            keyAlias = keystoreProperties["keyAlias"]
-            keyPassword = keystoreProperties["keyPassword"]
-            storeFile = keystoreProperties["storeFile"]
-                    ? file(keystoreProperties["storeFile"])
-                    : null
-            storePassword = keystoreProperties["storePassword"]
+        if (releaseKeystoreAvailable) {
+            release {
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+                storeFile = file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+            }
         }
     }
 
     buildTypes {
-        buildTypes {
-            debug {
-                signingConfig = signingConfigs.nhamhealthDebug
-            }
+        debug {
+            signingConfig = customDebugKeystoreAvailable
+                    ? signingConfigs.nhamhealthDebug
+                    : signingConfigs.debug
+        }
 
-            release {
-                signingConfig = signingConfigs.nhamhealthDebug
-            }
+        release {
+            signingConfig = releaseKeystoreAvailable
+                    ? signingConfigs.release
+                    : (customDebugKeystoreAvailable
+                        ? signingConfigs.nhamhealthDebug
+                        : signingConfigs.debug)
         }
     }
 }

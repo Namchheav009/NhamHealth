@@ -7,6 +7,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_nutrient_theme.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
+import '../../../models/planner/meal_plan.dart';
 import '../../../models/wellness/food_nutrition_model.dart';
 
 class AiFoodNutritionResultContent extends StatelessWidget {
@@ -49,6 +50,8 @@ class AiFoodNutritionResultContent extends StatelessWidget {
           const SizedBox(height: 14),
           _buildNutritionEstimateCard(context, _food),
           const SizedBox(height: 14),
+          _buildMealPlanLinkCard(context),
+          const SizedBox(height: 14),
           _buildSugarAnalysisCard(context, _food),
           const SizedBox(height: 14),
           _buildAiRecommendationCard(context, _food),
@@ -58,6 +61,73 @@ class AiFoodNutritionResultContent extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildMealPlanLinkCard(BuildContext context) => Obx(() {
+    final selectedSlot = controller.selectedMealPlanSlot.value;
+    final plannedMeal = controller.selectedPlannedMeal;
+    return Material(
+      color: context.appElevatedSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: context.appBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: controller.linkToMealPlan.value,
+              onChanged: (value) => controller.linkToMealPlan.value = value,
+              title: Text(
+                'wellness.link_scan_to_meal_plan'.tr,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: context.appText,
+                ),
+              ),
+              subtitle: Text(
+                'wellness.link_scan_to_meal_plan_help'.tr,
+                style: TextStyle(color: context.appMutedText, fontSize: 12),
+              ),
+            ),
+            if (controller.linkToMealPlan.value) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: MealPlanSlot.values
+                    .map((slot) {
+                      return ChoiceChip(
+                        selected: selectedSlot == slot,
+                        label: Text(slot.labelKey.tr),
+                        avatar: Icon(slot.icon, size: 17),
+                        onSelected:
+                            (_) => controller.selectedMealPlanSlot.value = slot,
+                      );
+                    })
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                plannedMeal == null
+                    ? 'wellness.meal_plan_slot_empty'.tr
+                    : 'wellness.meal_plan_match'.trParams({
+                      'name': plannedMeal.name,
+                    }),
+                style: TextStyle(
+                  color: plannedMeal == null ? warn : greenDark,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  });
 
   // ---- 1. Hero Food Card ----------------------------------------------------
   Widget _buildHeroCard(BuildContext context, FoodNutritionModel food) {

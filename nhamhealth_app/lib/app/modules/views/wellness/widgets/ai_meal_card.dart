@@ -1,100 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/wellness/wellness_controller.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../controllers/wellness/wellness_controller.dart';
 
+/// Water shortcut shown on the Daily Wellness dashboard.
 class AiMealCard extends GetView<WellnessController> {
   const AiMealCard({super.key});
 
+  static const double _waterImageWidth = 104;
+  static const double _waterImageHeight = 112;
+
   @override
   Widget build(BuildContext context) {
-    final isDark = context.appIsDark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
       decoration: BoxDecoration(
-        color: isDark ? context.appSurfaceLow : Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: isDark ? Border.all(color: context.appBorder) : null,
-        boxShadow:
-            isDark
-                ? context.appCardShadow
-                : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 18,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.appCardShadow,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 108,
-            height: 116,
+            key: const ValueKey('daily-wellness-water-image'),
+            width: _waterImageWidth,
+            height: _waterImageHeight,
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: Image.asset(
-                'assets/images/wellness/ai_search.png',
+                'assets/images/wellness/AI-water.png',
+                width: _waterImageWidth,
+                height: _waterImageHeight,
                 fit: BoxFit.contain,
-                alignment: Alignment.center,
-                semanticLabel: 'wellness.ai_food_search_assistant'.tr,
               ),
             ),
           ),
-
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'wellness.log_food_with_ai'.tr,
+                  'wellness.log_water'.tr,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? context.appText : const Color(0xFF555555),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: context.appText,
                   ),
                 ),
-
-                const SizedBox(height: 7),
-
+                const SizedBox(height: 5),
                 Text(
-                  'wellness.tell_ai_what_you_ate_and_choose_the_amount_for_a_better_estimate'
-                      .tr,
+                  'wellness.log_water_description'.tr,
                   style: TextStyle(
+                    color: context.appMutedText,
                     fontSize: 11,
-                    height: 1.4,
-                    color: isDark ? context.appMutedText : Colors.black54,
+                    height: 1.35,
                   ),
                 ),
-
-                const SizedBox(height: 12),
-
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  height: 38,
-                  child: ElevatedButton.icon(
-                    // CLICK -> AI PAGE
-                    onPressed: controller.openMealAutoFill,
-
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 17),
-
+                  height: 36,
+                  child: FilledButton.icon(
+                    onPressed: () => controller.openNutrientDetails('Water'),
+                    icon: const Icon(Icons.water_drop_rounded, size: 16),
                     label: Text(
-                      'wellness.open_ai_meal_auto_fill'.tr,
+                      'wellness.open_water_tracker'.tr,
                       style: const TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: context.appColorScheme.primary,
-                      foregroundColor: context.appColorScheme.onPrimary,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF25A9E8),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),

@@ -23,6 +23,7 @@ import com.nhamhealth.nhamhealth_api.repository.meal.MealPlanRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.PlannerMealRepository;
 import com.nhamhealth.nhamhealth_api.repository.meal.WeeklyMealRecommendationRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
+import com.nhamhealth.nhamhealth_api.service.wellness.DailyNutritionService;
 
 @Service
 public class MealPlannerService {
@@ -33,14 +34,17 @@ public class MealPlannerService {
     private final PlannerMealRepository plannerMeals;
     private final WeeklyMealRecommendationRepository recommendations;
     private final UserRepository users;
+    private final DailyNutritionService dailyNutrition;
 
     public MealPlannerService(MealPlanRepository plans, PlannerMealRepository plannerMeals,
             WeeklyMealRecommendationRepository recommendations,
-            UserRepository users) {
+            UserRepository users,
+            DailyNutritionService dailyNutrition) {
         this.plans = plans;
         this.plannerMeals = plannerMeals;
         this.recommendations = recommendations;
         this.users = users;
+        this.dailyNutrition = dailyNutrition;
     }
 
     @Transactional(readOnly = true)
@@ -81,12 +85,15 @@ public class MealPlannerService {
                     value.setMealType(type);
                     return value;
                 });
+        boolean wasEaten = "EATEN".equals(plan.getStatus());
         plan.setPlannerMeal(meal);
         plan.setServings(request.servings());
         plan.setStatus("PLANNED");
         plan.setCompletedAt(null);
         plan.setActualServings(null);
-        return response(plans.save(plan), lang);
+        MealPlan saved = plans.save(plan);
+        if (wasEaten) dailyNutrition.removeMealPlan(userId, saved.getMealPlanId());
+        return response(saved, lang);
     }
 
     @Transactional
@@ -105,7 +112,6 @@ public class MealPlannerService {
     @Transactional
     public MealPlanResponse update(Integer userId, Integer id, MealPlanUpdateRequest request, String lang) {
         MealPlan plan = owned(id, userId);
-        LocalDate targetDate = request.planDate() == null ? plan.getPlanDate() : request.planDate();
         if (request.plannerMealId() != null) {
             PlannerMeal replacement = activePlannerMeal(request.plannerMealId());
             requireGoalCompatible(replacement, request.weightGoal());
@@ -135,12 +141,15 @@ public class MealPlannerService {
                     userId, request.planDate(), plan.getMealType())
                     .filter(existing -> !existing.getMealPlanId().equals(id));
             if (conflict.isPresent()) {
+                dailyNutrition.removeMealPlan(userId, conflict.get().getMealPlanId());
                 plans.delete(conflict.get());
                 plans.flush();
             }
             plan.setPlanDate(request.planDate());
         }
-        return response(plans.save(plan), lang);
+        MealPlan saved = plans.save(plan);
+        syncNutrition(userId, saved);
+        return response(saved, lang);
     }
 
     private void requireGoalCompatible(PlannerMeal meal, String requestedGoal) {
@@ -159,7 +168,9 @@ public class MealPlannerService {
 
     @Transactional
     public void remove(Integer userId, Integer id) {
-        plans.delete(owned(id, userId));
+        MealPlan plan = owned(id, userId);
+        dailyNutrition.removeMealPlan(userId, plan.getMealPlanId());
+        plans.delete(plan);
     }
 
     @Transactional
@@ -175,6 +186,7 @@ public class MealPlannerService {
             plan.setStatus(normalizedStatus);
             plan.setCompletedAt(completedAt);
             plan.setActualServings("EATEN".equals(normalizedStatus) ? plan.getServings() : null);
+            syncNutrition(userId, plan);
         }
         return plans.saveAll(ownedPlans).stream().map(plan -> response(plan, lang)).toList();
     }
@@ -184,7 +196,22 @@ public class MealPlannerService {
         // Resolve every ID before deleting any row. A missing or foreign ID
         // therefore rolls back the whole request instead of partially clearing.
         List<MealPlan> ownedPlans = distinctOwned(ids, userId);
+        ownedPlans.forEach(plan -> dailyNutrition.removeMealPlan(userId, plan.getMealPlanId()));
         plans.deleteAll(ownedPlans);
+    }
+
+    private void syncNutrition(Integer userId, MealPlan plan) {
+        if (!"EATEN".equals(plan.getStatus())) {
+            dailyNutrition.removeMealPlan(userId, plan.getMealPlanId());
+            return;
+        }
+        PlannerMeal meal = plan.getPlannerMeal();
+        var servings = plan.getActualServings() == null ? plan.getServings() : plan.getActualServings();
+        dailyNutrition.upsertMealPlan(userId, plan.getMealPlanId(), plan.getPlanDate(),
+                meal.getCalories().multiply(servings),
+                meal.getProteinGrams().multiply(servings),
+                meal.getCarbsGrams().multiply(servings),
+                meal.getFatGrams().multiply(servings));
     }
 
     private List<MealPlan> distinctOwned(List<Integer> ids, Integer userId) {

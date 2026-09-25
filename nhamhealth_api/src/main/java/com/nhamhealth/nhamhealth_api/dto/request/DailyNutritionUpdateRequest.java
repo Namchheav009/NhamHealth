@@ -14,5 +14,7 @@ public record DailyNutritionUpdateRequest(
         @DecimalMin("0.0") BigDecimal water,
         @DecimalMin("0.0") BigDecimal fiber,
         @DecimalMin("0.0") BigDecimal sugar,
-        String aiRecommendation) {
+        String aiRecommendation,
+        String sourceType,
+        String sourceId) {
 }

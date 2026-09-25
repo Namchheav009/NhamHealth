@@ -37,6 +37,19 @@ void main() {
       WaterController.maximumGlassesPerEntry,
     );
   });
+
+  test('supports a custom milliliter amount', () async {
+    final repository = _WaterProfileRepository();
+    final controller = WaterController(repository: repository);
+
+    controller.selectMilliliters(350);
+    expect(controller.selectedMilliliters, 350);
+    expect(controller.selectedWaterAmount, 1.4);
+
+    await controller.addSelectedWater();
+    expect(repository.addedWater, 1.4);
+    expect(controller.selectedMilliliters, 250);
+  });
 }
 
 class _WaterProfileRepository extends ProfileRepository {

@@ -68,6 +68,48 @@ void main() {
       expect(controller.isLoading.value, isFalse);
     },
   );
+
+  test('meal mark and unmark update today nutrition immediately', () {
+    final controller = WellnessController();
+    final today = DateTime.now();
+    controller.showSavedNutrition(savedDashboard, date: today);
+
+    controller.applyMealNutritionDelta(
+      date: today,
+      calories: 360,
+      protein: 12,
+      carbs: 54,
+      fat: 8,
+    );
+    expect(
+      controller.nutrients
+          .firstWhere((item) => item.name == 'Calories')
+          .current,
+      '1200',
+    );
+    expect(
+      controller.nutrients.firstWhere((item) => item.name == 'Protein').current,
+      '42',
+    );
+
+    controller.applyMealNutritionDelta(
+      date: today,
+      calories: -360,
+      protein: -12,
+      carbs: -54,
+      fat: -8,
+    );
+    expect(
+      controller.nutrients
+          .firstWhere((item) => item.name == 'Calories')
+          .current,
+      '840',
+    );
+    expect(
+      controller.nutrients.firstWhere((item) => item.name == 'Protein').current,
+      '30',
+    );
+  });
 }
 
 class DelayedProfileRepository extends ProfileRepository {

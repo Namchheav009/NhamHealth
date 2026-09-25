@@ -18,7 +18,9 @@ import '../../services/wellness/food_ai_service.dart';
 import '../../services/wellness/food_decomposition_service.dart';
 import '../../services/wellness/food_recommendation_service.dart';
 import '../../services/wellness/ingredient_visual_service.dart';
+import '../../models/planner/meal_plan.dart';
 import '../home/home_controller.dart';
+import '../planner/meal_planner_controller.dart';
 import 'calories_controller.dart';
 import 'wellness_controller.dart';
 
@@ -69,8 +71,36 @@ class AiFoodController extends GetxController {
   final drinkConsumedFraction = 1.0.obs;
   final drinkSugarPercentage = 100.obs;
   final plateItems = <PlateItemState>[].obs;
+  final linkToMealPlan = false.obs;
+  late final selectedMealPlanSlot = Rxn<MealPlanSlot>(suggestedSlotNow());
   int _scanGeneration = 0;
+  String? _scanSourceId;
   FoodNutritionModel? _baseNutrition;
+
+  MealPlanSlot suggestedSlotNow() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) return MealPlanSlot.breakfast;
+    if (hour >= 11 && hour < 15) return MealPlanSlot.lunch;
+    if (hour >= 15 && hour < 17) return MealPlanSlot.snack;
+    if (hour >= 17 && hour < 22) return MealPlanSlot.dinner;
+    return MealPlanSlot.snack;
+  }
+
+  PlannedMeal? get selectedPlannedMeal {
+    final slot = selectedMealPlanSlot.value;
+    if (slot == null || !Get.isRegistered<MealPlannerController>()) return null;
+    final meal = Get.find<MealPlannerController>().mealFor(slot);
+    final planDate = meal?.planDate;
+    final today = DateTime.now();
+    if (meal?.planId == null ||
+        planDate == null ||
+        planDate.year != today.year ||
+        planDate.month != today.month ||
+        planDate.day != today.day) {
+      return null;
+    }
+    return meal;
+  }
 
   double get selectedAmount =>
       inputKind.value == AiFoodInputKind.drink
@@ -425,7 +455,29 @@ class AiFoodController extends GetxController {
     try {
       final waterGlasses = food.plainWaterVolumeMl / 250;
       final today = DateTime.now();
-      final savedDashboard = await profileRepository.addDailyNutrition(
+      final linkedMeal = linkToMealPlan.value ? selectedPlannedMeal : null;
+      if (linkToMealPlan.value && linkedMeal == null) {
+        await AppAlert.actionError(
+          title: 'wellness.meal_plan_link_unavailable'.tr,
+          message: 'wellness.meal_plan_slot_empty'.tr,
+        );
+        return;
+      }
+      if (linkedMeal != null) {
+        final planner = Get.find<MealPlannerController>();
+        await planner.changeStatus(linkedMeal, MealPlanStatus.eaten);
+        if (planner.mealFor(linkedMeal.slot)?.status != MealPlanStatus.eaten) {
+          throw StateError('Meal plan status was not saved');
+        }
+      }
+      _scanSourceId ??=
+          food.analysisId != null
+              ? 'analysis-${food.analysisId}'
+              : 'scan-${DateTime.now().microsecondsSinceEpoch}';
+      final savedDashboard = await profileRepository.upsertDailyNutritionSource(
+        sourceType: linkedMeal == null ? 'AI_SCAN' : 'MEAL_PLAN',
+        sourceId:
+            linkedMeal == null ? _scanSourceId! : linkedMeal.planId!.toString(),
         date: today,
         calories: food.calories,
         protein: food.protein,
@@ -693,6 +745,9 @@ class AiFoodController extends GetxController {
     errorMessageParams.clear();
     wasAdded.value = false;
     isUserConfirmed.value = false;
+    linkToMealPlan.value = false;
+    selectedMealPlanSlot.value = suggestedSlotNow();
+    _scanSourceId = null;
   }
 
   void updateDetectedFood({
@@ -860,7 +915,9 @@ class AiFoodController extends GetxController {
         final imageUrl = await nutritionRepository.lookupIngredientImage(
           item.name,
         );
-        if (imageUrl != null && imageUrl.isNotEmpty && plateItems.contains(item)) {
+        if (imageUrl != null &&
+            imageUrl.isNotEmpty &&
+            plateItems.contains(item)) {
           item.imageUrl = imageUrl;
         }
       }),

@@ -32,11 +32,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('water-progress-hero')), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('water-log-hero-image'))),
+      const Size.square(132),
+    );
+    expect(
+      find.image(const AssetImage('assets/images/homepage/Water.png')),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('water-quick-1')), findsOneWidget);
     expect(find.byKey(const ValueKey('water-quick-4')), findsOneWidget);
+    expect(find.byKey(const ValueKey('water-custom-amount')), findsOneWidget);
     expect(find.byKey(const ValueKey('add-water-button')), findsOneWidget);
     expect(find.text('Stay hydrated, stay healthy'), findsNothing);
-    expect(find.text("Today's total"), findsOneWidget);
+    expect(find.text("Today's total"), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('water page renders in dark mode without light-only surfaces', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 700);
+    addTearDown(tester.view.reset);
+
+    Get.put<WaterController>(
+      WaterController(repository: _WaterViewRepository()),
+    );
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: ThemeMode.dark,
+        home: const WaterView(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('water-progress-hero')), findsOneWidget);
+    expect(find.byKey(const ValueKey('add-water-button')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
