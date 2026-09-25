@@ -346,4 +346,10 @@ const Map<String, String> profileEn = {
   'profile.log_out_description': 'Log out from your account',
   'profile.title': 'Profile',
   'profile.phone_code_prompt': 'Enter the 6-digit code sent to your phone.',
+  'profile.gender_male': 'Male',
+  'profile.gender_female': 'Female',
+  'profile.gender_other': 'Prefer not to say',
+  'profile.check_health_info': 'Check Health Information',
+  'profile.invalid_height': 'Please enter a valid height between 50 and 300 cm.',
+  'profile.invalid_weight': 'Please enter a valid weight between 15 and 500 kg.',
 };

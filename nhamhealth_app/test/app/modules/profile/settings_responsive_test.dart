@@ -6,6 +6,9 @@ import 'package:nhamhealth_flutter/app/modules/views/profile/setting_view.dart';
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nhamhealth_flutter/core/services/auth_service.dart';
+
 class _TestSettingsController extends SettingsController {
   @override
   void onInit() {
@@ -19,6 +22,8 @@ void main() {
 
   setUp(() {
     Get.testMode = true;
+    FlutterSecureStorage.setMockInitialValues({});
+    Get.put<AuthService>(AuthService());
   });
 
   tearDown(() {

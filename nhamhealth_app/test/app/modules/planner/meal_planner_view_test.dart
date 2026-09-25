@@ -97,7 +97,9 @@ void main() {
     );
   });
 
-  testWidgets('Meal Planner shows a skeleton during Auto Fill', (tester) async {
+  testWidgets('Meal Planner shows only slot skeletons during Auto Fill', (
+    tester,
+  ) async {
     final planner = Get.put(MealPlannerController());
     planner.hasLoadedOnce.value = true;
     planner.isLoading.value = false;
@@ -114,10 +116,7 @@ void main() {
     planner.isAutoFilling.value = true;
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(
-      find.byKey(const ValueKey('planner-autofill-skeleton')),
-      findsOneWidget,
-    );
+    expect(find.text('Creating your meal plan'), findsNothing);
     expect(find.byKey(const ValueKey('planner-week-card')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('planner-daily-overview')),
@@ -131,23 +130,19 @@ void main() {
       find.byKey(const ValueKey('planner-slots-skeleton')),
       findsOneWidget,
     );
-    expect(find.text('Creating your meal plan'), findsOneWidget);
     expect(
       find.text('Checking your goal and food preferences…'),
-      findsOneWidget,
+      findsNothing,
     );
 
     planner.autoFillStatusKey.value = 'planner.autofill_loading_refreshing';
     await tester.pump();
-    expect(find.text('Updating your saved meals…'), findsOneWidget);
+    expect(find.text('Updating your saved meals…'), findsNothing);
 
     planner.isAutoFilling.value = false;
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(
-      find.byKey(const ValueKey('planner-autofill-skeleton')),
-      findsNothing,
-    );
+    expect(find.byKey(const ValueKey('planner-slots-skeleton')), findsNothing);
   });
 
   testWidgets('Meal Planner keeps loaded content visible while refreshing', (

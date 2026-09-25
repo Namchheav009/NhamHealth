@@ -7,6 +7,8 @@ import 'package:nhamhealth_flutter/app/modules/views/profile/appearance_view.dar
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
 import 'package:nhamhealth_flutter/core/services/app_theme_service.dart';
 
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -23,6 +25,9 @@ void main() {
       GetMaterialApp(
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
         home: const AppearanceView(),
       ),
     );
@@ -32,7 +37,9 @@ void main() {
       Brightness.light,
     );
 
-    await tester.tap(find.text('Dark Mode'));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('theme-option-profile.dark_mode')),
+    );
     await tester.pumpAndSettle();
 
     expect(
@@ -41,7 +48,9 @@ void main() {
     );
     expect(themeService.themeMode, ThemeMode.dark);
 
-    await tester.tap(find.text('theme_system'));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('theme-option-profile.theme_system')),
+    );
     await tester.pumpAndSettle();
 
     expect(themeService.themeMode, ThemeMode.system);

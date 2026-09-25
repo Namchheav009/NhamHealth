@@ -59,7 +59,7 @@ class ProfileController extends GetxController {
 
   final name = 'My Profile'.obs;
   final email = ''.obs;
-  final membership = 'WellBite Member'.obs;
+  final membership = 'NhamHealth Member'.obs;
   final profileImagePath = ''.obs;
   final insight = "Start logging meals to build today's progress.".obs;
 
@@ -402,7 +402,7 @@ class ProfileController extends GetxController {
     membership.value =
         dashboard.membership?.trim().isNotEmpty == true
             ? dashboard.membership!.trim()
-            : 'WellBite Member';
+            : 'NhamHealth Member';
     if (dashboard.age != null) age.value = dashboard.age!;
     if (dashboard.heightCm != null) height.value = dashboard.heightCm!;
     if (dashboard.weightKg != null) weight.value = dashboard.weightKg!;
@@ -536,11 +536,14 @@ class ProfileController extends GetxController {
     )) {
       return;
     }
+    if (Get.isRegistered<EditProfileController>()) {
+      Get.delete<EditProfileController>();
+    }
     Get.to(
       () => const EditProfileView(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<EditProfileController>(
-          () => EditProfileController(profileController: this),
+        Get.put<EditProfileController>(
+          EditProfileController(profileController: this),
         );
       }),
     );

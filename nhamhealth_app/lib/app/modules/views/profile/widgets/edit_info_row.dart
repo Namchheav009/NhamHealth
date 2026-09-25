@@ -112,7 +112,8 @@ class InlineEditInfoRow extends StatelessWidget {
     required this.iconColor,
     required this.iconBackground,
     required this.label,
-    required this.initialValue,
+    this.initialValue,
+    this.controller,
     required this.onChanged,
     this.hintText,
     this.suffixText,
@@ -122,13 +123,17 @@ class InlineEditInfoRow extends StatelessWidget {
     this.trailing,
     this.onFieldSubmitted,
     this.showDivider = true,
-  });
+  }) : assert(
+         initialValue == null || controller == null,
+         'controller and initialValue cannot both be provided.',
+       );
 
   final IconData icon;
   final Color iconColor;
   final Color iconBackground;
   final String label;
-  final String initialValue;
+  final String? initialValue;
+  final TextEditingController? controller;
   final ValueChanged<String> onChanged;
   final String? hintText;
   final String? suffixText;
@@ -172,7 +177,8 @@ class InlineEditInfoRow extends StatelessWidget {
               ),
               Expanded(
                 child: TextFormField(
-                  initialValue: initialValue,
+                  controller: controller,
+                  initialValue: controller == null ? initialValue : null,
                   onChanged: onChanged,
                   keyboardType: keyboardType,
                   inputFormatters: inputFormatters,
@@ -186,7 +192,15 @@ class InlineEditInfoRow extends StatelessWidget {
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: hintText,
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: context.appMutedText.withValues(alpha: 0.7),
+                    ),
                     suffixText: suffixText,
+                    suffixStyle: TextStyle(
+                      fontSize: 12,
+                      color: context.appMutedText,
+                    ),
                     counterText: '',
                     contentPadding: const EdgeInsets.symmetric(vertical: 9),
                     border: InputBorder.none,

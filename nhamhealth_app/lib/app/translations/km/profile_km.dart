@@ -346,4 +346,10 @@ const Map<String, String> profileKm = {
   'profile.title': 'ប្រវត្តិរូប',
   'profile.phone_code_prompt':
       'សូមបញ្ចូលលេខកូដ ៦ ខ្ទង់ដែលបានផ្ញើទៅទូរស័ព្ទរបស់អ្នក។',
+  'profile.gender_male': 'ប្រុស',
+  'profile.gender_female': 'ស្រី',
+  'profile.gender_other': 'មិនបញ្ជាក់',
+  'profile.check_health_info': 'ពិនិត្យព័ត៌មានសុខភាព',
+  'profile.invalid_height': 'សូមបញ្ចូលកម្ពស់ចន្លោះពី 50 ដល់ 300 សង់ទីម៉ែត្រ។',
+  'profile.invalid_weight': 'សូមបញ្ចូលទម្ងន់ចន្លោះពី 15 ដល់ 500 គីឡូក្រាម។',
 };

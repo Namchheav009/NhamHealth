@@ -17,8 +17,8 @@ import 'package:nhamhealth_flutter/app/modules/services/wellness/food_recommenda
 import 'package:nhamhealth_flutter/app/modules/views/auth/forgot_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/change_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/profile_view.dart';
-import 'package:nhamhealth_flutter/app/modules/views/profile/security_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/wellness/ai_food_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/wellness/widgets/ai_food_scan_content.dart';
 import 'package:nhamhealth_flutter/app/modules/views/wellness/wellness_view.dart';
 import 'package:nhamhealth_flutter/core/services/app_security_service.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';

@@ -29,7 +29,7 @@ class EditProfileController extends GetxController {
 
   // Top profile card
   final profileName = 'My Profile'.obs;
-  final membership = 'WellBite Member'.obs;
+  final membership = 'NhamHealth Member'.obs;
   final profileEmail = ''.obs;
   final profileImagePath = ''.obs;
 
@@ -52,26 +52,61 @@ class EditProfileController extends GetxController {
   final height = 0.0.obs;
   final weight = 0.0.obs;
 
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final ageController = TextEditingController();
+  final heightController = TextEditingController();
+  final weightController = TextEditingController();
+
+  static const _khmerMonths = [
+    'មករា',
+    'កុម្ភៈ',
+    'មីនា',
+    'មេសា',
+    'ឧសភា',
+    'មិថុនា',
+    'កក្កដា',
+    'សីហា',
+    'កញ្ញា',
+    'តុលា',
+    'វិច្ឆិកា',
+    'ធ្នូ',
+  ];
+
+  static const _englishMonths = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
   String get formattedDateOfBirth {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
     final date = dateOfBirth.value;
-    if (date == null) return 'Not set';
+    if (date == null) return 'profile.not_set'.tr;
 
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    final isKhmer = Get.locale?.languageCode == 'km';
+    if (isKhmer) {
+      return '${date.day} ${_khmerMonths[date.month - 1]} ${date.year}';
+    }
+    return '${_englishMonths[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  String get genderDisplay {
+    final g = gender.value.trim();
+    if (g.isEmpty) return 'profile.not_set'.tr;
+    if (g == 'Male') return 'profile.gender_male'.tr;
+    if (g == 'Female') return 'profile.gender_female'.tr;
+    if (g == 'Prefer not to say') return 'profile.gender_other'.tr;
+    return g.trOrSelf;
   }
 
   int _calculateAge(DateTime birth) {
@@ -83,7 +118,7 @@ class EditProfileController extends GetxController {
       currentAge--;
     }
 
-    return currentAge;
+    return currentAge < 0 ? 0 : currentAge;
   }
 
   double get bmi {
@@ -107,7 +142,9 @@ class EditProfileController extends GetxController {
     fullName.value = profileController.dashboard.value?.fullName ?? '';
     email.value = profileController.email.value;
     isEmailVerified.value = email.value.trim().isNotEmpty;
-    membership.value = profileController.membership.value;
+    membership.value = profileController.membership.value.isEmpty
+        ? 'NhamHealth Member'
+        : profileController.membership.value;
     profileImagePath.value = profileController.profileImagePath.value;
     age.value = profileController.age.value;
     height.value = profileController.height.value.toDouble();
@@ -121,11 +158,35 @@ class EditProfileController extends GetxController {
           dashboard.gender?.trim().isNotEmpty == true
               ? dashboard.gender!.trim()
               : '';
+      if (dateOfBirth.value != null && age.value <= 0) {
+        age.value = _calculateAge(dateOfBirth.value!);
+      }
     }
+
+    nameController.text = fullName.value;
+    emailController.text = email.value;
+    phoneController.text = phone.value;
+    ageController.text = age.value > 0 ? age.value.toString() : '';
+    heightController.text =
+        height.value > 0 ? height.value.toStringAsFixed(0) : '';
+    weightController.text =
+        weight.value > 0 ? weight.value.toStringAsFixed(0) : '';
+
     _savedEmail = email.value.trim().toLowerCase();
     _savedPhone = phone.value.trim();
     _savedEmailVerified = isEmailVerified.value;
     _savedPhoneVerified = isPhoneVerified.value;
+  }
+
+  @override
+  void onClose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    ageController.dispose();
+    heightController.dispose();
+    weightController.dispose();
+    super.onClose();
   }
 
   void goBack() {
@@ -138,13 +199,47 @@ class EditProfileController extends GetxController {
 
   Future<void> saveProfile() async {
     if (isBusy) return;
-    if (fullName.value.trim().length < 2) {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    fullName.value = nameController.text.trim();
+    if (fullName.value.length < 2) {
       await AppAlert.actionError(
         title: 'profile.add_your_name',
         message: 'profile.enter_your_full_name_before_saving_your_profile',
       );
       return;
     }
+
+    final heightText = heightController.text.trim();
+    if (heightText.isNotEmpty) {
+      final h = double.tryParse(heightText);
+      if (h == null || h < 50 || h > 300) {
+        await AppAlert.actionError(
+          title: 'profile.check_health_info',
+          message: 'profile.invalid_height',
+        );
+        return;
+      }
+      height.value = h;
+    } else {
+      height.value = 0;
+    }
+
+    final weightText = weightController.text.trim();
+    if (weightText.isNotEmpty) {
+      final w = double.tryParse(weightText);
+      if (w == null || w < 15 || w > 500) {
+        await AppAlert.actionError(
+          title: 'profile.check_health_info',
+          message: 'profile.invalid_weight',
+        );
+        return;
+      }
+      weight.value = w;
+    } else {
+      weight.value = 0;
+    }
+
     final emailAddress = email.value.trim();
     final phoneNumber = phone.value.trim();
     if (emailAddress.isEmpty && phoneNumber.isEmpty) {
@@ -961,17 +1056,23 @@ class EditProfileController extends GetxController {
   }
 
   Future<void> selectDateOfBirth(BuildContext context) async {
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
     final selectedDate = await showDatePicker(
       context: context,
       initialDate:
-          dateOfBirth.value ?? DateTime(DateTime.now().year - 18, 1, 1),
+          (dateOfBirth.value != null && dateOfBirth.value!.isBefore(now))
+              ? dateOfBirth.value!
+              : DateTime(now.year - 18, 1, 1),
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: yesterday,
     );
 
     if (selectedDate != null) {
       dateOfBirth.value = selectedDate;
-      age.value = _calculateAge(selectedDate);
+      final calculatedAge = _calculateAge(selectedDate);
+      age.value = calculatedAge;
+      ageController.text = calculatedAge > 0 ? calculatedAge.toString() : '';
     }
   }
 
@@ -1129,7 +1230,7 @@ class _PhoneOtpCodeField extends StatelessWidget {
                     height: 52,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FBF9),
+                      color: context.appElevatedSurface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color:
@@ -1137,13 +1238,14 @@ class _PhoneOtpCodeField extends StatelessWidget {
                                 ? Colors.red
                                 : isActive
                                 ? const Color(0xFF00A651)
-                                : const Color(0xFFD7E3DB),
+                                : context.appBorder,
                         width: hasError || isActive ? 1.5 : 1,
                       ),
                     ),
                     child: Text(
                       digit,
-                      style: const TextStyle(
+                      style: TextStyle(
+                        color: context.appText,
                         fontSize: 21,
                         fontWeight: FontWeight.w800,
                       ),
