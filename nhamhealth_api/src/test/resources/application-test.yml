@@ -10,6 +10,8 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+  flyway:
+    enabled: false
   cache:
     type: caffeine
     cache-names: adminDashboard,mealCategories,activeMealCategories,tags,mealTagNames,servingSizes,nutrients,foodCorrectionMatches,foodSearch,meals,mealDetail,moods

@@ -26,6 +26,7 @@ import com.nhamhealth.nhamhealth_api.service.auth.GoogleTokenVerifier;
 import com.nhamhealth.nhamhealth_api.service.auth.LoginAttemptService;
 import org.springframework.mail.javamail.JavaMailSender;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
 class AuthEnvironmentAndStatusTests {

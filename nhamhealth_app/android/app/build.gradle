@@ -116,18 +116,14 @@ android {
     }
 
     buildTypes {
-        debug {
-            signingConfig = customDebugKeystoreAvailable
-                    ? signingConfigs.nhamhealthDebug
-                    : signingConfigs.debug
-        }
+        buildTypes {
+            debug {
+                signingConfig = signingConfigs.nhamhealthDebug
+            }
 
-        release {
-            signingConfig = releaseKeystoreAvailable
-                    ? signingConfigs.release
-                    : (customDebugKeystoreAvailable
-                        ? signingConfigs.nhamhealthDebug
-                        : signingConfigs.debug)
+            release {
+                signingConfig = signingConfigs.nhamhealthDebug
+            }
         }
     }
 }

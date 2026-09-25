@@ -17,6 +17,7 @@ import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.community.ReportReasonRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @SpringBootTest
 @TestPropertySource(properties = {
         "app.seed.admin-email=seed-admin@example.com",

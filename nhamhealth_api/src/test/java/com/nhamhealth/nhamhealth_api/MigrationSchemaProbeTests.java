@@ -11,7 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("supabase")
 @SpringBootTest(properties = {
-                "spring.flyway.enabled=true",
+                "spring.flyway.enabled=false",
                 "spring.jpa.hibernate.ddl-auto=none",
                 "logging.level.root=WARN",
                 "app.seed.admin-enabled=false"

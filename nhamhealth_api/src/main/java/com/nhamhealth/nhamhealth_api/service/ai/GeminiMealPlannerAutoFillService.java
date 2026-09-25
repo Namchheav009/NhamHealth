@@ -623,7 +623,9 @@ public class GeminiMealPlannerAutoFillService {
                         : 0.0;
         boolean khmer = "km".equalsIgnoreCase(lang);
         String summary;
-        if (isWeightLoss) {
+        if (aiSummary != null && !aiSummary.isBlank()) {
+            summary = aiSummary;
+        } else if (isWeightLoss) {
             summary = khmer
                     ? String.format(Locale.ROOT,
                             "ផែនការនេះមានប្រហែល %.0f kcal/ថ្ងៃ (ឱនភាព %.0f kcal/ថ្ងៃ) និងប៉ាន់ស្មានស្រក %.2f kg/សប្តាហ៍។",

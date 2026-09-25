@@ -33,6 +33,7 @@ import com.nhamhealth.nhamhealth_api.entity.WellnessProfile;
 import com.nhamhealth.nhamhealth_api.repository.wellness.WellnessProfileRepository;
 import java.math.BigDecimal;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserAdminControllerTests {

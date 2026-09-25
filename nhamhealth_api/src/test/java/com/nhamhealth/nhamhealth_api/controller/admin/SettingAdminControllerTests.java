@@ -23,6 +23,7 @@ import com.nhamhealth.nhamhealth_api.repository.auth.RoleRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserRepository;
 import com.nhamhealth.nhamhealth_api.repository.user.UserSettingRepository;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
 class SettingAdminControllerTests {

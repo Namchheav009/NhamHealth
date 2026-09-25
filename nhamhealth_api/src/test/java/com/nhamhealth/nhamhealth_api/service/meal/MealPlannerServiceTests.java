@@ -138,7 +138,8 @@ class MealPlannerServiceTests {
         when(plannerMeals.findById(20)).thenReturn(Optional.of(sampleMeal(20)));
         when(plans.save(any(MealPlan.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        MealPlanUpdateRequest request = new MealPlanUpdateRequest(null, 20, new BigDecimal("2"), "PLANNED", null);
+        MealPlanUpdateRequest request = new MealPlanUpdateRequest(
+                null, 20, new BigDecimal("2"), "PLANNED", null, "MAINTAIN_HEALTH");
         var response = service.update(1, 50, request, "en");
 
         assertNotNull(response);

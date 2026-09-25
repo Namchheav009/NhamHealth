@@ -17,6 +17,7 @@ import com.nhamhealth.nhamhealth_api.entity.Recipe;
 import com.nhamhealth.nhamhealth_api.entity.Role;
 import com.nhamhealth.nhamhealth_api.entity.User;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @DataJpaTest
 class PostLikeRepositoryPersistenceTests {
     @MockitoBean private CacheManager cacheManager;
