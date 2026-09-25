@@ -665,7 +665,10 @@ public class CommunityService {
         return new CommunityCommentResponse(comment.getCommentId(),
                 communityDisplayName(comment.getUser(), profile),
                 profile == null ? "" : value(profile.getProfileImageUrl(), ""),
-                comment.getCommentText(), comment.getCreatedAt(),
+                comment.getCommentText(),
+                comment.getCreatedAt() == null
+                        ? null
+                        : comment.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime(),
                 comment.getParentComment() == null ? null : comment.getParentComment().getCommentId(),
                 commentLikes.countByPostCommentCommentId(comment.getCommentId()),
                 viewerId != null

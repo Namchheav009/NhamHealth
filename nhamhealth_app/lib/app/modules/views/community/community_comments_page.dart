@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/notification_realtime_event.dart';
 import '../../../../core/services/push_notification_service.dart';
+import '../../../../core/utils/api_date_time.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
@@ -1411,7 +1412,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   );
 
   String _commentAge(String value) {
-    final date = DateTime.tryParse(value)?.toLocal();
+    final date = parseApiDateTimeToLocal(value);
     if (date == null) return 'community.recently'.tr;
     final difference = DateTime.now().difference(date);
     if (difference.inMinutes < 1) return 'community.just_now'.tr;

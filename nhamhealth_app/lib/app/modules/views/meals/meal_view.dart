@@ -205,7 +205,7 @@ class MealView extends GetView<MealController> {
           ),
           const SizedBox(height: 10),
           _buildPopularMeals(meals),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
           MealSectionHeader(title: 'meals.ideas_for_you'),
           const SizedBox(height: 4),
           Row(
@@ -238,7 +238,7 @@ class MealView extends GetView<MealController> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 7),
           _buildIdeaMeals(ideaMeals),
         ],
       );
@@ -267,10 +267,10 @@ class MealView extends GetView<MealController> {
           );
         }
 
-        final cardWidth = (constraints.maxWidth - 16) / 2;
+        final cardWidth = (constraints.maxWidth - 12) / 2;
         return Wrap(
-          spacing: 16,
-          runSpacing: 16,
+          spacing: 12,
+          runSpacing: 12,
           children: [
             for (final meal in list)
               SizedBox(
@@ -294,9 +294,9 @@ class MealView extends GetView<MealController> {
         final isWide = constraints.maxWidth >= AppSpacing.tabletBreakpoint;
         final cardWidth =
             isWide
-                ? 230.0
-                : ((constraints.maxWidth - 12) / 2.08).clamp(150.0, 180.0);
-        final cardHeight = isWide ? 250.0 : 232.0;
+                ? 210.0
+                : ((constraints.maxWidth - 10) / 2.04).clamp(145.0, 174.0);
+        final cardHeight = isWide ? 190.0 : 174.0;
         final itemGap = isWide ? 14.0 : 12.0;
 
         return SizedBox(

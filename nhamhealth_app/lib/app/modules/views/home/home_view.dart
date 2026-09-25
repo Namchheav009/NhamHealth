@@ -226,7 +226,10 @@ class _RecommendedMealsSection extends GetView<HomeController> {
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
                     minimumSize: const Size(0, 36),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Row(
@@ -251,8 +254,14 @@ class _RecommendedMealsSection extends GetView<HomeController> {
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 600;
-                  final cardWidth = isWide ? 240.0 : 150.0;
-                  final cardHeight = isWide ? 236.0 : 184.0;
+                  final cardWidth =
+                      isWide
+                          ? 210.0
+                          : ((constraints.maxWidth - 10) / 2.04).clamp(
+                            145.0,
+                            174.0,
+                          );
+                  final cardHeight = isWide ? 190.0 : 174.0;
                   final itemGap = isWide ? 14.0 : 10.0;
                   return SizedBox(
                     height: cardHeight,

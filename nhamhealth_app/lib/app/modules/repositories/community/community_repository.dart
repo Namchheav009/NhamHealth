@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/utils/api_date_time.dart';
 import '../../models/community/community_person.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../models/community/community_comment.dart';
@@ -693,7 +694,7 @@ class CommunityRepository {
   String _absoluteUrl(String value) =>
       value.startsWith('/') ? '${ApiConfig.baseUrl}$value' : value;
   String _ageLabel(String value) {
-    final date = DateTime.tryParse(value)?.toLocal();
+    final date = parseApiDateTimeToLocal(value);
     if (date == null) return 'community.recently'.tr;
     final difference = DateTime.now().difference(date);
     if (difference.inMinutes < 1) return 'community.just_now'.tr;

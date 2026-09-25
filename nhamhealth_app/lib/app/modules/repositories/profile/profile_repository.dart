@@ -8,6 +8,7 @@ import 'package:image/image.dart' as image;
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/utils/api_date_time.dart';
 import '../../models/community/community_post.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 
@@ -468,7 +469,7 @@ class ProfileRepository {
   }
 
   String _ageLabel(String value) {
-    final date = DateTime.tryParse(value)?.toLocal();
+    final date = parseApiDateTimeToLocal(value);
     if (date == null) return 'community.recently'.tr;
     final difference = DateTime.now().difference(date);
     if (difference.inMinutes < 1) return 'community.just_now'.tr;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/api_date_time.dart';
 import '../../../translations/meal_localization_helpers.dart';
 
 enum NotificationKind { social, recommendation, wellness, system }
@@ -51,9 +52,7 @@ class NotificationItem {
       id: (json['id'] as num).toInt(),
       title: (json['title'] as String? ?? 'Notification').trim(),
       message: (json['message'] as String? ?? '').trim(),
-      time: _relativeTime(
-        DateTime.tryParse(json['createdAt'] as String? ?? ''),
-      ),
+      time: _relativeTime(parseApiDateTimeToLocal(json['createdAt'])),
       kind: switch (type) {
         'COMMUNITY' => NotificationKind.social,
         'HEALTH' || 'REMINDER' => NotificationKind.wellness,
@@ -66,9 +65,7 @@ class NotificationItem {
       actorAvatarUrl: (json['actorAvatarUrl'] as String? ?? '').trim(),
       referenceType: (json['referenceType'] as String?)?.trim().toUpperCase(),
       referenceId: (json['referenceId'] as num?)?.toInt(),
-      createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal() ??
-          DateTime.now(),
+      createdAt: parseApiDateTimeToLocal(json['createdAt']) ?? DateTime.now(),
     );
   }
 

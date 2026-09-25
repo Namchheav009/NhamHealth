@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/api_date_time.dart';
+
 class CommunityPost {
   CommunityPost({
     required this.id,
@@ -87,7 +89,7 @@ class CommunityPost {
         .whereType<int>()
         .toList(growable: false),
     ageLabel: (json['ageLabel'] as String? ?? 'Just now').trim(),
-    createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal(),
+    createdAt: parseApiDateTimeToLocal(json['createdAt']),
     likes: (json['likes'] as num?)?.toInt() ?? 0,
     comments: (json['comments'] as num?)?.toInt() ?? 0,
     shares: (json['shares'] as num?)?.toInt() ?? 0,
@@ -350,7 +352,7 @@ class CommunitySharedPost {
               ? const []
               : [imageUrl],
       ageLabel: (json['ageLabel'] as String? ?? 'Recently').trim(),
-      createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal(),
+      createdAt: parseApiDateTimeToLocal(json['createdAt']),
       shares: (json['shares'] as num?)?.toInt() ?? 0,
       isFollowingAuthor:
           json['isFollowingAuthor'] == true || json['following'] == true,

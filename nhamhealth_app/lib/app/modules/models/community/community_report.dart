@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import '../../../../core/utils/api_date_time.dart';
+
 enum CommunityReportStatus {
   pending,
   underReview,
@@ -98,11 +100,9 @@ class CommunityReport {
         postId: (json['targetId'] as num?)?.toInt() ?? 0,
         reason: CommunityPostReportReason.fromApi('${json['reason'] ?? ''}'),
         status: CommunityReportStatus.fromApi('${json['status'] ?? ''}'),
-        createdAt:
-            DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal() ??
-            DateTime.now(),
-        updatedAt: DateTime.tryParse('${json['updatedAt'] ?? ''}')?.toLocal(),
-        reviewedAt: DateTime.tryParse('${json['reviewedAt'] ?? ''}')?.toLocal(),
+        createdAt: parseApiDateTimeToLocal(json['createdAt']) ?? DateTime.now(),
+        updatedAt: parseApiDateTimeToLocal(json['updatedAt']),
+        reviewedAt: parseApiDateTimeToLocal(json['reviewedAt']),
         description: '${json['description'] ?? ''}'.trim(),
         adminMessage: '${json['adminMessage'] ?? ''}'.trim(),
         postPreview: '${json['postPreview'] ?? ''}'.trim(),

@@ -21,7 +21,7 @@ class MealIdeaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 158,
+      height: 126,
       decoration: BoxDecoration(
         color: context.appElevatedSurface.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(18),
@@ -35,11 +35,11 @@ class MealIdeaCard extends StatelessWidget {
           onTap: onTap,
           child: Row(
             children: [
-              Expanded(flex: 5, child: _MealIdeaImage(path: meal.image)),
+              Expanded(flex: 4, child: _MealIdeaImage(path: meal.image)),
               Expanded(
                 flex: 6,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                  padding: const EdgeInsets.fromLTRB(11, 9, 9, 9),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -49,11 +49,11 @@ class MealIdeaCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               localizeDishName(meal.name),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: context.appText,
-                                fontSize: 14,
+                                fontSize: 12,
                                 height: 1.15,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -77,7 +77,7 @@ class MealIdeaCard extends StatelessWidget {
                                       meal.isFavorite
                                           ? AppColors.favoriteRed
                                           : const Color(0xFF8A8D8B),
-                                  size: 24,
+                                  size: 20,
                                 ),
                               ),
                             ),
@@ -85,29 +85,30 @@ class MealIdeaCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        meal.recommendationReason.isNotEmpty
-                            ? localizeRecommendationReason(
-                              meal.recommendationReason,
-                            )
-                            : [
-                              if (meal.difficulty.isNotEmpty)
-                                localizeDifficulty(meal.difficulty),
-                              localizeCategory(meal.category),
-                              'meals.healthy'.tr,
-                            ].join('  •  '),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.primaryGreen,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.accentOrange),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          localizeCategory(meal.category),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.accentOrange,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       const Spacer(),
                       Wrap(
-                        spacing: 12,
-                        runSpacing: 6,
+                        spacing: 9,
+                        runSpacing: 4,
                         children: [
                           _Metric(
                             icon: AppNutrientTheme.caloriesIcon,
@@ -164,12 +165,9 @@ class _Metric extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: iconColor, size: 17),
+        Icon(icon, color: iconColor, size: 12),
         const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(color: context.appMutedText, fontSize: 10.5),
-        ),
+        Text(label, style: TextStyle(color: context.appMutedText, fontSize: 9)),
       ],
     );
   }

@@ -177,7 +177,7 @@ class AllMealsView extends GetView<MealController> {
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
-              mainAxisExtent: 232,
+              mainAxisExtent: 174,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
