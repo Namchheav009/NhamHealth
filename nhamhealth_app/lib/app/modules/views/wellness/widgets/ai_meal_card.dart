@@ -33,7 +33,11 @@ class AiMealCard extends GetView<WellnessController> {
                 'assets/images/wellness/AI-water.png',
                 width: _waterImageWidth,
                 height: _waterImageHeight,
-                fit: BoxFit.contain,
+                // This source is landscape-oriented, so `contain` makes the
+                // character look much smaller than the AI Insight robot even
+                // though both image slots have identical dimensions.
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
               ),
             ),
           ),

@@ -109,6 +109,20 @@ abstract final class AppAlert {
     context: context,
   );
 
+  /// Presents a branded warning dialog for cautions or notices.
+  static Future<void> actionWarning({
+    required String title,
+    required String message,
+    String confirmText = 'common.ok',
+    BuildContext? context,
+  }) => _showActionDialog(
+    title: title,
+    message: message,
+    tone: _AppActionAlertTone.warning,
+    confirmText: confirmText,
+    context: context,
+  );
+
   /// Presents a branded confirmation dialog with Cancel and Confirm buttons.
   static Future<bool> confirmAction({
     required String title,
@@ -118,6 +132,7 @@ abstract final class AppAlert {
     IconData icon = Icons.person_remove_rounded,
     Color? iconColor,
     Color? confirmButtonColor,
+    bool barrierDismissible = true,
     BuildContext? context,
   }) async {
     await _closeActiveAlert();
@@ -128,7 +143,7 @@ abstract final class AppAlert {
     try {
       final result = await showGeneralDialog<bool>(
         context: targetContext,
-        barrierDismissible: true,
+        barrierDismissible: barrierDismissible,
         barrierLabel: 'common.alert_dialog'.tr,
         barrierColor: Colors.black.withValues(alpha: 0.48),
         transitionDuration:
@@ -399,7 +414,7 @@ abstract final class AppAlert {
 
 enum _AppAlertTone { success }
 
-enum _AppActionAlertTone { success, error, info }
+enum _AppActionAlertTone { success, error, info, warning }
 
 class _AppActionAlertOverlay extends StatelessWidget {
   const _AppActionAlertOverlay({
@@ -418,22 +433,35 @@ class _AppActionAlertOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSuccess = tone == _AppActionAlertTone.success;
     final isInfo = tone == _AppActionAlertTone.info;
+    final isWarning = tone == _AppActionAlertTone.warning;
     final iconColor =
-        isInfo
+        isWarning
+            ? const Color(0xFFF59E0B)
+            : isInfo
             ? const Color(0xFF0F62FE)
             : isSuccess
             ? AppColors.primaryGreen
             : AppColors.errorCoral;
     final icon =
-        isInfo
+        isWarning
+            ? Icons.warning_amber_rounded
+            : isInfo
             ? Icons.lightbulb_outline_rounded
             : isSuccess
             ? Icons.check_rounded
             : Icons.close_rounded;
     final localizedTitle = title.trOrSelf;
     final localizedMessage = message.trOrSelf;
-    final buttonColor = context.appColorScheme.primary;
-    final buttonForeground = context.appOnBrand;
+    final buttonColor =
+        isWarning
+            ? const Color(0xFFF59E0B)
+            : !isSuccess && !isInfo
+            ? AppColors.errorCoral
+            : context.appColorScheme.primary;
+    final buttonForeground =
+        isWarning || (!isSuccess && !isInfo)
+            ? Colors.white
+            : context.appOnBrand;
 
     return Material(
       type: MaterialType.transparency,
@@ -454,10 +482,10 @@ class _AppActionAlertOverlay extends StatelessWidget {
                   namesRoute: true,
                   explicitChildNodes: true,
                   label:
-                      '${isInfo ? 'Information' : isSuccess ? 'Success' : 'Error'}: '
+                      '${isWarning ? 'Warning' : isInfo ? 'Information' : isSuccess ? 'Success' : 'Error'}: '
                       '$localizedTitle. $localizedMessage',
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 424),
+                    constraints: const BoxConstraints(maxWidth: 400),
                     child: Container(
                       width: double.infinity,
                       constraints: const BoxConstraints(minHeight: 250),
@@ -492,7 +520,7 @@ class _AppActionAlertOverlay extends StatelessWidget {
                             ),
                             child: Icon(icon, color: iconColor, size: 34),
                           ),
-                          const SizedBox(height: 29),
+                          const SizedBox(height: 24),
                           Text(
                             localizedTitle,
                             textAlign: TextAlign.center,
@@ -517,10 +545,10 @@ class _AppActionAlertOverlay extends StatelessWidget {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 27),
+                          const SizedBox(height: 26),
                           SizedBox(
                             width: 160,
-                            height: 53,
+                            height: 52,
                             child: FilledButton(
                               key: const ValueKey<String>(
                                 'app-action-alert-confirm',
@@ -537,7 +565,7 @@ class _AppActionAlertOverlay extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(21),
                                 ),
                                 textStyle: const TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -602,11 +630,11 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
                   explicitChildNodes: true,
                   label: '$localizedTitle. $localizedMessage',
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 424),
+                    constraints: const BoxConstraints(maxWidth: 400),
                     child: Container(
                       width: double.infinity,
                       constraints: const BoxConstraints(minHeight: 250),
-                      padding: const EdgeInsets.fromLTRB(24, 29, 24, 28),
+                      padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
                       decoration: BoxDecoration(
                         color: context.appElevatedSurface,
                         borderRadius: BorderRadius.circular(26),
@@ -637,7 +665,7 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
                             ),
                             child: Icon(icon, color: iconColor, size: 34),
                           ),
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 24),
                           Text(
                             localizedTitle,
                             textAlign: TextAlign.center,
@@ -661,12 +689,12 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 27),
+                          const SizedBox(height: 26),
                           Row(
                             children: [
                               Expanded(
                                 child: SizedBox(
-                                  height: 50,
+                                  height: 52,
                                   child: OutlinedButton(
                                     key: const ValueKey<String>(
                                       'app-confirm-alert-cancel',
@@ -674,12 +702,10 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
                                     onPressed:
                                         () => Navigator.of(context).pop(false),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: context.appMutedText,
                                       side: BorderSide(
-                                        color: context.appBorder.withValues(
-                                          alpha: 0.4,
-                                        ),
+                                        color: context.appBorder,
                                       ),
+                                      foregroundColor: context.appText,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(21),
                                       ),
@@ -695,7 +721,7 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: SizedBox(
-                                  height: 50,
+                                  height: 52,
                                   child: FilledButton(
                                     key: const ValueKey<String>(
                                       'app-confirm-alert-confirm',
@@ -705,7 +731,7 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
                                     style: FilledButton.styleFrom(
                                       backgroundColor: confirmButtonColor,
                                       foregroundColor: Colors.white,
-                                      elevation: 4,
+                                      elevation: 5,
                                       shadowColor: confirmButtonColor
                                           .withValues(alpha: 0.38),
                                       shape: RoundedRectangleBorder(

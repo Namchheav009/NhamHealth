@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -779,97 +780,203 @@ class MultiItemPlateCard extends StatelessWidget {
     final caloriesController = TextEditingController(text: '150');
     final amountController = TextEditingController(text: '50');
 
-    showDialog(
+    showGeneralDialog<void>(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            backgroundColor: dialogContext.appSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Text(
-              'wellness.add_ingredient'.tr,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: dialogContext.appText,
+      barrierDismissible: true,
+      barrierLabel: 'wellness.add_ingredient'.tr,
+      barrierColor: Colors.black.withValues(alpha: 0.48),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: const SizedBox.expand(),
               ),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: 'wellness.plate_item_name'.tr,
-                    hintText: 'e.g. Matcha powder, Sweetener',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: amountController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'wellness.amount_label'.tr,
-                          hintText: '50',
-                          suffixText: 'g',
+              SafeArea(
+                minimum: const EdgeInsets.all(22),
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(28, 29, 28, 28),
+                        decoration: BoxDecoration(
+                          color: dialogContext.appElevatedSurface,
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.22),
+                              blurRadius: 32,
+                              offset: const Offset(0, 16),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 58,
+                                height: 58,
+                                decoration: BoxDecoration(
+                                  color: dialogContext.appElevatedSurface,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.16),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.restaurant_menu_rounded,
+                                  color: green,
+                                  size: 34,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'wellness.add_ingredient'.tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                height: 1.2,
+                                fontWeight: FontWeight.w700,
+                                color: dialogContext.appText,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            TextField(
+                              controller: nameController,
+                              autofocus: true,
+                              decoration: InputDecoration(
+                                labelText: 'wellness.plate_item_name'.tr,
+                                hintText: 'e.g. Matcha powder, Sweetener',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: amountController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'wellness.amount_label'.tr,
+                                      hintText: '50',
+                                      suffixText: 'g',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: caloriesController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'wellness.plate_item_calories'.tr,
+                                      hintText: '150',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () => Navigator.pop(dialogContext),
+                                    style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size(0, 50),
+                                      side: BorderSide(color: dialogContext.appBorder),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'common.cancel'.tr,
+                                      style: TextStyle(
+                                        color: dialogContext.appText,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: FilledButton(
+                                    onPressed: () {
+                                      final name = nameController.text.trim();
+                                      final cals = double.tryParse(caloriesController.text.trim()) ?? 150.0;
+                                      final amount = double.tryParse(amountController.text.trim()) ?? 50.0;
+                                      if (name.isNotEmpty) {
+                                        controller.addPlateItem(
+                                          name: name,
+                                          calories: cals,
+                                          protein: cals * 0.05,
+                                          carbs: cals * 0.15,
+                                          fat: cals * 0.03,
+                                          amount: amount,
+                                          unit: 'g',
+                                        );
+                                      }
+                                      Navigator.pop(dialogContext);
+                                    },
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size(0, 50),
+                                      backgroundColor: green,
+                                      foregroundColor: Colors.white,
+                                      elevation: 2,
+                                      shadowColor: green.withValues(alpha: 0.35),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'wellness.add_ingredient'.tr,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: caloriesController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'wellness.plate_item_calories'.tr,
-                          hintText: '150',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text('common.cancel'.tr),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final name = nameController.text.trim();
-                  final cals =
-                      double.tryParse(caloriesController.text.trim()) ?? 150.0;
-                  final amount =
-                      double.tryParse(amountController.text.trim()) ?? 50.0;
-                  if (name.isNotEmpty) {
-                    controller.addPlateItem(
-                      name: name,
-                      calories: cals,
-                      protein: cals * 0.05,
-                      carbs: cals * 0.15,
-                      fat: cals * 0.03,
-                      amount: amount,
-                      unit: 'g',
-                    );
-                  }
-                  Navigator.pop(dialogContext);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text('wellness.add_ingredient'.tr),
               ),
             ],
           ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.9, end: 1.0).animate(curved),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

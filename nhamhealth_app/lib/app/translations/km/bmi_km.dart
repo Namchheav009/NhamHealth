@@ -39,4 +39,9 @@ const Map<String, String> bmiKm = {
   'bmi.edit_profile': 'កែប្រែប្រវត្តិរូប',
   'bmi.supporting_context':
       'NhamHealth ប្រើ BMI ត្រឹមជាព័ត៌មានជំនួយ រួមជាមួយសកម្មភាព ចំណូលចិត្ត និងព័ត៌មានអាហារូបត្ថម្ភរបស់អ្នក។',
+  'bmi.edit': 'កែប្រែ',
+  'bmi.range_underweight': 'ស្គម',
+  'bmi.range_normal': 'ធម្មតា',
+  'bmi.range_overweight': 'លើសទម្ងន់',
+  'bmi.range_obesity': 'ធាត់',
 };

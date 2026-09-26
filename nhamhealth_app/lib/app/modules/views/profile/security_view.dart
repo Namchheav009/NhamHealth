@@ -186,52 +186,18 @@ class _SecurityViewState extends State<SecurityView> {
 
   Future<bool> _showFaceScanAlert() async {
     if (!mounted) return false;
-    return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (dialogContext) => AlertDialog(
-                icon: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: dialogContext.appSelectedSurface,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: SizedBox.square(
-                      dimension: 40,
-                      child: _BiometricMark(kind: AppBiometricKind.face),
-                    ),
-                  ),
-                ),
-                title: Text('security.face_scan_title'.tr),
-                content: Text(
-                  'security.face_scan_description'.tr,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: dialogContext.appMutedText,
-                    height: 1.45,
-                  ),
-                ),
-                actionsAlignment: MainAxisAlignment.spaceBetween,
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: Text('common.cancel'.tr),
-                  ),
-                  FilledButton.icon(
-                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                    icon: const Icon(
-                      Icons.center_focus_strong_rounded,
-                      size: 19,
-                    ),
-                    label: Text('security.scan_face'.tr),
-                  ),
-                ],
-              ),
-        ) ??
-        false;
+    final confirmed = await AppAlert.confirmAction(
+      context: context,
+      title: 'security.face_scan_title',
+      message: 'security.face_scan_description',
+      confirmText: 'security.scan_face',
+      cancelText: 'common.cancel',
+      icon: Icons.center_focus_strong_rounded,
+      iconColor: AppColors.primaryGreen,
+      confirmButtonColor: AppColors.primaryGreen,
+      barrierDismissible: false,
+    );
+    return confirmed;
   }
 
   String get _biometricName => switch (_biometricKind) {
@@ -390,26 +356,31 @@ class _SecurityViewState extends State<SecurityView> {
         constraints: BoxConstraints(
           maxWidth: _contentMaxWidth(context),
         ),
-        child: Row(
-          children: [
-            if (widget.requirePinCreation && !_hasPin)
-              const SizedBox(width: AppBackButton.layoutSize)
-            else
-              AppBackButton(onPressed: Get.back),
-            const SizedBox(width: AppBackButton.headerGap),
-            Expanded(
-              child: Text(
-                'profile.password_and_security'.tr,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                  color: context.appText,
+        child:
+            widget.requirePinCreation && !_hasPin
+                ? Row(
+                  children: [
+                    const SizedBox(width: AppBackButton.layoutSize),
+                    const SizedBox(width: AppBackButton.headerGap),
+                    Expanded(
+                      child: Text(
+                        'profile.password_and_security'.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppBackHeader.titleFontSize,
+                          fontWeight: AppBackHeader.titleFontWeight,
+                          letterSpacing: AppBackHeader.titleLetterSpacing,
+                          color: context.appText,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+                : AppBackHeader(
+                  title: 'profile.password_and_security'.tr,
+                  onBack: Get.back,
                 ),
-              ),
-            ),
-          ],
-        ),
       ),
     ),
   );

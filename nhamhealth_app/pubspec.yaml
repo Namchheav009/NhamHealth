@@ -119,6 +119,8 @@ flutter:
     - "assets/animations/Customer Support.json"
     - assets/ai/
     - assets/images/profile/profile.jpg
+    - "assets/images/profile/Health Guidance.png"
+    - assets/images/profile/Nutritions.png
 flutter_launcher_icons:
   android: true
   ios: false

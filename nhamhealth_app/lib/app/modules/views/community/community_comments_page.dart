@@ -325,27 +325,16 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
 
   Future<void> _confirmAndDeleteComment(CommunityComment comment) async {
     if (_deletingCommentId != null) return;
-    final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text('community.delete_comment'.tr),
-        content: Text(
-          'community.this_will_permanently_remove_this_comment_and_any_replies_to_it'
-              .tr,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text('common.cancel'.tr),
-          ),
-          FilledButton(
-            onPressed: () => Get.back(result: true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD94545),
-            ),
-            child: Text('common.delete'.tr),
-          ),
-        ],
-      ),
+    final confirmed = await AppAlert.confirmAction(
+      context: context,
+      title: 'community.delete_comment',
+      message:
+          'community.this_will_permanently_remove_this_comment_and_any_replies_to_it',
+      confirmText: 'common.delete',
+      cancelText: 'common.cancel',
+      icon: Icons.delete_outline_rounded,
+      iconColor: AppColors.errorCoral,
+      confirmButtonColor: AppColors.errorCoral,
     );
     if (confirmed != true || !mounted) return;
 

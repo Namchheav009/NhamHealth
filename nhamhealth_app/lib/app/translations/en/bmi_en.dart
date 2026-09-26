@@ -39,4 +39,9 @@ const Map<String, String> bmiEn = {
   'bmi.edit_profile': 'Edit Profile',
   'bmi.supporting_context':
       'NhamHealth uses BMI only as supporting context alongside your activity, preferences and nutrition information.',
+  'bmi.edit': 'Edit',
+  'bmi.range_underweight': 'Underweight',
+  'bmi.range_normal': 'Normal',
+  'bmi.range_overweight': 'Overweight',
+  'bmi.range_obesity': 'Obesity',
 };

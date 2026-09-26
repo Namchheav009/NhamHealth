@@ -198,7 +198,7 @@ void main() {
       fatGrams: 10,
       servings: 1,
       status: MealPlanStatus.planned,
-      ingredients: const [],
+      ingredients: [],
     );
 
     // Trigger status change in planner

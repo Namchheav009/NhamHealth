@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/translations/localized_text.dart';
 
+import '../../../../widgets/app_input_dialog.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../controllers/wellness/ai_food_controller.dart';
 import 'visual_portion_selector.dart';
@@ -74,73 +75,33 @@ class _AiFoodAmountSheetState extends State<AiFoodAmountSheet> {
   }
 
   Future<void> _showCustomCupDialog(BuildContext context) async {
-    final textController = TextEditingController(
-      text: widget.controller.drinkCupMl.value.round().toString(),
-    );
-
-    final result = await showDialog<double>(
+    final result = await AppInputDialog.show(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            backgroundColor: dialogContext.appSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            title: Text(
-              'wellness.enter_custom_cup_size'.tr,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: dialogContext.appText,
-              ),
-            ),
-            content: TextField(
-              controller: textController,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              decoration: InputDecoration(
-                suffixText: 'common.ml'.tr,
-                filled: true,
-                fillColor: dialogContext.appSurfaceLow,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: dialogContext.appBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: dialogContext.appBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: green, width: 1.5),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: Text('common.cancel'.tr),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final parsed = double.tryParse(textController.text.trim());
-                  if (parsed != null && parsed > 0) {
-                    Navigator.of(dialogContext).pop(parsed);
-                  }
-                },
-                style: FilledButton.styleFrom(backgroundColor: green),
-                child: Text('common.ok'.tr),
-              ),
-            ],
-          ),
+      title: 'wellness.enter_custom_cup_size',
+      initialValue: widget.controller.drinkCupMl.value.round().toString(),
+      labelText: 'wellness.enter_custom_cup_size',
+      icon: Icons.local_cafe_rounded,
+      confirmText: 'common.ok',
+      cancelText: 'common.cancel',
+      keyboardType: TextInputType.number,
+      validator: (value) {
+        final parsed = double.tryParse(value.trim());
+        if (parsed == null || parsed <= 0) {
+          return 'errors.error'.tr;
+        }
+        return null;
+      },
     );
 
-    if (result != null && result > 0) {
-      widget.controller.setDrinkCupMl(result);
+    if (result != null) {
+      final parsed = double.tryParse(result.trim());
+      if (parsed != null && parsed > 0) {
+        widget.controller.setDrinkCupMl(parsed);
+      }
     }
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Obx(() {
       final isDrink =

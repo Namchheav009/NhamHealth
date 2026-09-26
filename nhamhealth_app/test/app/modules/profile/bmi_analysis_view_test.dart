@@ -46,7 +46,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows adult BMI analysis and planner actions', (tester) async {
+  testWidgets('shows adult BMI analysis and nutrition action', (tester) async {
     await pumpPage(tester, age: 28);
 
     expect(find.byKey(const ValueKey('bmi-result-card')), findsOneWidget);
@@ -54,10 +54,6 @@ void main() {
     expect(find.text('Healthy weight range'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('bmi-nutrition-summary-button')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('bmi-meal-planner-button')),
       findsOneWidget,
     );
     await disposePage(tester);
