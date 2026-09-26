@@ -533,6 +533,7 @@ class _AppActionAlertOverlay extends StatelessWidget {
             minimum: const EdgeInsets.all(22),
             child: Center(
               child: SingleChildScrollView(
+                primary: false,
                 child: Semantics(
                   container: true,
                   scopesRoute: true,
@@ -686,6 +687,7 @@ class _AppConfirmAlertOverlay extends StatelessWidget {
             minimum: const EdgeInsets.all(22),
             child: Center(
               child: SingleChildScrollView(
+                primary: false,
                 child: Semantics(
                   container: true,
                   scopesRoute: true,

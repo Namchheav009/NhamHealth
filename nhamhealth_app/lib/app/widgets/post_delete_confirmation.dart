@@ -4,10 +4,14 @@ import 'package:get/get.dart';
 import '../theme/app_colors.dart';
 import 'app_alert.dart';
 
-Future<bool> confirmPostDeletion({required String messageKey}) async {
-  final context = Get.overlayContext ?? Get.context;
+Future<bool> confirmPostDeletion({
+  required String messageKey,
+  BuildContext? context,
+  bool barrierDismissible = true,
+}) async {
+  final targetContext = context ?? Get.overlayContext ?? Get.context;
   return await AppAlert.confirmAction(
-    context: context,
+    context: targetContext,
     title: 'community.delete_post_question',
     message: messageKey,
     confirmText: 'common.delete',
@@ -15,6 +19,6 @@ Future<bool> confirmPostDeletion({required String messageKey}) async {
     icon: Icons.delete_outline_rounded,
     iconColor: AppColors.errorCoral,
     confirmButtonColor: AppColors.errorCoral,
-    barrierDismissible: true,
+    barrierDismissible: barrierDismissible,
   );
 }

@@ -187,6 +187,7 @@ class _PinKeypadDialogState extends State<_PinKeypadDialog> {
                   ],
                 ),
                 child: SingleChildScrollView(
+                  primary: false,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

@@ -27,7 +27,7 @@ void main() {
         communityRepository: _CommunityRepository(auth),
       ),
     );
-    tester.view.physicalSize = const Size(430, 1100);
+    tester.view.physicalSize = const Size(430, 1400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(

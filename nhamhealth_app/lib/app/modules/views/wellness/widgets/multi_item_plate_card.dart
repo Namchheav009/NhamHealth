@@ -800,6 +800,7 @@ class MultiItemPlateCard extends StatelessWidget {
                 minimum: const EdgeInsets.all(22),
                 child: Center(
                   child: SingleChildScrollView(
+                    primary: false,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: Container(

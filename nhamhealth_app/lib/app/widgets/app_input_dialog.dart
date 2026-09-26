@@ -225,6 +225,7 @@ class _AppInputDialogState extends State<AppInputDialog> {
               minimum: const EdgeInsets.all(22),
               child: Center(
                 child: SingleChildScrollView(
+                  primary: false,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 424),
                     child: Container(
