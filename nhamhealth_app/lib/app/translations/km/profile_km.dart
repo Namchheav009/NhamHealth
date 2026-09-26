@@ -331,7 +331,9 @@ const Map<String, String> profileKm = {
   'profile.password_security_description':
       'លេខសម្ងាត់ PIN ស្នាមម្រាមដៃ Face ID និងពាក្យសម្ងាត់',
   'profile.favorites': 'ចំណូលចិត្ត',
-  'profile.favorites_description': 'មើលអាហារ និងការបង្ហោះដែលអ្នកបានរក្សាទុក',
+  'profile.favorites_description': 'មើលអាហារដែលអ្នកបានរក្សាទុក',
+  'profile.saved_posts': 'ការបង្ហោះដែលបានរក្សាទុក',
+  'profile.saved_posts_description': 'មើលការបង្ហោះដែលអ្នកបានរក្សាទុកសម្រាប់ពេលក្រោយ',
   'profile.appearance_2': 'រូបរាង',
   'profile.appearance_description': 'ជ្រើសរើសតាមប្រព័ន្ធ រូបរាងភ្លឺ ឬងងឹត',
   'profile.theme_system': 'តាមការកំណត់ឧបករណ៍',

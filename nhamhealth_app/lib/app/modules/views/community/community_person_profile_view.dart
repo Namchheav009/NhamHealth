@@ -13,6 +13,8 @@ import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/community/community_controller.dart';
+import '../../controllers/favorites/favorites_controller.dart';
+import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_person_profile.dart';
 import '../../repositories/community/community_repository.dart';
 import '../profile/widgets/profile_post_card.dart';
@@ -1014,10 +1016,7 @@ class _CommunityPersonProfileViewState
     }
     final recipeId = post.mealId;
     if (recipeId == null) {
-      Get.snackbar(
-        'common.favorites_unavailable'.tr,
-        'This post cannot be saved right now.',
-      );
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
       return;
     }
     try {
@@ -1038,6 +1037,24 @@ class _CommunityPersonProfileViewState
           community.posts.refresh();
         }
       }
+      if (Get.isRegistered<ProfileController>()) {
+        final profile = Get.find<ProfileController>();
+        final pIndex = profile.posts.indexWhere((item) => item.id == post.id);
+        if (pIndex >= 0) {
+          profile.posts[pIndex] = updated;
+          profile.posts.refresh();
+        }
+      }
+      if (Get.isRegistered<FavoritesController>()) {
+        Get.find<FavoritesController>().loadPosts();
+      }
+      AppAlert.toast(
+        message:
+            (updated.isSaved
+                    ? 'favorites.post_saved_to_favorites'
+                    : 'favorites.post_removed_from_favorites')
+                .tr,
+      );
     } on Object catch (error) {
       if (!mounted) return;
       unawaited(

@@ -82,7 +82,7 @@ class _FoodFilterSheetState extends State<FoodFilterSheet> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.filter_alt_outlined,
+                    Icons.tune_rounded,
                     size: 21,
                     color: context.appColorScheme.primary,
                   ),

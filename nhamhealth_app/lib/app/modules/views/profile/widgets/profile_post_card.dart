@@ -29,6 +29,7 @@ class ProfilePostCard extends StatelessWidget {
     required this.onComment,
     required this.onShare,
     this.onFavorite,
+    this.showFavoriteButton = true,
     this.showRecipeButton = true,
     this.onSharedPostTap,
     this.onSharedAuthorTap,
@@ -55,6 +56,7 @@ class ProfilePostCard extends StatelessWidget {
   final VoidCallback onComment;
   final VoidCallback onShare;
   final VoidCallback? onFavorite;
+  final bool showFavoriteButton;
   final bool showRecipeButton;
   final VoidCallback? onSharedPostTap;
   final VoidCallback? onSharedAuthorTap;
@@ -186,7 +188,7 @@ class ProfilePostCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (onFavorite != null)
+                if (showFavoriteButton && onFavorite != null)
                   IconButton(
                     tooltip:
                         (post.isSaved
@@ -206,7 +208,7 @@ class ProfilePostCard extends StatelessWidget {
                               : context.appMutedText,
                     ),
                   ),
-                if (onOptions != null || onEdit != null || onDelete != null)
+                if (onOptions != null || onEdit != null || onDelete != null || onFavorite != null)
                   IconButton(
                     tooltip: 'common.post_options'.tr,
                     visualDensity: VisualDensity.compact,
@@ -392,9 +394,12 @@ class ProfilePostCard extends StatelessWidget {
           (_) => _ProfilePostOptionsSheet(
             canEdit: onEdit != null,
             canDelete: onDelete != null,
+            canFavorite: onFavorite != null,
+            isSaved: post.isSaved,
           ),
     );
     if (!context.mounted) return;
+    if (action == 'save') onFavorite?.call();
     if (action == 'edit') onEdit?.call();
     if (action == 'delete') onDelete?.call();
   }
@@ -806,10 +811,14 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
   const _ProfilePostOptionsSheet({
     required this.canEdit,
     required this.canDelete,
+    this.canFavorite = false,
+    this.isSaved = false,
   });
 
   final bool canEdit;
   final bool canDelete;
+  final bool canFavorite;
+  final bool isSaved;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -846,21 +855,35 @@ class _ProfilePostOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: context.appMutedSurface,
-              borderRadius: BorderRadius.circular(20),
-            ),
+          Material(
+            color: context.appMutedSurface,
+            borderRadius: BorderRadius.circular(20),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
-                if (canEdit)
+                if (canFavorite) ...[
+                  _ProfilePostOption(
+                    value: 'save',
+                    label: (isSaved
+                            ? 'common.remove_from_favorites'
+                            : 'common.add_to_favorites')
+                        .tr,
+                    icon: isSaved
+                        ? Icons.bookmark_remove_rounded
+                        : Icons.bookmark_add_outlined,
+                  ),
+                  if (canEdit || canDelete)
+                    Divider(height: 1, indent: 64, color: context.appBorder),
+                ],
+                if (canEdit) ...[
                   _ProfilePostOption(
                     value: 'edit',
                     label: 'profile.edit_post'.tr,
                     icon: Icons.edit_outlined,
                   ),
-                if (canEdit && canDelete)
-                  Divider(height: 1, indent: 64, color: context.appBorder),
+                  if (canDelete)
+                    Divider(height: 1, indent: 64, color: context.appBorder),
+                ],
                 if (canDelete)
                   _ProfilePostOption(
                     value: 'delete',

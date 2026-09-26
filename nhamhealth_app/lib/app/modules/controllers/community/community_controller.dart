@@ -21,6 +21,8 @@ import '../../providers/home/home_provider.dart';
 import '../../repositories/community/community_repository.dart';
 import '../../repositories/community/follow_connections_repository.dart';
 import '../../repositories/notifications/notifications_repository.dart';
+import '../favorites/favorites_controller.dart';
+import '../profile/profile_controller.dart';
 
 export '../../models/community/community_person.dart';
 export '../../models/community/community_post.dart';
@@ -675,21 +677,42 @@ class CommunityController extends GetxController {
   }
 
   Future<void> togglePostSaved(CommunityPost post) async {
-    final currentUserId = authenticatedUser.value?.id;
-    if (currentUserId != null && post.authorId == currentUserId) {
-      return;
-    }
     final recipeId = post.mealId;
     if (recipeId == null) {
-      Get.snackbar(
-        'common.favorites_unavailable'.tr,
-        'This post cannot be saved right now.',
-      );
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
       return;
     }
-    final updated = await _repository.toggleSaved(post.id, recipeId: recipeId);
-    final index = posts.indexWhere((item) => item.id == post.id);
-    if (index >= 0) posts[index] = updated;
+    try {
+      final updated = await _repository.toggleSaved(
+        post.id,
+        recipeId: recipeId,
+      );
+      final index = posts.indexWhere((item) => item.id == post.id);
+      if (index >= 0) {
+        posts[index] = updated;
+        posts.refresh();
+      }
+      if (Get.isRegistered<ProfileController>()) {
+        final profile = Get.find<ProfileController>();
+        final pIndex = profile.posts.indexWhere((item) => item.id == post.id);
+        if (pIndex >= 0) {
+          profile.posts[pIndex] = updated;
+          profile.posts.refresh();
+        }
+      }
+      if (Get.isRegistered<FavoritesController>()) {
+        Get.find<FavoritesController>().loadPosts();
+      }
+      AppAlert.toast(
+        message:
+            (updated.isSaved
+                    ? 'favorites.post_saved_to_favorites'
+                    : 'favorites.post_removed_from_favorites')
+                .tr,
+      );
+    } catch (_) {
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
+    }
   }
 
   Future<void> sharePost(
@@ -799,34 +822,40 @@ class CommunityController extends GetxController {
     int? categoryId,
   }) async {
     final fallbackPost = post.sharedPost;
-    final effectiveMealName = (mealName ?? post.mealName).trim().isNotEmpty
-        ? (mealName ?? post.mealName).trim()
-        : (fallbackPost?.mealName.trim().isNotEmpty == true
-            ? fallbackPost!.mealName.trim()
-            : 'Shared Post');
-    final effectiveCookingTime = cookingTimeMinutes ??
+    final effectiveMealName =
+        (mealName ?? post.mealName).trim().isNotEmpty
+            ? (mealName ?? post.mealName).trim()
+            : (fallbackPost?.mealName.trim().isNotEmpty == true
+                ? fallbackPost!.mealName.trim()
+                : 'Shared Post');
+    final effectiveCookingTime =
+        cookingTimeMinutes ??
         ((post.cookingTimeMinutes != null && post.cookingTimeMinutes! > 0)
             ? post.cookingTimeMinutes!
             : (fallbackPost?.cookingTimeMinutes != null &&
                     fallbackPost!.cookingTimeMinutes! > 0
                 ? fallbackPost.cookingTimeMinutes!
                 : 1));
-    final effectiveServings = servings ??
+    final effectiveServings =
+        servings ??
         ((post.servings != null && post.servings! > 0)
             ? post.servings!
             : (fallbackPost?.servings != null && fallbackPost!.servings! > 0
                 ? fallbackPost.servings!
                 : 1));
-    final effectiveDifficulty = (difficulty ?? post.difficulty).trim().isNotEmpty
-        ? (difficulty ?? post.difficulty).trim()
-        : (fallbackPost?.difficulty.trim().isNotEmpty == true
-            ? fallbackPost!.difficulty.trim()
-            : 'EASY');
-    final effectiveIngredients = ingredients ??
+    final effectiveDifficulty =
+        (difficulty ?? post.difficulty).trim().isNotEmpty
+            ? (difficulty ?? post.difficulty).trim()
+            : (fallbackPost?.difficulty.trim().isNotEmpty == true
+                ? fallbackPost!.difficulty.trim()
+                : 'EASY');
+    final effectiveIngredients =
+        ingredients ??
         (post.ingredients.isNotEmpty
             ? post.ingredients
             : fallbackPost?.ingredients ?? const []);
-    final effectiveSteps = steps ??
+    final effectiveSteps =
+        steps ??
         (post.steps.isNotEmpty ? post.steps : fallbackPost?.steps ?? const []);
     final effectiveCategoryId = categoryId ?? post.categoryId ?? 1;
 
@@ -1059,7 +1088,8 @@ class CommunityController extends GetxController {
                 person.connection == CommunityConnectionStatus.following,
           )
           .toList(growable: false),
-      FriendsView.addFriends: value[FriendsView.addFriends] ??
+      FriendsView.addFriends:
+          value[FriendsView.addFriends] ??
           peopleById.values.toList(growable: false),
     };
     final statuses = <String, String>{};

@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/app/modules/controllers/assistant/assistant_c
 import 'package:nhamhealth_flutter/app/modules/models/assistant/assistant_message.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/assistant/assistant_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/views/assistant/assistant_view.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
@@ -12,6 +13,8 @@ void main() {
 
   setUp(() {
     Get.testMode = true;
+    Get.addTranslations(AppTranslations().keys);
+    Get.locale = const Locale('en', 'US');
     Get.put(
       AssistantController(
         provider: AssistantProvider(authService: AuthService()),
@@ -23,10 +26,17 @@ void main() {
     Get.reset();
   });
 
+  Widget createApp() => GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        home: const AssistantView(),
+      );
+
   testWidgets('quick questions render without a GetX scope error', (
     tester,
   ) async {
-    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pumpWidget(createApp());
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Quick questions'), findsOneWidget);
@@ -37,7 +47,7 @@ void main() {
   testWidgets('all questions remain available in the question sheet', (
     tester,
   ) async {
-    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pumpWidget(createApp());
     await tester.pump(const Duration(milliseconds: 100));
 
     await tester.tap(find.byKey(const ValueKey('assistant-all-questions')));
@@ -60,7 +70,7 @@ void main() {
       ),
     ]);
 
-    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pumpWidget(createApp());
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(
@@ -93,7 +103,7 @@ void main() {
       ),
     ]);
 
-    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pumpWidget(createApp());
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(
@@ -116,7 +126,7 @@ void main() {
     tester.view.physicalSize = const Size(1024, 768);
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const GetMaterialApp(home: AssistantView()));
+    await tester.pumpWidget(createApp());
     await tester.pump(const Duration(milliseconds: 100));
 
     final messages = find.byKey(

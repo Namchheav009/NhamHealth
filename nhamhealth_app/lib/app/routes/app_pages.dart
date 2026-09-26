@@ -35,6 +35,7 @@ import '../modules/views/community/community_person_profile_view.dart';
 import '../modules/views/community/community_post_detail_page.dart';
 import '../modules/views/community/community_report_page.dart';
 import '../modules/views/favorites/favorites_view.dart';
+import '../modules/views/favorites/saved_posts_view.dart';
 import '../modules/views/main_tabs_view.dart';
 import '../modules/views/meals/food_detail_view.dart';
 import '../modules/views/notifications/notifications_view.dart';
@@ -210,6 +211,12 @@ abstract class AppPages {
     GetPage<dynamic>(
       name: AppRoutes.favorites,
       page: () => const FavoritesView(),
+      binding: FavoritesBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.savedPosts,
+      page: () => const SavedPostsView(),
       binding: FavoritesBinding(),
       transition: Transition.rightToLeft,
     ),

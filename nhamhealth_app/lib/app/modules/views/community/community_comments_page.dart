@@ -15,6 +15,8 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/post_delete_confirmation.dart';
 import '../../controllers/community/community_controller.dart';
+import '../../controllers/favorites/favorites_controller.dart';
+import '../../controllers/profile/profile_controller.dart';
 import '../../models/community/community_comment.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_reply_address.dart';
@@ -474,10 +476,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
   Future<void> _togglePostSavedFor(CommunityPost post) async {
     final recipeId = post.mealId;
     if (recipeId == null) {
-      Get.snackbar(
-        'common.favorites_unavailable'.tr,
-        'This post cannot be saved right now.',
-      );
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
       return;
     }
     try {
@@ -489,14 +488,40 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
       setState(() {
         post.isSaved = updated.isSaved;
       });
+      if (Get.isRegistered<CommunityController>()) {
+        final community = Get.find<CommunityController>();
+        final index = community.posts.indexWhere((item) => item.id == post.id);
+        if (index != -1) {
+          community.posts[index] = community.posts[index].copyWith(
+            isSaved: updated.isSaved,
+          );
+          community.posts.refresh();
+        }
+      }
+      if (Get.isRegistered<FavoritesController>()) {
+        Get.find<FavoritesController>().loadPosts();
+      }
+      if (Get.isRegistered<ProfileController>()) {
+        final profile = Get.find<ProfileController>();
+        final pIndex = profile.posts.indexWhere((item) => item.id == post.id);
+        if (pIndex >= 0) {
+          profile.posts[pIndex] = profile.posts[pIndex].copyWith(
+            isSaved: updated.isSaved,
+          );
+          profile.posts.refresh();
+        }
+      }
+      widget.onPostChanged?.call();
       AppAlert.toast(
         message:
             (updated.isSaved
-                    ? 'common.saved_to_favorites'
-                    : 'common.removed_from_favorites')
+                    ? 'favorites.post_saved_to_favorites'
+                    : 'favorites.post_removed_from_favorites')
                 .tr,
       );
-    } catch (_) {}
+    } catch (_) {
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
+    }
   }
 
   Future<void> _togglePostSaved() async {
@@ -510,10 +535,7 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
     }
     final recipeId = _post.mealId;
     if (recipeId == null) {
-      Get.snackbar(
-        'common.favorites_unavailable'.tr,
-        'This post cannot be saved right now.',
-      );
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
       return;
     }
     try {
@@ -532,14 +554,27 @@ class _CommunityCommentsPageState extends State<CommunityCommentsPage> {
           community.posts.refresh();
         }
       }
-    } on Object catch (error) {
-      if (!mounted) return;
-      unawaited(
-        AppAlert.error(
-          title: 'common.favorites_unavailable',
-          message: error.toString(),
-        ),
+      if (Get.isRegistered<FavoritesController>()) {
+        Get.find<FavoritesController>().loadPosts();
+      }
+      if (Get.isRegistered<ProfileController>()) {
+        final profile = Get.find<ProfileController>();
+        final pIndex = profile.posts.indexWhere((item) => item.id == _post.id);
+        if (pIndex >= 0) {
+          profile.posts[pIndex] = updated;
+          profile.posts.refresh();
+        }
+      }
+      AppAlert.toast(
+        message:
+            (updated.isSaved
+                    ? 'favorites.post_saved_to_favorites'
+                    : 'favorites.post_removed_from_favorites')
+                .tr,
       );
+    } catch (_) {
+      if (!mounted) return;
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
     }
   }
 

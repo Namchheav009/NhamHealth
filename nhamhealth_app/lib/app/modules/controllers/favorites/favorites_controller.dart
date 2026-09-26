@@ -37,7 +37,8 @@ class FavoritesController extends GetxController {
     loadPosts();
     if (!Get.testMode) {
       _realtimeRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-        if (Get.currentRoute == AppRoutes.favorites) {
+        if (Get.currentRoute == AppRoutes.favorites ||
+            Get.currentRoute == AppRoutes.savedPosts) {
           unawaited(_refreshSilently());
         }
       });
@@ -142,7 +143,12 @@ class FavoritesController extends GetxController {
 
   Future<void> removePost(int id) async {
     final index = posts.indexWhere((post) => post.id == id);
-    if (index < 0 || !await confirmFavoriteRemoval()) return;
+    if (index < 0 ||
+        !await confirmFavoriteRemoval(
+          message: 'favorites.remove_post_from_favorites'.tr,
+        )) {
+      return;
+    }
     final removed = posts.removeAt(index);
     try {
       await repository.removePost(id);

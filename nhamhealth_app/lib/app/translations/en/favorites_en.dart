@@ -11,4 +11,11 @@ const Map<String, String> favoritesEn = {
   'favorites.category_category': '@category category',
   'favorites.filter_by_category': 'Filter by category',
   'favorites.filter_by_post': 'Filter by Post',
+  'favorites.filter_by_time': 'Filter by time',
+  'favorites.saved_to_favorites': 'Saved to favorites',
+  'favorites.removed_from_favorites': 'Removed from favorites',
+  'favorites.post_saved_to_favorites': 'Post saved to favorites',
+  'favorites.post_removed_from_favorites': 'Post removed from favorites',
+  'favorites.remove_post_from_favorites':
+      'Remove this post from your favorites? You can add it again later.',
 };

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -8,13 +7,13 @@ import '../../../../core/services/app_security_service.dart';
 import '../../../../core/services/current_user_service.dart';
 import '../../../../core/services/notification_realtime_event.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/app_alert.dart';
 import '../../../widgets/privacy_auth_dialog.dart';
+import '../community/community_controller.dart';
+import '../favorites/favorites_controller.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/community/community_comment.dart';
-import '../../models/community/community_person.dart';
 import '../../models/community/community_person_profile.dart';
-import '../../models/community/community_post.dart';
-import '../../models/community/community_types.dart';
 import '../../models/profile/bmi_assessment.dart';
 import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/community/community_repository.dart';
@@ -285,6 +284,42 @@ class ProfileController extends GetxController {
       Get.snackbar('community.could_not_update_like'.tr, error.toString());
     } finally {
       likingPostIds.remove(post.id);
+    }
+  }
+
+  Future<void> togglePostSaved(CommunityPost post) async {
+    final recipeId = post.mealId;
+    if (recipeId == null) {
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
+      return;
+    }
+    try {
+      final updated = await _communityRepository.toggleSaved(
+        post.id,
+        recipeId: recipeId,
+      );
+      _replacePost(updated);
+      posts.refresh();
+      if (Get.isRegistered<CommunityController>()) {
+        final community = Get.find<CommunityController>();
+        final cIndex = community.posts.indexWhere((item) => item.id == post.id);
+        if (cIndex >= 0) {
+          community.posts[cIndex] = updated;
+          community.posts.refresh();
+        }
+      }
+      if (Get.isRegistered<FavoritesController>()) {
+        Get.find<FavoritesController>().loadPosts();
+      }
+      AppAlert.toast(
+        message:
+            (updated.isSaved
+                    ? 'favorites.post_saved_to_favorites'
+                    : 'favorites.post_removed_from_favorites')
+                .tr,
+      );
+    } catch (_) {
+      AppAlert.toast(message: 'common.favorites_unavailable'.tr);
     }
   }
 

@@ -386,13 +386,12 @@ void main() {
   );
 
   testWidgets(
-    'users can post directly from Step 1 without inputting ingredients and cooking steps',
+    'Step 1 only shows Continue to ingredients and does not display Post meal button',
     (tester) async {
       tester.view.physicalSize = const Size(800, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      CommunityPostDraft? submitted;
       await tester.pumpWidget(
         GetMaterialApp(
           translations: AppTranslations(),
@@ -400,57 +399,21 @@ void main() {
           home: CommunityPostEditorPage(
             authorName: 'Nham Member',
             authorAvatarUrl: '',
-            onSubmit: (draft) async => submitted = draft,
+            onSubmit: (draft) async {},
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('Choose a category'));
-      await tester.scrollUntilVisible(
-        find.text('Choose a category'),
-        300,
-        scrollable: find.byType(Scrollable).first,
+      expect(
+        find.byKey(const ValueKey<String>('community-continue-button-0')),
+        findsNothing,
       );
-      await tester.tap(find.text('Choose a category'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Main dishes').last);
-      await tester.pumpAndSettle();
-
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Ex. Salad'),
-        'Quick Breakfast Bowl',
+      expect(
+        find.byKey(const ValueKey<String>('community-navigation-button-0')),
+        findsOneWidget,
       );
-      await tester.drag(find.byType(ListView), const Offset(0, -260));
-      await tester.pump();
-      await tester.scrollUntilVisible(
-        find.widgetWithText(TextFormField, 'Ex. 40'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.enterText(find.widgetWithText(TextFormField, 'Ex. 40'), '10');
-      await tester.enterText(find.widgetWithText(TextFormField, '1'), '1');
-
-      // Tapping the Post meal button directly on Step 1
-      final postMealButton = find.byKey(
-        const ValueKey<String>('community-continue-button-0'),
-      );
-      expect(postMealButton, findsOneWidget);
-      await tester.tap(postMealButton);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.text('Meal published'), findsOneWidget);
-      await tester.tap(
-        find.byKey(const ValueKey<String>('app-action-alert-confirm')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(submitted, isNotNull);
-      expect(submitted!.mealName, 'Quick Breakfast Bowl');
-      expect(submitted!.ingredients, isEmpty);
-      expect(submitted!.steps, isEmpty);
-      expect(tester.takeException(), isNull);
+      expect(find.text('Continue to ingredients'), findsOneWidget);
     },
   );
 

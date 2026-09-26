@@ -44,6 +44,8 @@ const Map<String, String> commonKm = {
   'common.no_favorite_foods_yet': 'មិនទាន់មានអាហារចំណូលចិត្ត',
   'common.remove_from_favorites': 'លុបចេញពីចំណូលចិត្ត',
   'common.add_to_favorites': 'បន្ថែមទៅចំណូលចិត្ត',
+  'common.saved_to_favorites': 'រក្សាទុកក្នុងចំណូលចិត្តរួចរាល់',
+  'common.removed_from_favorites': 'បានលុបចេញពីចំណូលចិត្ត',
   'common.try_again': 'ព្យាយាមម្តងទៀត',
   'common.food_detail': 'ព័ត៌មានអាហារ',
   'common.cooking_time': 'រយៈពេលចម្អិន',

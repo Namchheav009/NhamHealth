@@ -151,7 +151,6 @@ const Map<String, String> communityKm = {
   'community.meal_name': 'ឈ្មោះអាហារ',
   'community.meal_name_required': 'ត្រូវការឈ្មោះអាហារ។',
   'community.categories_load_error': 'មិនអាចផ្ទុកប្រភេទអាហារបានទេ។',
-  'community.prefill_from_favorites_short': 'បំពេញពីចំណូលចិត្ត',
   'community.ingredients_help':
       'ជាជម្រើស — បន្ថែមគ្រឿងផ្សំ ប្រសិនបើអ្នកចង់ចែករំលែករូបមន្តពេញលេញ។',
   'community.optional': 'ជាជម្រើស',
@@ -199,11 +198,6 @@ const Map<String, String> communityKm = {
   'community.clear_all': 'លុបទាំងអស់',
   'community.new_meal': 'អាហារថ្មី',
   'community.edit_meal': 'កែសម្រួលអាហារ',
-  'community.choose_favorites': 'ជ្រើសរើសពីចំណូលចិត្ត',
-  'community.prefill_from_favorites':
-      'បំពេញការបង្ហោះនេះជាមុនដោយអាហារមួយក្នុងចំណោមអាហារដែលអ្នកបានរក្សាទុក',
-  'community.favorite_selected_help':
-      'បានបន្ថែមព័ត៌មានអាហារ — ចុចដើម្បីជ្រើសរើសអាហារផ្សេង',
   'community.new_meal_available':
       'ការបង្ហោះរបស់អ្នកមាននៅក្នុងសហគមន៍ ហើយកំពុងរង់ចាំការអនុម័តពីអ្នកគ្រប់គ្រង មុនពេលបង្ហាញក្នុងបញ្ជីអាហារ។',
   'community.report_submitted': 'បានផ្ញើរបាយការណ៍',
@@ -296,8 +290,6 @@ const Map<String, String> communityKm = {
   'community.write_a_comment': 'សរសេរមតិ...',
   'community.write_a_reply': 'សរសេរការឆ្លើយតប...',
   'community.send': 'ផ្ញើ',
-  'community.choose_favorite_food': 'ជ្រើសរើសអាហារចំណូលចិត្ត',
-  'community.favorite_foods_load_failed': 'មិនអាចផ្ទុកអាហារចំណូលចិត្តបានទេ។',
   'community.post_prompt': 'សរសេរអ្វីមួយ...',
   'community.add_emoji': 'បន្ថែមអ៊ីមូជី',
   'community.audience': 'អ្នកមើល',

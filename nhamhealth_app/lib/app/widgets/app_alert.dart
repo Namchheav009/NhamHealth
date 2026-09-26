@@ -23,13 +23,40 @@ abstract final class AppAlert {
   static Future<void> error({required String title, required String message}) =>
       Future<void>.value();
 
+  static BuildContext? _findValidContext(BuildContext? context) {
+    if (context != null && context.mounted) return context;
+    final keyContext = Get.key.currentContext;
+    if (keyContext != null && keyContext.mounted) return keyContext;
+    final getContext = Get.context;
+    if (getContext != null && getContext.mounted) return getContext;
+    final overlay = Get.overlayContext;
+    if (overlay != null && overlay.mounted) return overlay;
+    return null;
+  }
+
   /// Displays a subtle, non-blocking floating toast/snackbar at the bottom of the screen.
   static void toast({
     required String message,
     BuildContext? context,
     Duration duration = const Duration(seconds: 2),
+    IconData? icon,
   }) {
-    final targetContext = context ?? Get.overlayContext ?? Get.context;
+    final targetContext = _findValidContext(context);
+    final textWidget = Text(
+      message.tr,
+      style: const TextStyle(fontWeight: FontWeight.w600),
+    );
+    final content =
+        icon == null
+            ? textWidget
+            : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Flexible(child: textWidget),
+              ],
+            );
     if (targetContext != null) {
       final messenger = ScaffoldMessenger.maybeOf(targetContext);
       if (messenger != null) {
@@ -37,10 +64,7 @@ abstract final class AppAlert {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text(
-                message.tr,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
+              content: content,
               behavior: SnackBarBehavior.floating,
               duration: duration,
             ),
@@ -53,7 +77,26 @@ abstract final class AppAlert {
     }
     try {
       Get.rawSnackbar(
-        message: message.tr,
+        messageText:
+            icon == null
+                ? null
+                : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        message.tr,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        message: icon == null ? message.tr : null,
         duration: duration,
         snackPosition: SnackPosition.BOTTOM,
         snackStyle: SnackStyle.FLOATING,
@@ -136,12 +179,15 @@ abstract final class AppAlert {
     BuildContext? context,
   }) async {
     await _closeActiveAlert();
-    final targetContext = context ?? Get.overlayContext ?? Get.context;
+    // ignore: use_build_context_synchronously
+    final targetContext = _findValidContext(context);
     if (targetContext == null || !targetContext.mounted) return false;
     final disableAnimations =
+        // ignore: use_build_context_synchronously
         MediaQuery.maybeOf(targetContext)?.disableAnimations ?? false;
     try {
       final result = await showGeneralDialog<bool>(
+        // ignore: use_build_context_synchronously
         context: targetContext,
         barrierDismissible: barrierDismissible,
         barrierLabel: 'common.alert_dialog'.tr,
@@ -239,12 +285,21 @@ abstract final class AppAlert {
     BuildContext? context,
   }) async {
     await _closeActiveAlert();
-    final targetContext = context ?? Get.overlayContext ?? Get.context;
-    if (targetContext == null || !targetContext.mounted) return;
+    if (Get.isBottomSheetOpen == true) {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    // ignore: use_build_context_synchronously
+    final targetContext = _findValidContext(context);
+    if (targetContext == null || !targetContext.mounted) {
+      toast(message: message);
+      return;
+    }
     final disableAnimations =
+        // ignore: use_build_context_synchronously
         MediaQuery.maybeOf(targetContext)?.disableAnimations ?? false;
     try {
       await showGeneralDialog<void>(
+        // ignore: use_build_context_synchronously
         context: targetContext,
         barrierDismissible: false,
         barrierLabel: 'common.alert_dialog'.tr,
@@ -282,6 +337,8 @@ abstract final class AppAlert {
           );
         },
       );
+    } catch (_) {
+      toast(message: message);
     } finally {
       _activeDialogContext = null;
     }
@@ -482,7 +539,13 @@ class _AppActionAlertOverlay extends StatelessWidget {
                   namesRoute: true,
                   explicitChildNodes: true,
                   label:
-                      '${isWarning ? 'Warning' : isInfo ? 'Information' : isSuccess ? 'Success' : 'Error'}: '
+                      '${isWarning
+                          ? 'Warning'
+                          : isInfo
+                              ? 'Information'
+                              : isSuccess
+                                  ? 'Success'
+                                  : 'Error'}: '
                       '$localizedTitle. $localizedMessage',
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 400),

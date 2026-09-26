@@ -7,6 +7,7 @@ import 'package:nhamhealth_flutter/app/modules/models/recipes/community_recipe.d
 import 'package:nhamhealth_flutter/app/modules/providers/favorites/favorites_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/repositories/favorites/favorites_repository.dart';
 import 'package:nhamhealth_flutter/app/modules/views/favorites/favorites_view.dart';
+import 'package:nhamhealth_flutter/app/modules/views/favorites/saved_posts_view.dart';
 import 'package:nhamhealth_flutter/app/theme/app_theme.dart';
 import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
@@ -198,7 +199,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('switches to posts tab and renders constrained list on tablet', (
+  testWidgets('renders constrained list on tablet in saved posts view', (
     tester,
   ) async {
     // 800 x 1280 tablet
@@ -209,17 +210,20 @@ void main() {
     final controller = FavoritesController(repository: _FakeFavoritesRepository());
     Get.put<FavoritesController>(controller);
 
-    await tester.pumpWidget(createFavoritesApp());
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    // Tap the posts tab
-    await tester.tap(find.text('Posts'));
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: AppTheme.light,
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        home: const SavedPostsView(),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(
-      find.byKey(const ValueKey<String>('favorites-posts-list')),
+      find.byKey(const ValueKey<String>('saved-posts-list')),
       findsOneWidget,
     );
     expect(find.text('Healthy Khmer Soup'), findsOneWidget);

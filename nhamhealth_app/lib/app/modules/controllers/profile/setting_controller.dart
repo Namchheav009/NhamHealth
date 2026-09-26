@@ -57,6 +57,10 @@ class SettingsController extends GetxController {
     );
   }
 
+  void openSavedPosts() {
+    Get.toNamed<void>(AppRoutes.savedPosts);
+  }
+
   void selectBottomMenu(int index) {
     switch (index) {
       case 0:

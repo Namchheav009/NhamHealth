@@ -3,10 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/services/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../translations/localized_text.dart';
@@ -17,11 +15,8 @@ import '../../models/community/community_post.dart';
 import '../../models/community/community_post_draft.dart';
 import '../../models/community/community_tag.dart';
 import '../../models/community/ingredient_suggestion.dart';
-import '../../models/favorites/favorite_food.dart';
 import '../../models/meals/meal_category_model.dart';
-import '../../providers/favorites/favorites_provider.dart';
 import '../../repositories/community/community_repository.dart';
-import '../../repositories/favorites/favorites_repository.dart';
 
 class CommunityPostEditorPage extends StatefulWidget {
   const CommunityPostEditorPage({
@@ -78,7 +73,6 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
   bool _categoriesLoading = true;
   bool _showValidation = false;
   bool _creatingTag = false;
-  FavoriteFood? _selectedFavoriteFood;
   String? _tagsError;
   String? _categoriesError;
   late int _currentStep;
@@ -178,170 +172,12 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
       if (mounted) {
         setState(() {
           _mealCategories = value;
-          _selectMatchingFavoriteCategory();
         });
       }
     } on Object catch (error) {
       if (mounted) setState(() => _categoriesError = error.toString());
     } finally {
       if (mounted) setState(() => _categoriesLoading = false);
-    }
-  }
-
-  Future<void> _chooseFavoriteFood() async {
-    final repository =
-        Get.isRegistered<FavoritesRepository>()
-            ? Get.find<FavoritesRepository>()
-            : FavoritesRepository(
-              provider: FavoritesProvider(authService: Get.find<AuthService>()),
-            );
-    final food = await showModalBottomSheet<FavoriteFood>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder:
-          (sheetContext) => SafeArea(
-            child: SizedBox(
-              height: MediaQuery.sizeOf(sheetContext).height * .62,
-              child: FutureBuilder<List<FavoriteFood>>(
-                future: repository.getFoods(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final foods = snapshot.data ?? const <FavoriteFood>[];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                        child: Text(
-                          'community.choose_favorite_food'.tr,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child:
-                            snapshot.hasError
-                                ? Center(
-                                  child: Text(
-                                    'community.favorite_foods_load_failed'.tr,
-                                    style: TextStyle(
-                                      color: context.appMutedText,
-                                    ),
-                                  ),
-                                )
-                                : foods.isEmpty
-                                ? Center(
-                                  child: Text(
-                                    'common.no_favorite_foods_yet'.tr,
-                                    style: TextStyle(
-                                      color: context.appMutedText,
-                                    ),
-                                  ),
-                                )
-                                : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    16,
-                                    0,
-                                    16,
-                                    20,
-                                  ),
-                                  itemCount: foods.length,
-                                  separatorBuilder:
-                                      (_, _) => const SizedBox(height: 8),
-                                  itemBuilder: (context, index) {
-                                    final item = foods[index];
-                                    return ListTile(
-                                      onTap: () => Navigator.pop(context, item),
-                                      tileColor: context.appSubtleSurface,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        side: BorderSide(
-                                          color: context.appBorder,
-                                        ),
-                                      ),
-                                      leading: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: SizedBox.square(
-                                          dimension: 48,
-                                          child:
-                                              item.image.isEmpty
-                                                  ? const Icon(
-                                                    Icons.restaurant_rounded,
-                                                    color: green,
-                                                  )
-                                                  : Image.network(
-                                                    item.image,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder:
-                                                        (_, _, _) => const Icon(
-                                                          Icons
-                                                              .restaurant_rounded,
-                                                          color: green,
-                                                        ),
-                                                  ),
-                                        ),
-                                      ),
-                                      title: Text(
-                                        item.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      subtitle: Text('${item.calories} kcal'),
-                                      trailing: const Icon(
-                                        Icons.add_circle_rounded,
-                                        color: green,
-                                      ),
-                                    );
-                                  },
-                                ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-    );
-    if (food == null || !mounted) return;
-
-    Uint8List? imageBytes;
-    final imageUri = Uri.tryParse(food.image);
-    if (imageUri != null && imageUri.hasScheme) {
-      try {
-        final response = await http.get(imageUri);
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          imageBytes = response.bodyBytes;
-        }
-      } on Object {
-        // The food details can still be used if its image cannot be copied.
-      }
-    }
-    if (!mounted) return;
-    _description.text = food.name;
-    setState(() {
-      _selectedFavoriteFood = food;
-      if (imageBytes != null) _images.add(imageBytes);
-      _selectMatchingFavoriteCategory();
-    });
-  }
-
-  void _selectMatchingFavoriteCategory() {
-    final favorite = _selectedFavoriteFood;
-    if (favorite == null) return;
-    for (final category in _mealCategories) {
-      if (category.name.trim().toLowerCase() ==
-          favorite.category.trim().toLowerCase()) {
-        _selectedCategoryId = category.id;
-        return;
-      }
     }
   }
 
@@ -1624,44 +1460,7 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
 
   Widget _bottomActions(BuildContext context) {
     if (_currentStep == 0) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _navigationButton(),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton(
-              key: const ValueKey('community-continue-button-0'),
-              onPressed: _submitting ? null : _submit,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: green,
-                side: BorderSide(color: green.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    widget.post == null
-                        ? 'community.post_meal'.tr
-                        : 'common.save_changes'.tr,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.check_rounded, size: 18),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
+      return _navigationButton();
     }
     return _primaryActionButton(
       buttonKey: ValueKey('community-continue-button-$_currentStep'),
@@ -1999,64 +1798,22 @@ class _CommunityPostEditorPageState extends State<CommunityPostEditorPage> {
     );
   }
 
-  Widget _step1Header() => Row(
+  Widget _step1Header() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'community.share_your_meal'.tr,
-              style: TextStyle(
-                color: context.appText,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'community.basic_info_help'.tr,
-              style: TextStyle(color: context.appMutedText, fontSize: 12),
-            ),
-          ],
+      Text(
+        'community.share_your_meal'.tr,
+        style: TextStyle(
+          color: context.appText,
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      if (widget.post == null) ...[
-        const SizedBox(width: 8),
-        Material(
-          color: context.appSoftGreen,
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            onTap: _submitting ? null : _chooseFavoriteFood,
-            borderRadius: BorderRadius.circular(20),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.bookmark_outline_rounded,
-                    size: 16,
-                    color: green,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    _selectedFavoriteFood?.name ??
-                        'community.prefill_from_favorites_short'.tr,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+      const SizedBox(height: 2),
+      Text(
+        'community.basic_info_help'.tr,
+        style: TextStyle(color: context.appMutedText, fontSize: 12),
+      ),
     ],
   );
 

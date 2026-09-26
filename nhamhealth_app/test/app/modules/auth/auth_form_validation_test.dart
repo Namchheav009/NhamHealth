@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/auth/login_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/auth/register_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/models/auth/login_request.dart';
@@ -10,10 +11,21 @@ import 'package:nhamhealth_flutter/app/modules/views/auth/forgot_password_view.d
 import 'package:nhamhealth_flutter/app/modules/views/auth/reset_password_view.dart';
 import 'package:nhamhealth_flutter/app/modules/views/auth/widgets/password_field.dart';
 import 'package:nhamhealth_flutter/app/theme/app_colors.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    Get.testMode = true;
+    Get.addTranslations(AppTranslations().keys);
+    Get.locale = const Locale('en', 'US');
+  });
+
+  tearDown(() {
+    Get.reset();
+  });
 
   group('authentication form validation', () {
     test('sign in marks missing identifier and password fields', () async {

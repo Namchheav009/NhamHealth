@@ -22,6 +22,11 @@ class CommunityRecipe {
     this.publishedAt,
     this.createdAt,
     this.updatedAt,
+    this.likes = 5,
+    this.comments = 3,
+    this.shares = 4,
+    this.role = 'USER',
+    this.isFollowing = true,
   });
   final int id;
   final String name,
@@ -32,8 +37,11 @@ class CommunityRecipe {
       aiStatus,
       aiReviewReason,
       authorName,
-      authorAvatarUrl;
+      authorAvatarUrl,
+      role;
   final int? cookingTimeMinutes, servings, postId, mealId;
+  final int likes, comments, shares;
+  final bool isFollowing;
   final List<String> tags;
   final DateTime? publishedAt, createdAt, updatedAt;
   final List<RecipeIngredient> ingredients;
@@ -58,6 +66,11 @@ class CommunityRecipe {
     aiReviewReason: '${json['aiReviewReason'] ?? ''}',
     authorName: '${json['authorName'] ?? ''}',
     authorAvatarUrl: '${json['authorAvatarUrl'] ?? ''}',
+    role: (json['role'] as String? ?? 'USER').trim(),
+    likes: (json['likes'] as num?)?.toInt() ?? 5,
+    comments: (json['comments'] as num?)?.toInt() ?? 3,
+    shares: (json['shares'] as num?)?.toInt() ?? 4,
+    isFollowing: json['isFollowing'] as bool? ?? true,
     tags: (json['tags'] as List<dynamic>? ?? const [])
         .map((tag) => '$tag')
         .toList(growable: false),

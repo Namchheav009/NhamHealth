@@ -332,7 +332,9 @@ const Map<String, String> profileEn = {
   'profile.password_security_description':
       'PIN, fingerprint, Face ID and password',
   'profile.favorites': 'Favorites',
-  'profile.favorites_description': 'View your saved meals and posts',
+  'profile.favorites_description': 'View your saved meals',
+  'profile.saved_posts': 'Saved posts',
+  'profile.saved_posts_description': 'View posts you saved for later',
   'profile.appearance_2': 'Appearance',
   'profile.appearance_description': 'Choose system, light, or dark appearance',
   'profile.theme_system': 'System default',

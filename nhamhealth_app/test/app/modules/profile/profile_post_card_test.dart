@@ -5,6 +5,7 @@ import 'package:nhamhealth_flutter/config/api_config.dart';
 import 'package:nhamhealth_flutter/app/modules/models/community/community_post.dart';
 import 'package:nhamhealth_flutter/app/modules/views/community/widgets/community_shared_post_card.dart';
 import 'package:nhamhealth_flutter/app/modules/views/profile/widgets/profile_post_card.dart';
+import 'package:nhamhealth_flutter/app/translations/app_translations.dart';
 
 void main() {
   for (final width in <double>[320, 381]) {
@@ -234,6 +235,92 @@ void main() {
     await tester.tap(find.text('Original food post'));
     await tester.pump();
     expect(didTapSharedPost, isTrue);
+  });
+
+  testWidgets('profile post options sheet shows Save to favorites and triggers onFavorite', (
+    tester,
+  ) async {
+    var didTapFavorite = false;
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Scaffold(
+          body: ProfilePostCard(
+            post: CommunityPost(
+              id: '10',
+              description: 'Profile post description',
+              imageUrl: '',
+              author: 'Ron Namchheav',
+              role: 'Member',
+              isSaved: false,
+            ),
+            showFavoriteButton: false,
+            onEdit: _noop,
+            onDelete: _noop,
+            onLike: _noop,
+            onComment: _noop,
+            onShare: _noop,
+            onFavorite: () => didTapFavorite = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap more options
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Post options'), findsOneWidget);
+    expect(find.text('Save to favorites'), findsOneWidget);
+    expect(find.text('Edit post'), findsOneWidget);
+    expect(find.text('Delete post'), findsOneWidget);
+
+    await tester.tap(find.text('Save to favorites'));
+    await tester.pumpAndSettle();
+
+    expect(didTapFavorite, isTrue);
+  });
+
+  testWidgets('profile post options sheet shows Remove from favorites when already saved', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        home: Scaffold(
+          body: ProfilePostCard(
+            post: CommunityPost(
+              id: '11',
+              description: 'Saved profile post',
+              imageUrl: '',
+              author: 'Ron Namchheav',
+              role: 'Member',
+              isSaved: true,
+            ),
+            showFavoriteButton: false,
+            onEdit: _noop,
+            onDelete: _noop,
+            onLike: _noop,
+            onComment: _noop,
+            onShare: _noop,
+            onFavorite: _noop,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Post options'), findsOneWidget);
+    expect(find.text('Remove from favorites'), findsOneWidget);
+    expect(find.text('Edit post'), findsOneWidget);
+    expect(find.text('Delete post'), findsOneWidget);
   });
 }
 

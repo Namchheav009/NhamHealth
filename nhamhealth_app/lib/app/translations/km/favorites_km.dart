@@ -11,4 +11,11 @@ const Map<String, String> favoritesKm = {
   'favorites.category_category': 'ប្រភេទ @category',
   'favorites.filter_by_category': 'តម្រងតាមប្រភេទ',
   'favorites.filter_by_post': 'តម្រងការបង្ហោះ',
+  'favorites.filter_by_time': 'តម្រងតាមពេលវេលា',
+  'favorites.saved_to_favorites': 'បានរក្សាទុកជាចំណូលចិត្ត',
+  'favorites.removed_from_favorites': 'បានលុបចេញពីចំណូលចិត្ត',
+  'favorites.post_saved_to_favorites': 'បានរក្សាទុកការបង្ហោះជាចំណូលចិត្ត',
+  'favorites.post_removed_from_favorites': 'បានលុបការបង្ហោះចេញពីចំណូលចិត្ត',
+  'favorites.remove_post_from_favorites':
+      'តើអ្នកចង់លុបការបង្ហោះនេះពីចំណូលចិត្តរបស់អ្នកដែរឬទេ?',
 };

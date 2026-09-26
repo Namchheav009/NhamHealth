@@ -44,6 +44,8 @@ const Map<String, String> commonEn = {
   'common.no_favorite_foods_yet': 'No favorite foods yet',
   'common.remove_from_favorites': 'Remove from favorites',
   'common.add_to_favorites': 'Save to favorites',
+  'common.saved_to_favorites': 'Saved to favorites',
+  'common.removed_from_favorites': 'Removed from favorites',
   'common.try_again': 'Try again',
   'common.food_detail': 'Food Detail',
   'common.cooking_time': 'Cooking time',

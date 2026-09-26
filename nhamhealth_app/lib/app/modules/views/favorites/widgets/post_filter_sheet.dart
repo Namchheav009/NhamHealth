@@ -79,21 +79,12 @@ class _PostFilterSheetState extends State<PostFilterSheet> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'favorites.filter_by_post'.tr,
+                  'favorites.filter_by_time'.tr,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed:
-                    selectedSort == FavoritePostSort.newest
-                        ? null
-                        : () => setState(
-                          () => selectedSort = FavoritePostSort.newest,
-                        ),
-                child: Text('common.reset'.tr),
               ),
             ],
           ),
@@ -102,7 +93,7 @@ class _PostFilterSheetState extends State<PostFilterSheet> {
             children: [
               Expanded(
                 child: _SortOption(
-                  label: 'favorites.new'.tr,
+                  label: 'favorites.newest'.tr,
                   selected: selectedSort == FavoritePostSort.newest,
                   onTap:
                       () => setState(

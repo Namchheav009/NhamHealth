@@ -130,7 +130,6 @@ const Map<String, String> communityEn = {
   'community.meal_name': 'Meal name',
   'community.meal_name_required': 'Meal name is required.',
   'community.categories_load_error': 'Meal categories could not be loaded.',
-  'community.prefill_from_favorites_short': 'Prefill from favorites',
   'community.ingredients_help':
       'Optional — add them if you want to share the full recipe.',
   'community.optional': 'Optional',
@@ -178,11 +177,6 @@ const Map<String, String> communityEn = {
   'community.clear_all': 'Clear all',
   'community.new_meal': 'New meal',
   'community.edit_meal': 'Edit meal',
-  'community.choose_favorites': 'Choose from favorites',
-  'community.prefill_from_favorites':
-      'Prefill this post with one of your saved foods',
-  'community.favorite_selected_help':
-      'Food details added — tap to choose another',
   'community.new_meal_available':
       'Your post is available in Community and is waiting for admin approval before it appears in Meals.',
   'community.report_submitted': 'Report submitted',
@@ -278,8 +272,6 @@ const Map<String, String> communityEn = {
   'community.write_a_comment': 'Write a comment...',
   'community.write_a_reply': 'Write a reply...',
   'community.send': 'Send',
-  'community.choose_favorite_food': 'Choose a favorite food',
-  'community.favorite_foods_load_failed': 'Unable to load favorite foods.',
   'community.post_prompt': 'Say something...',
   'community.add_emoji': 'Add emoji',
   'community.audience': 'Audience',

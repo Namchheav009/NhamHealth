@@ -210,6 +210,8 @@ class ProfileView extends GetView<ProfileController> {
                           membership: controller.membership.value,
                           onEdit: () => _showEditPost(post),
                           onDelete: () => _confirmDeletePost(post),
+                          onFavorite: () => controller.togglePostSaved(post),
+                          showFavoriteButton: false,
                           onViewDetails: () => _showComments(post),
                           onLike: () => controller.togglePostLike(post),
                           onShowLikes:

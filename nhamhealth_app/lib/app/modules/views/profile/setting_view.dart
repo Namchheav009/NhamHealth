@@ -313,6 +313,13 @@ class SettingsView extends GetView<SettingsController> {
           subtitle: 'profile.favorites_description'.tr,
           onTap: controller.openFavorites,
         ),
+        _divider(context),
+        _SettingsItem(
+          icon: Icons.bookmark_outline_rounded,
+          title: 'profile.saved_posts'.tr,
+          subtitle: 'profile.saved_posts_description'.tr,
+          onTap: controller.openSavedPosts,
+        ),
       ],
     );
   }
