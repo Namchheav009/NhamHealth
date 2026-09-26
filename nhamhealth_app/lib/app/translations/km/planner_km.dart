@@ -637,4 +637,57 @@ const Map<String, String> plannerKm = {
   'planner.water_glasses_count': '@count ក្នុងចំណោម @total កែវ (@ml ម.ល)',
   'planner.water_goal_reached': 'អ្នកបានសម្រេចគោលដៅញ៉ាំទឹកប្រចាំថ្ងៃហើយ! 💧',
   'planner.water_glass_unit': 'កែវ',
+  'planner.weight_shift_confirmation': 'ការបញ្ជាក់ការប្រែប្រួលទម្ងន់',
+  'planner.weight_trajectory': 'ដំណើរប្រែប្រួលទម្ងន់',
+  'planner.weight_shift_loss': 'ការរំពឹងទុកសម្រកទម្ងន់ @amount គ.ក្រ',
+  'planner.weight_shift_gain': 'ការរំពឹងទុកឡើងទម្ងន់ @amount គ.ក្រ',
+  'planner.weight_shift_maintain': 'រក្សាទម្ងន់ឱ្យនៅថេរ (មិនប្រែប្រួលខ្លាំង)',
+  'planner.weight_shift_small_loss_note':
+      'ការសម្រកទម្ងន់បន្តិចម្តងៗ (@amount គ.ក្រ) ជួយការពារសាច់ដុំ និងរក្សាសុខភាពល្អយូរអង្វែង។',
+  'planner.weight_shift_steady_loss_note':
+      'ការសម្រកទម្ងន់ជាប្រចាំ (@amount គ.ក្រ) ក្នុងកម្រិតសមស្រប និងមានប្រសិទ្ធភាពខ្ពស់។',
+  'planner.weight_shift_small_gain_note':
+      'ការឡើងទម្ងន់បន្តិចម្តងៗ (@amount គ.ក្រ) ជួយឱ្យរាងកាយសម្របខ្លួនបានល្អទៅនឹងកាឡូរីបន្ថែម។',
+  'planner.weight_shift_steady_gain_note':
+      'ការឡើងទម្ងន់ជាប្រចាំ (@amount គ.ក្រ) ជួយគាំទ្រដល់ការកើនឡើងសាច់ដុំ និងកម្លាំង។',
+  'planner.weight_shift_maintain_note':
+      'កាឡូរី និងសារធាតុចិញ្ចឹមមានតុល្យភាពល្អ ជួយរក្សាទម្ងន់បច្ចុប្បន្នឱ្យនៅថេរ។',
+  'planner.lifestyle_tips_title': 'ការណែនាំរស់នៅប្រចាំថ្ងៃ',
+  'planner.lifestyle_tips_subtitle': 'ទម្លាប់ងាយៗសម្រាប់ការរស់នៅជាក់ស្តែង',
+  'planner.lifestyle_loss_tip1_title': 'ផឹកទឹក ១ កែវមុនពេលបាយ ១៥-៣០ នាទី',
+  'planner.lifestyle_loss_tip1_desc':
+      'ផឹកទឹកឱ្យបាន ២-២.៥ លីត្រក្នុងមួយថ្ងៃ ជួយកាត់បន្ថយការឃ្លានអាហារផ្ដេសផ្ដាស និងជួយប្រព័ន្ធរំលាយអាហារ។',
+  'planner.lifestyle_loss_tip2_title': 'ញ៉ាំបន្លែ និងប្រូតេអ៊ីនមុនគេ',
+  'planner.lifestyle_loss_tip2_desc':
+      'ចាប់ផ្តើមអាហារដោយស៊ុប បន្លែ ឬសាច់មុនបាយ ដើម្បីឱ្យឆាប់ឆ្អែតបានយូរ និងទប់កម្រិតជាតិស្ករក្នុងឈាម។',
+  'planner.lifestyle_loss_tip3_title': 'កុំអត់អាហារ ឬរំលងពេលបាយ',
+  'planner.lifestyle_loss_tip3_desc':
+      'កាត់បន្ថយបរិមាណបន្តិចម្តងៗប្រសើរជាងការអត់អាហារ ព្រោះការអត់អាហារនាំឱ្យបាត់បង់សាច់ដុំ និងឃ្លានខ្លាំងនៅពេលក្រោយ។',
+  'planner.lifestyle_loss_tip4_title': 'គេងឱ្យបានគ្រប់គ្រាន់ ៧-៨ ម៉ោង',
+  'planner.lifestyle_loss_tip4_desc':
+      'ការគេងមិនគ្រប់គ្រាន់ ឬគេងយប់ជ្រៅ ធ្វើឱ្យអ័រម៉ូនឃ្លានកើនឡើង និងចង់ញ៉ាំអាហារផ្អែម ឬអាហារយប់ជ្រៅ។',
+  'planner.lifestyle_gain_tip1_title': 'បន្ថែមអាហារសម្រន់សុខភាព ២-៣ ដង',
+  'planner.lifestyle_gain_tip1_desc':
+      'ញ៉ាំគ្រាប់ធញ្ញជាតិ ចេក អាវ៉ូកាដូ ដំឡូងជ្វា ឬទឹកសណ្តែករវាងពេលបាយ ដើម្បីបន្ថែមថាមពលប្រកបដោយគុណភាព។',
+  'planner.lifestyle_gain_tip2_title': 'បន្ថែមប្រូតេអ៊ីនគ្រប់ពេលបាយ',
+  'planner.lifestyle_gain_tip2_desc':
+      'បញ្ចូលស៊ុត សាច់ ត្រី ឬតៅហ៊ូ ដើម្បីឱ្យទម្ងន់ដែលឡើងជាសាច់ដុំ មិនមែនជាខ្លាញ់មិនល្អ។',
+  'planner.lifestyle_gain_tip3_title': 'បែងចែកជាអាហារតូចៗ ៤-៥ ពេល',
+  'planner.lifestyle_gain_tip3_desc':
+      'ប្រសិនបើញ៉ាំច្រើនក្នុងពេលតែមួយមានអារម្មណ៍ថាឆ្អល់ ឬពិបាក សូមប្តូរមកញ៉ាំតិចៗតែញឹកញាប់វិញ។',
+  'planner.lifestyle_gain_tip4_title': 'ចៀសវាងផឹកទឹកច្រើនមុនញ៉ាំបាយភ្លាមៗ',
+  'planner.lifestyle_gain_tip4_desc':
+      'កុំផឹកទឹកពេញពោះមុនពេលញ៉ាំបាយ ដើម្បីកុំឱ្យឆ្អែតទឹកពេក និងញ៉ាំអាហារមិនបានគ្រប់គ្រាន់។',
+  'planner.lifestyle_maintain_tip1_title': 'រូបមន្តចានអាហារមានតុល្យភាព (៥០-២៥-២៥)',
+  'planner.lifestyle_maintain_tip1_desc':
+      'បន្លែ ៥០%, ប្រូតេអ៊ីន ២៥%, និងកាបូអ៊ីដ្រាត ២៥% ក្នុងមួយចាន ដើម្បីរក្សាថាមពលពេញមួយថ្ងៃ។',
+  'planner.lifestyle_maintain_tip2_title': 'ធ្វើចលនារាងកាយឱ្យបានរាល់ថ្ងៃ',
+  'planner.lifestyle_maintain_tip2_desc':
+      'ដើរយ៉ាងហោចណាស់ ៣០ នាទី ឬ ៧,០០០ ជំហានក្នុងមួយថ្ងៃ ដើម្បីរក្សាការដុតបំផ្លាញថាមពលឱ្យនៅថេរ។',
+  'planner.lifestyle_maintain_tip3_title': 'រក្សាពេលញ៉ាំអាហារឱ្យទៀងទាត់',
+  'planner.lifestyle_maintain_tip3_desc':
+      'ញ៉ាំអាហារតាមម៉ោងទៀងទាត់ និងកាត់បន្ថយភេសជ្ជៈផ្អែម ដើម្បីរក្សាតុល្យភាពជាតិស្ករក្នុងឈាម។',
+  'planner.lifestyle_maintain_tip4_title': 'ផឹកទឹក និងគេងឱ្យទៀងទាត់',
+  'planner.lifestyle_maintain_tip4_desc':
+      'ផឹកទឹកយ៉ាងហោចណាស់ ២ លីត្រ និងគេង ៧-៨ ម៉ោង ដើម្បីសុខភាព និងការស្តារថាមពលឡើងវិញ។',
 };

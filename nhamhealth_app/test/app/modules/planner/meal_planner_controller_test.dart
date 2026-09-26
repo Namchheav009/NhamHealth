@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:nhamhealth_flutter/app/modules/controllers/planner/meal_planner_controller.dart';
 import 'package:nhamhealth_flutter/app/modules/models/planner/ai_meal_recommendation_model.dart';
 import 'package:nhamhealth_flutter/app/modules/models/planner/meal_plan.dart';
+import 'package:nhamhealth_flutter/app/modules/models/profile/profile_dashboard_model.dart';
 import 'package:nhamhealth_flutter/app/modules/providers/planner/meal_planner_provider.dart';
 import 'package:nhamhealth_flutter/app/modules/views/planner/planner_shared.dart';
 import 'package:nhamhealth_flutter/core/services/auth_service.dart';
@@ -86,6 +87,58 @@ void main() {
     ]);
     return controller;
   }
+
+  group('BMI-linked weight goal', () {
+    ProfileDashboardModel profile({
+      required double heightCm,
+      required double weightKg,
+      int age = 28,
+    }) => ProfileDashboardModel(
+      userId: 1,
+      email: 'user@example.com',
+      age: age,
+      heightCm: heightCm,
+      weightKg: weightKg,
+    );
+
+    test('overweight BMI recommends weight loss', () {
+      final goal = MealPlannerController.recommendedHealthGoalForProfile(
+        profile(heightCm: 170, weightKg: 76.3),
+      );
+
+      expect(goal, MealPlannerHealthGoal.loseWeight);
+    });
+
+    test('healthy BMI recommends maintenance', () {
+      final goal = MealPlannerController.recommendedHealthGoalForProfile(
+        profile(heightCm: 170, weightKg: 65),
+      );
+
+      expect(goal, MealPlannerHealthGoal.maintainHealth);
+    });
+
+    test('underweight BMI recommends weight gain', () {
+      final goal = MealPlannerController.recommendedHealthGoalForProfile(
+        profile(heightCm: 170, weightKg: 50),
+      );
+
+      expect(goal, MealPlannerHealthGoal.gainWeight);
+    });
+
+    test('minor and pregnancy safety override weight loss', () {
+      final minorGoal = MealPlannerController.recommendedHealthGoalForProfile(
+        profile(heightCm: 170, weightKg: 80, age: 16),
+      );
+      final protectedGoal =
+          MealPlannerController.recommendedHealthGoalForProfile(
+            profile(heightCm: 170, weightKg: 80),
+            medicalFlags: const {'PREGNANT_OR_BREASTFEEDING'},
+          );
+
+      expect(minorGoal, MealPlannerHealthGoal.maintainHealth);
+      expect(protectedGoal, MealPlannerHealthGoal.maintainHealth);
+    });
+  });
 
   test(
     'planner keeps daily meals separate and builds a unique grocery list',

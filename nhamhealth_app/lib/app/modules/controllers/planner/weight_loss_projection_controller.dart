@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/auth_service.dart';
@@ -8,13 +10,19 @@ import '../../../widgets/app_alert.dart';
 import '../../models/planner/meal_plan.dart';
 import '../../models/planner/weight_loss_forecast_model.dart';
 import '../../providers/planner/meal_planner_provider.dart';
+import '../profile/profile_controller.dart';
 import 'meal_planner_controller.dart';
 
 class WeightLossProjectionController extends GetxController {
-  WeightLossProjectionController({MealPlannerProvider? provider})
-    : _provider = provider;
+  WeightLossProjectionController({
+    MealPlannerProvider? provider,
+    FlutterSecureStorage? storage,
+  }) : _provider = provider,
+       _storage = storage ?? const FlutterSecureStorage();
 
   final MealPlannerProvider? _provider;
+  final FlutterSecureStorage _storage;
+  static const _forecastCacheKey = 'meal_planner_weight_goal_forecast';
 
   final selectedTimeframeDays = 30.obs;
   final forecast = Rxn<WeightLossForecast>();
@@ -31,6 +39,8 @@ class WeightLossProjectionController extends GetxController {
   Worker? _weekOffsetWorker;
   Worker? _startDateWorker;
   Worker? _planDaysWorker;
+  Worker? _weightWorker;
+  Worker? _heightWorker;
   bool _forecastRefreshQueued = false;
   int _forecastRequestId = 0;
 
@@ -59,7 +69,79 @@ class WeightLossProjectionController extends GetxController {
         (_) => _scheduleForecastRefresh(),
       );
     }
-    unawaited(loadForecast());
+    if (Get.isRegistered<ProfileController>()) {
+      final profile = Get.find<ProfileController>();
+      _weightWorker = ever<double>(
+        profile.weight,
+        (_) => _scheduleForecastRefresh(),
+      );
+      _heightWorker = ever<double>(
+        profile.height,
+        (_) => _scheduleForecastRefresh(),
+      );
+    }
+    unawaited(_restoreForecastThenRefresh());
+  }
+
+  Future<void> _restoreForecastThenRefresh() async {
+    await _restoreForecast();
+    await loadForecast();
+  }
+
+  Future<String> _userForecastKey() async {
+    try {
+      final auth =
+          Get.isRegistered<AuthService>() ? Get.find<AuthService>() : null;
+      final token = await auth?.readAccessToken();
+      if (token != null && token.isNotEmpty) {
+        final parts = token.split('.');
+        if (parts.length >= 2) {
+          final decoded = utf8.decode(
+            base64Url.decode(base64Url.normalize(parts[1])),
+          );
+          final payload = jsonDecode(decoded);
+          if (payload is Map) {
+            final userId = payload['userId'] ?? payload['id'] ?? payload['sub'];
+            if (userId != null) return '${_forecastCacheKey}_$userId';
+          }
+        }
+      }
+    } catch (_) {
+      // Fall back to the legacy key when authentication data is unavailable.
+    }
+    return _forecastCacheKey;
+  }
+
+  Future<void> _restoreForecast() async {
+    try {
+      final raw = await _storage.read(key: await _userForecastKey());
+      if (raw == null || raw.isEmpty) return;
+      final payload = jsonDecode(raw);
+      if (payload is! Map) return;
+      final cached = WeightLossForecast.fromJson(
+        Map<String, dynamic>.from(payload),
+      );
+      forecast.value = cached;
+      goalForecastCache.value = cached;
+      activeAnalysisGoal.value = switch (cached.resolvedWeightDirection) {
+        'GAIN' => MealPlannerHealthGoal.gainWeight,
+        'MAINTAIN' => MealPlannerHealthGoal.maintainHealth,
+        _ => MealPlannerHealthGoal.loseWeight,
+      };
+    } catch (_) {
+      // A corrupt or unavailable cache must not block a live forecast.
+    }
+  }
+
+  Future<void> _persistForecast(WeightLossForecast value) async {
+    try {
+      await _storage.write(
+        key: await _userForecastKey(),
+        value: jsonEncode(value.toJson()),
+      );
+    } catch (_) {
+      // The live result remains usable when local secure storage is unavailable.
+    }
   }
 
   @override
@@ -68,6 +150,8 @@ class WeightLossProjectionController extends GetxController {
     _weekOffsetWorker?.dispose();
     _startDateWorker?.dispose();
     _planDaysWorker?.dispose();
+    _weightWorker?.dispose();
+    _heightWorker?.dispose();
     super.onClose();
   }
 
@@ -121,18 +205,19 @@ class WeightLossProjectionController extends GetxController {
         requiresProfileReview.value = false;
         forecast.value = result;
         goalForecastCache.value = result;
+        unawaited(_persistForecast(result));
       }
     } on MealPlannerProviderException catch (e) {
       if (requestId == _forecastRequestId) {
         errorMessage.value = e.message;
         requiresProfileReview.value = e.statusCode == 400;
-        forecast.value = null;
+        // Keep the last saved analysis available for offline/later viewing.
       }
     } catch (_) {
       if (requestId == _forecastRequestId) {
         errorMessage.value = 'planner.forecast_unavailable'.tr;
         requiresProfileReview.value = false;
-        forecast.value = null;
+        // Keep the last saved analysis available for offline/later viewing.
       }
     } finally {
       if (requestId == _forecastRequestId) isLoading.value = false;

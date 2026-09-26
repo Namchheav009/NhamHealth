@@ -75,11 +75,20 @@ void main() {
     expect(find.text('Daily Deficit'), findsOneWidget);
     expect(find.text('BMI 26.2'), findsOneWidget);
     expect(find.text('Focus on gradual weight loss'), findsOneWidget);
+    expect(find.byKey(const ValueKey('weight-goal-bmi-context')), findsNothing);
+    expect(find.text('Your health context'), findsNothing);
+    expect(find.byKey(const ValueKey('saved-plan-details-card')), findsNothing);
+    await tester.tap(
+      find.byKey(const ValueKey('gemini-analysis-topbar-button')),
+    );
+    await tester.pumpAndSettle();
     expect(
-      find.byKey(const ValueKey('weight-goal-bmi-context')),
+      find.byKey(const ValueKey('planner-autofill-success-sheet')),
       findsOneWidget,
     );
-    expect(find.text('Why this goal is recommended'), findsOneWidget);
+    expect(find.text('Plan details'), findsWidgets);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
     expect(find.text('Focus on gradual weight loss'), findsOneWidget);
     expect(find.text('Calorie deficit'), findsNothing);
     expect(find.text('Protein focus'), findsNothing);

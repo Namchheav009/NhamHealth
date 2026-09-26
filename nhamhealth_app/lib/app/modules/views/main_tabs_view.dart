@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../widgets/main_tab_scope.dart';
 import '../controllers/home/home_controller.dart';
 import '../controllers/planner/meal_planner_controller.dart';
+import '../controllers/planner/weight_loss_projection_controller.dart';
 import 'community/community_page.dart';
 import 'home/home_view.dart';
 import 'meals/meal_view.dart';
@@ -37,9 +38,18 @@ class _MainTabsViewState extends State<MainTabsView> {
     });
     if (index == 0 && Get.isRegistered<HomeController>()) {
       unawaited(Get.find<HomeController>().loadDashboard(showLoading: false));
-    } else if (index == 2 && Get.isRegistered<MealPlannerController>()) {
-      final planner = Get.find<MealPlannerController>();
-      unawaited(planner.loadDailyNutrition(planner.selectedDate));
+    } else if (index == 2) {
+      if (Get.isRegistered<MealPlannerController>()) {
+        final planner = Get.find<MealPlannerController>();
+        unawaited(planner.loadDailyNutrition(planner.selectedDate));
+      }
+      if (Get.isRegistered<WeightLossProjectionController>()) {
+        unawaited(
+          Get.find<WeightLossProjectionController>().loadForecast(
+            forceRefresh: true,
+          ),
+        );
+      }
     }
   }
 

@@ -337,16 +337,11 @@ class MealPlannerController extends GetxController {
       (dailyDashboard.value?.calories?.goal ?? 2000.0).round();
   double get totalProtein =>
       dailyDashboard.value?.protein?.current ?? eatenProtein;
-  double get totalProteinGoal =>
-      dailyDashboard.value?.protein?.goal ?? 120.0;
-  double get totalCarbs =>
-      dailyDashboard.value?.carbs?.current ?? eatenCarbs;
-  double get totalCarbsGoal =>
-      dailyDashboard.value?.carbs?.goal ?? 205.0;
-  double get totalFat =>
-      dailyDashboard.value?.fat?.current ?? eatenFat;
-  double get totalFatGoal =>
-      dailyDashboard.value?.fat?.goal ?? 78.0;
+  double get totalProteinGoal => dailyDashboard.value?.protein?.goal ?? 120.0;
+  double get totalCarbs => dailyDashboard.value?.carbs?.current ?? eatenCarbs;
+  double get totalCarbsGoal => dailyDashboard.value?.carbs?.goal ?? 205.0;
+  double get totalFat => dailyDashboard.value?.fat?.current ?? eatenFat;
+  double get totalFatGoal => dailyDashboard.value?.fat?.goal ?? 78.0;
   int get totalWaterGoal =>
       (dailyDashboard.value?.water?.goal ?? dailyWaterGoalGlasses.toDouble())
           .round();
@@ -1033,8 +1028,10 @@ class MealPlannerController extends GetxController {
   }) {
     if (_sameDay(selectedDate, date)) {
       dailyDashboard.value = dashboard;
-      dailyWaterGlasses.value =
-          (dashboard.water?.current ?? 0).round().clamp(0, 20);
+      dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
+        0,
+        20,
+      );
     }
   }
 
@@ -1148,7 +1145,6 @@ class MealPlannerController extends GetxController {
       }
     }
   }
-
 
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -1369,8 +1365,10 @@ class MealPlannerController extends GetxController {
         final dashboard = await _profileRepository.getDashboard(date: date);
         if (_sameDay(selectedDate, date)) {
           dailyDashboard.value = dashboard;
-          dailyWaterGlasses.value =
-              (dashboard.water?.current ?? 0).round().clamp(0, 20);
+          dailyWaterGlasses.value = (dashboard.water?.current ?? 0)
+              .round()
+              .clamp(0, 20);
+          await syncHealthGoalFromProfile(dashboard);
         }
       } catch (_) {
         // Keep the last server value visible if refreshing fails.
@@ -1392,6 +1390,51 @@ class MealPlannerController extends GetxController {
     } catch (_) {
       dailyWaterGlasses.value = 0;
     }
+  }
+
+  /// Keeps Planner's goal aligned with the latest saved biometric profile.
+  ///
+  /// Adult BMI uses the standard direction bands. For users under 18, or
+  /// during pregnancy/breastfeeding, Planner avoids automatically selecting a
+  /// weight-loss goal and uses maintenance until professional guidance is
+  /// available.
+  Future<void> syncHealthGoalFromProfile(
+    ProfileDashboardModel dashboard,
+  ) async {
+    final recommended = recommendedHealthGoalForProfile(
+      dashboard,
+      medicalFlags: dietaryPreferences.value.medicalFlags,
+    );
+    if (recommended == null || recommended == healthGoal.value) return;
+    await setHealthGoal(recommended);
+  }
+
+  static MealPlannerHealthGoal? recommendedHealthGoalForProfile(
+    ProfileDashboardModel dashboard, {
+    Iterable<String> medicalFlags = const [],
+  }) {
+    final heightCm = dashboard.heightCm;
+    final weightKg = dashboard.weightKg;
+    if (heightCm == null ||
+        heightCm <= 0 ||
+        weightKg == null ||
+        weightKg <= 0) {
+      return null;
+    }
+
+    final isMinor = dashboard.age != null && dashboard.age! < 18;
+    final requiresProtectedGoal = medicalFlags.contains(
+      'PREGNANT_OR_BREASTFEEDING',
+    );
+    if (isMinor || requiresProtectedGoal) {
+      return MealPlannerHealthGoal.maintainHealth;
+    }
+
+    final heightMeters = heightCm / 100;
+    final bmi = weightKg / (heightMeters * heightMeters);
+    if (bmi < 18.5) return MealPlannerHealthGoal.gainWeight;
+    if (bmi < 25) return MealPlannerHealthGoal.maintainHealth;
+    return MealPlannerHealthGoal.loseWeight;
   }
 
   Future<void> incrementWater() async {

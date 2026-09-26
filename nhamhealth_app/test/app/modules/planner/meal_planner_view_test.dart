@@ -130,10 +130,7 @@ void main() {
       find.byKey(const ValueKey('planner-slots-skeleton')),
       findsOneWidget,
     );
-    expect(
-      find.text('Checking your goal and food preferences…'),
-      findsNothing,
-    );
+    expect(find.text('Checking your goal and food preferences…'), findsNothing);
 
     planner.autoFillStatusKey.value = 'planner.autofill_loading_refreshing';
     await tester.pump();
@@ -200,9 +197,9 @@ void main() {
 
     await tester.tap(find.text('Open result'));
     await tester.pumpAndSettle();
-    expect(find.text('Your meal plan is ready'), findsOneWidget);
-    expect(find.text('Successfully filled 4 meals!'), findsOneWidget);
-    await tester.tap(find.text('Done'));
+    expect(find.text('Plan details'), findsOneWidget);
+    expect(find.textContaining('Your goal:'), findsOneWidget);
+    await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('planner-autofill-success-sheet')),

@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/page_skeleton.dart';
@@ -62,11 +61,9 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
                         key: const ValueKey('gemini-analysis-topbar-button'),
                         tooltip: 'planner.gemini_analysis'.tr,
                         onPressed:
-                            () => AppAlert.actionInfo(
-                              context: context,
-                              title: 'planner.gemini_analysis',
-                              message:
-                                  '$analysis\n\n${'planner.forecast_disclaimer'.tr}',
+                            () => showWeightGoalPlanDetailsAlert(
+                              context,
+                              forecast: controller.forecast.value,
                             ),
                         icon: const Icon(Icons.auto_awesome_rounded),
                         color: const Color(0xFF0F62FE),
@@ -194,7 +191,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
           _goalRecommendationCard(context, forecast),
         ],
         const SizedBox(height: 12),
-        _profileContextCard(context, forecast),
+        _lifestyleGuidanceCard(context, forecast),
         const SizedBox(height: 12),
         _energyBalanceCard(context, forecast),
       ],
@@ -423,10 +420,13 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     WeightLossForecast forecast,
   ) {
     final change = forecast.projectedEndWeightKg - forecast.currentWeightKg;
+    final absoluteChange = change.abs();
+    final preciseChange =
+        absoluteChange < 0.1 && absoluteChange > 0
+            ? absoluteChange.toStringAsFixed(2)
+            : absoluteChange.toStringAsFixed(1);
     final changeText =
-        change.abs() < 0.05
-            ? '0.0 kg'
-            : '${change > 0 ? '+' : '−'}${change.abs().toStringAsFixed(1)} kg';
+        change == 0 ? '0.0 kg' : '${change > 0 ? '+' : '−'}$preciseChange kg';
     final accent =
         forecast.shouldGainWeight
             ? AppColors.accentOrange
@@ -560,10 +560,272 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
           const SizedBox(height: 16),
 
           _weightProgress(context, forecast, accent: accent),
+          const SizedBox(height: 12),
+          _weightShiftConfirmationBanner(context, forecast, change: change),
           const SizedBox(height: 16),
 
           // Timeframe Selection Chips
           _timeframeSelector(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _weightShiftConfirmationBanner(
+    BuildContext context,
+    WeightLossForecast forecast, {
+    required double change,
+  }) {
+    final absChange = change.abs();
+    final absAmount =
+        absChange < 0.1 && absChange > 0
+            ? absChange.toStringAsFixed(2)
+            : absChange.toStringAsFixed(1);
+    final isLoss = change < 0;
+    final isGain = change > 0;
+
+    final String titleText;
+    final String noteText;
+    final IconData iconData;
+    final Color bannerColor;
+
+    if (isLoss) {
+      titleText = 'planner.weight_shift_loss'.trParams({'amount': absAmount});
+      noteText =
+          absChange < 0.5
+              ? 'planner.weight_shift_small_loss_note'.trParams({
+                'amount': absAmount,
+              })
+              : 'planner.weight_shift_steady_loss_note'.trParams({
+                'amount': absAmount,
+              });
+      iconData = Icons.trending_down_rounded;
+      bannerColor = AppColors.primaryGreen;
+    } else if (isGain) {
+      titleText = 'planner.weight_shift_gain'.trParams({'amount': absAmount});
+      noteText =
+          absChange < 0.5
+              ? 'planner.weight_shift_small_gain_note'.trParams({
+                'amount': absAmount,
+              })
+              : 'planner.weight_shift_steady_gain_note'.trParams({
+                'amount': absAmount,
+              });
+      iconData = Icons.trending_up_rounded;
+      bannerColor = AppColors.accentOrange;
+    } else {
+      titleText = 'planner.weight_shift_maintain'.tr;
+      noteText = 'planner.weight_shift_maintain_note'.tr;
+      iconData = Icons.balance_rounded;
+      bannerColor = _secondaryAccent(context);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bannerColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: bannerColor.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(iconData, color: bannerColor, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titleText,
+                  style: TextStyle(
+                    color: bannerColor,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  noteText,
+                  style: TextStyle(
+                    color: context.appMutedText,
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _lifestyleGuidanceCard(
+    BuildContext context,
+    WeightLossForecast forecast,
+  ) {
+    final isGain = forecast.shouldGainWeight;
+    final isMaintain = forecast.shouldMaintainWeight;
+
+    final String tip1Title =
+        isGain
+            ? 'planner.lifestyle_gain_tip1_title'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip1_title'.tr
+                : 'planner.lifestyle_loss_tip1_title'.tr);
+    final String tip1Desc =
+        isGain
+            ? 'planner.lifestyle_gain_tip1_desc'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip1_desc'.tr
+                : 'planner.lifestyle_loss_tip1_desc'.tr);
+
+    final String tip2Title =
+        isGain
+            ? 'planner.lifestyle_gain_tip2_title'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip2_title'.tr
+                : 'planner.lifestyle_loss_tip2_title'.tr);
+    final String tip2Desc =
+        isGain
+            ? 'planner.lifestyle_gain_tip2_desc'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip2_desc'.tr
+                : 'planner.lifestyle_loss_tip2_desc'.tr);
+
+    final String tip3Title =
+        isGain
+            ? 'planner.lifestyle_gain_tip3_title'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip3_title'.tr
+                : 'planner.lifestyle_loss_tip3_title'.tr);
+    final String tip3Desc =
+        isGain
+            ? 'planner.lifestyle_gain_tip3_desc'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip3_desc'.tr
+                : 'planner.lifestyle_loss_tip3_desc'.tr);
+
+    final String tip4Title =
+        isGain
+            ? 'planner.lifestyle_gain_tip4_title'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip4_title'.tr
+                : 'planner.lifestyle_loss_tip4_title'.tr);
+    final String tip4Desc =
+        isGain
+            ? 'planner.lifestyle_gain_tip4_desc'.tr
+            : (isMaintain
+                ? 'planner.lifestyle_maintain_tip4_desc'.tr
+                : 'planner.lifestyle_loss_tip4_desc'.tr);
+
+    final tips = [
+      (Icons.water_drop_outlined, tip1Title, tip1Desc),
+      (Icons.restaurant_rounded, tip2Title, tip2Desc),
+      (Icons.timer_outlined, tip3Title, tip3Desc),
+      (Icons.bedtime_outlined, tip4Title, tip4Desc),
+    ];
+
+    final accent =
+        isGain
+            ? AppColors.accentOrange
+            : (isMaintain ? _secondaryAccent(context) : AppColors.primaryGreen);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.appElevatedSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.7)),
+        boxShadow: context.appCardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.favorite_rounded, color: accent, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'planner.lifestyle_tips_title'.tr,
+                      style: TextStyle(
+                        color: context.appText,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'planner.lifestyle_tips_subtitle'.tr,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...tips.map(
+            (t) => Padding(
+              padding: const EdgeInsets.only(bottom: 11),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(t.$1, size: 14, color: accent),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.$2,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t.$3,
+                          style: TextStyle(
+                            color: context.appMutedText,
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -743,8 +1005,7 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     if (recommendation == null) return const SizedBox.shrink();
     final goalLabel = switch (recommendation) {
       MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
-      MealPlannerHealthGoal.maintainHealth =>
-        'planner.goal_maintain_health'.tr,
+      MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
       MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
     };
 
@@ -1013,6 +1274,9 @@ class WeightLossProjectionView extends GetView<WeightLossProjectionController> {
     );
   }
 
+  // Retained only as an implementation reference while the compact BMI goal
+  // summary remains in the forecast card.
+  // ignore: unused_element
   Widget _profileContextCard(
     BuildContext context,
     WeightLossForecast forecast,

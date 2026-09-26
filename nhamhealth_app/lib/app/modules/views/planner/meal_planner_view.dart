@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ import '../../../widgets/scroll_aware_scaffold.dart';
 import '../../controllers/meals/food_detail_controller.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
+import '../../controllers/profile/profile_controller.dart';
 import '../../models/auth/authenticated_user_model.dart';
 import '../../models/meals/meal_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
@@ -762,6 +764,14 @@ class _MealPlannerViewState extends State<MealPlannerView>
         onTap: () {
           if (_activePlannerTab != index) {
             setState(() => _activePlannerTab = index);
+            if (index == 1 &&
+                Get.isRegistered<WeightLossProjectionController>()) {
+              unawaited(
+                Get.find<WeightLossProjectionController>().loadForecast(
+                  forceRefresh: true,
+                ),
+              );
+            }
           }
         },
         borderRadius: BorderRadius.circular(12),
@@ -1302,139 +1312,216 @@ class _MealPlannerViewState extends State<MealPlannerView>
   }
 
   Widget _goalStatusRow(BuildContext context) {
-    final projectionController =
-        Get.isRegistered<WeightLossProjectionController>()
-            ? Get.find<WeightLossProjectionController>()
-            : null;
-    final forecast = projectionController?.forecast.value;
-    final weeks = ((forecast?.timeframeDays ?? 28) / 7).ceil();
-    final goal = controller.healthGoal.value;
-    final projectedChange =
-        forecast == null
-            ? null
-            : forecast.projectedEndWeightKg - forecast.currentWeightKg;
-    final goalProgressText =
-        projectedChange == null
-            ? null
-            : switch (goal) {
-              MealPlannerHealthGoal.gainWeight =>
-                '${_plannerLabel('planner.gain', 'Gain')} +${projectedChange.clamp(0, double.infinity).toStringAsFixed(1)} kg · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
-              MealPlannerHealthGoal.maintainHealth =>
-                '${_plannerLabel('planner.maintain', 'Maintain')} · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
-              MealPlannerHealthGoal.loseWeight =>
-                '${_plannerLabel('planner.lose', 'Lose')} ${projectedChange.abs().toStringAsFixed(1)} kg · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
-            };
-    final goalLabel = switch (goal) {
-      MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
-      MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
-      MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
-    };
-    final goalIcon = switch (goal) {
-      MealPlannerHealthGoal.gainWeight => Icons.trending_up_rounded,
-      MealPlannerHealthGoal.maintainHealth => Icons.balance_rounded,
-      MealPlannerHealthGoal.loseWeight => Icons.trending_down_rounded,
-    };
+    return Obx(() {
+      final projectionController =
+          Get.isRegistered<WeightLossProjectionController>()
+              ? Get.find<WeightLossProjectionController>()
+              : null;
+      final profileController =
+          Get.isRegistered<ProfileController>()
+              ? Get.find<ProfileController>()
+              : null;
+      final forecast = projectionController?.forecast.value;
+      final weeks = ((forecast?.timeframeDays ?? 28) / 7).ceil();
+      final goal = controller.healthGoal.value;
+      final projectedChange =
+          forecast == null
+              ? null
+              : forecast.projectedEndWeightKg - forecast.currentWeightKg;
+      final goalProgressText =
+          projectedChange == null
+              ? null
+              : switch (goal) {
+                MealPlannerHealthGoal.gainWeight =>
+                  '${_plannerLabel('planner.gain', 'Gain')} +${projectedChange.clamp(0, double.infinity).toStringAsFixed(1)} kg · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
+                MealPlannerHealthGoal.maintainHealth =>
+                  '${_plannerLabel('planner.maintain', 'Maintain')} · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
+                MealPlannerHealthGoal.loseWeight =>
+                  '${_plannerLabel('planner.lose', 'Lose')} ${projectedChange.abs().toStringAsFixed(1)} kg · $weeks ${_plannerLabel('planner.weeks', 'weeks')}',
+              };
+      final goalLabel = switch (goal) {
+        MealPlannerHealthGoal.gainWeight => 'planner.goal_gain_weight'.tr,
+        MealPlannerHealthGoal.maintainHealth => 'planner.goal_maintain_health'.tr,
+        MealPlannerHealthGoal.loseWeight => 'planner.goal_lose_weight'.tr,
+      };
+      final goalIcon = switch (goal) {
+        MealPlannerHealthGoal.gainWeight => Icons.trending_up_rounded,
+        MealPlannerHealthGoal.maintainHealth => Icons.balance_rounded,
+        MealPlannerHealthGoal.loseWeight => Icons.trending_down_rounded,
+      };
 
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 66),
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-            decoration: BoxDecoration(
-              color: context.appElevatedSurface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: context.appBorder.withValues(alpha: 0.7),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(goalIcon, color: Colors.white, size: 18),
+      final double? bmiVal =
+          profileController != null && profileController.bmi > 0
+              ? profileController.bmi
+              : (forecast != null && (forecast.bmi ?? 0) > 0
+                  ? forecast.bmi!
+                  : null);
+      final bmiStatusText =
+          forecast != null && (forecast.bmi ?? 0) > 0
+              ? forecast.bmiStatusKey.tr
+              : (bmiVal == null
+                  ? 'profile.not_set'.tr
+                  : (bmiVal < 18.5
+                      ? 'profile.bmi_underweight_range'.tr
+                      : (bmiVal < 25.0
+                          ? 'profile.bmi_healthy_range'.tr
+                          : (bmiVal < 30.0
+                              ? 'profile.bmi_overweight_range'.tr
+                              : 'profile.bmi_obesity_range'.tr))));
+
+      return Row(
+        children: [
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 66),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+              decoration: BoxDecoration(
+                color: context.appElevatedSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: context.appBorder.withValues(alpha: 0.7),
                 ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _plannerLabel('planner.your_goal', 'Your Goal'),
-                        style: TextStyle(
-                          color: context.appMutedText,
-                          fontSize: 9.5,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        goalLabel,
-                        style: TextStyle(
-                          color: context.appText,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      if (goalProgressText != null)
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(goalIcon, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          goalProgressText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          _plannerLabel('planner.your_goal', 'Your Goal'),
                           style: TextStyle(
                             color: context.appMutedText,
-                            fontSize: 8.5,
+                            fontSize: 9.5,
+                            height: 1,
                           ),
                         ),
+                        const SizedBox(height: 3),
+                        Text(
+                          goalLabel,
+                          style: TextStyle(
+                            color: context.appText,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (goalProgressText != null)
+                          Text(
+                            goalProgressText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: context.appMutedText,
+                              fontSize: 8.5,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  if (bmiVal != null && bmiVal > 0) {
+                    Get.toNamed<void>(AppRoutes.bmiAnalysis);
+                  } else {
+                    Get.toNamed<void>(AppRoutes.profile);
+                  }
+                },
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 66),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.monitor_weight_outlined,
+                          color: AppColors.primaryGreen,
+                          size: 17,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  bmiVal != null
+                                      ? 'BMI ${bmiVal.toStringAsFixed(1)}'
+                                      : 'BMI --',
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    color: AppColors.primaryGreen,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 15,
+                                  color: context.appMutedText,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              bmiStatusText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: context.appMutedText,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 66),
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "${_plannerLabel('planner.on_track', "You're on track!")} ✨",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'planner.keep_going_on_track'.tr,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: context.appMutedText, fontSize: 8.5),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _dailyOverview(BuildContext context) {

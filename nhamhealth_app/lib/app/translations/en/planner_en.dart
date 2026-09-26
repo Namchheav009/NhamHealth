@@ -633,4 +633,57 @@ const Map<String, String> plannerEn = {
   'planner.water_glasses_count': '@count of @total glasses (@ml ml)',
   'planner.water_goal_reached': 'Daily water goal achieved! Stay hydrated. 💧',
   'planner.water_glass_unit': 'glasses',
+  'planner.weight_shift_confirmation': 'Weight Goal Confirmation',
+  'planner.weight_trajectory': 'Weight Trajectory',
+  'planner.weight_shift_loss': 'Projected weight loss @amount kg',
+  'planner.weight_shift_gain': 'Projected weight gain @amount kg',
+  'planner.weight_shift_maintain': 'Maintain stable weight (minimal shift)',
+  'planner.weight_shift_small_loss_note':
+      'Gradual weight loss (@amount kg) protects muscle mass and long-term health.',
+  'planner.weight_shift_steady_loss_note':
+      'Optimal steady weight loss (@amount kg) at a safe, effective pace.',
+  'planner.weight_shift_small_gain_note':
+      'Gradual weight gain (@amount kg) allows your body to safely adapt to surplus calories.',
+  'planner.weight_shift_steady_gain_note':
+      'Steady weight gain (@amount kg) supports sustainable muscle development.',
+  'planner.weight_shift_maintain_note':
+      'Energy intake is balanced, supporting weight stability.',
+  'planner.lifestyle_tips_title': 'Daily Lifestyle Guidance',
+  'planner.lifestyle_tips_subtitle': 'Practical habits for real everyday living',
+  'planner.lifestyle_loss_tip1_title': 'Drink 1 glass of water 15-30m before meals',
+  'planner.lifestyle_loss_tip1_desc':
+      'Drink 2-2.5L daily to curb unnecessary snacking and boost digestion.',
+  'planner.lifestyle_loss_tip2_title': 'Eat vegetables and protein first',
+  'planner.lifestyle_loss_tip2_desc':
+      'Start meals with soup, vegetables, or protein before carbs to stay full longer and stabilize blood sugar.',
+  'planner.lifestyle_loss_tip3_title': "Don't starve or skip meals",
+  'planner.lifestyle_loss_tip3_desc':
+      'Moderate portion reductions work best; starving triggers muscle loss and rebound overeating.',
+  'planner.lifestyle_loss_tip4_title': 'Get 7-8 hours of regular sleep',
+  'planner.lifestyle_loss_tip4_desc':
+      'Inadequate or late sleep elevates ghrelin (hunger hormone) and triggers late-night cravings.',
+  'planner.lifestyle_gain_tip1_title': 'Add nutrient-dense snacks 2-3 times daily',
+  'planner.lifestyle_gain_tip1_desc':
+      'Enjoy nuts, bananas, avocado, sweet potatoes, or soy milk between meals for healthy extra calories.',
+  'planner.lifestyle_gain_tip2_title': 'Include quality protein in every meal',
+  'planner.lifestyle_gain_tip2_desc':
+      'Include eggs, lean meat, fish, or tofu so gained weight builds muscle rather than pure fat.',
+  'planner.lifestyle_gain_tip3_title': 'Divide into 4-5 smaller meals',
+  'planner.lifestyle_gain_tip3_desc':
+      'If large plates feel too heavy, eating smaller frequent meals prevents bloating and nausea.',
+  'planner.lifestyle_gain_tip4_title': "Don't chug water right before meals",
+  'planner.lifestyle_gain_tip4_desc':
+      'Avoid large glasses of water right before eating to prevent feeling prematurely full.',
+  'planner.lifestyle_maintain_tip1_title': 'Balanced plate rule (50-25-25)',
+  'planner.lifestyle_maintain_tip1_desc':
+      '50% vegetables, 25% lean protein, and 25% complex carbs per plate for steady vitality.',
+  'planner.lifestyle_maintain_tip2_title': 'Stay physically active daily',
+  'planner.lifestyle_maintain_tip2_desc':
+      'Walk at least 30 minutes or 7,000 steps daily to keep metabolic expenditure steady.',
+  'planner.lifestyle_maintain_tip3_title': 'Keep a consistent eating schedule',
+  'planner.lifestyle_maintain_tip3_desc':
+      'Eat at regular hours and limit sugary drinks to maintain balanced blood glucose.',
+  'planner.lifestyle_maintain_tip4_title': 'Hydrate and sleep consistently',
+  'planner.lifestyle_maintain_tip4_desc':
+      'Drink at least 2L of water and sleep 7-8 hours for vitality and metabolic recovery.',
 };

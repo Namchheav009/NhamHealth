@@ -3,12 +3,11 @@ import 'package:get/get.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/app_alert.dart';
 import '../../../widgets/app_back_header.dart';
 import '../../../widgets/app_background.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
-import '../../models/planner/weight_loss_forecast_model.dart';
+import 'planner_shared.dart';
 import 'weight_loss_projection_view.dart';
 
 class WeightLossAnalysisPage extends StatefulWidget {
@@ -69,14 +68,12 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
                               ),
                               tooltip: 'planner.plan_details'.tr,
                               onPressed:
-                                  () => AppAlert.actionInfo(
-                                    context: context,
-                                    title: 'planner.plan_details',
-                                    message:
-                                        forecast == null
-                                            ? 'planner.forecast_unavailable'
-                                            : _planDetails(forecast),
-                                  ),
+                                  forecast == null
+                                      ? null
+                                      : () => showWeightGoalPlanDetailsAlert(
+                                        context,
+                                        forecast: forecast,
+                                      ),
                               icon: const Icon(Icons.insights_rounded),
                               color: const Color(0xFF0F62FE),
                             );
@@ -129,51 +126,6 @@ class _WeightLossAnalysisPageState extends State<WeightLossAnalysisPage> {
         ],
       ),
     );
-  }
-
-  String _planDetails(WeightLossForecast forecast) {
-    final goal =
-        forecast.shouldGainWeight
-            ? 'planner.goal_gain_weight'.tr
-            : forecast.shouldMaintainWeight
-            ? 'planner.goal_maintain_health'.tr
-            : 'planner.goal_lose_weight'.tr;
-    final change = forecast.projectedEndWeightKg - forecast.currentWeightKg;
-    final changeText =
-        '${change > 0 ? '+' : change < 0 ? '−' : ''}${change.abs().toStringAsFixed(1)}';
-    final calorieGap = forecast.dailyDeficitCalories;
-    final balance =
-        calorieGap < 0
-            ? 'planner.balance_surplus'.trParams({
-              'amount': calorieGap.abs().round().toString(),
-            })
-            : calorieGap > 0
-            ? 'planner.balance_deficit'.trParams({
-              'amount': calorieGap.round().toString(),
-            })
-            : 'planner.balance_even'.tr;
-    final guidance =
-        forecast.aiAnalysisSummary.trim().isNotEmpty
-            ? forecast.aiAnalysisSummary.trim()
-            : forecast.paceDescription.trim();
-
-    return [
-      'planner.detail_goal'.trParams({'goal': goal}),
-      'planner.detail_projection'.trParams({
-        'current': forecast.currentWeightKg.toStringAsFixed(1),
-        'projected': forecast.projectedEndWeightKg.toStringAsFixed(1),
-        'days': forecast.timeframeDays.toString(),
-        'change': changeText,
-      }),
-      'planner.detail_energy'.trParams({
-        'intake': forecast.dailyPlannedCalories.round().toString(),
-        'burn': forecast.tdeeCalories.round().toString(),
-        'balance': balance,
-      }),
-      if (guidance.isNotEmpty)
-        'planner.detail_guidance'.trParams({'guidance': guidance}),
-      'planner.forecast_disclaimer'.tr,
-    ].join('\n\n');
   }
 
   Widget _analysisHero(BuildContext context) {

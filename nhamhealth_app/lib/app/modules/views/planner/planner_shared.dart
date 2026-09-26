@@ -14,8 +14,10 @@ import '../../../widgets/app_back_header.dart';
 import '../../../widgets/page_skeleton.dart';
 import '../../controllers/planner/meal_planner_controller.dart';
 import '../../controllers/planner/weight_loss_projection_controller.dart';
+import '../../controllers/profile/profile_controller.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/meal_plan.dart';
+import '../../models/planner/weight_loss_forecast_model.dart';
 
 String plannerImageUrl(String value) {
   final trimmed = value.trim();
@@ -1349,25 +1351,204 @@ Future<void> showAiAutoFillResultSheet(
   required int filledCount,
   AiAutoFillPlanResponse? result,
 }) async {
-  await showModalBottomSheet<void>(
+  final forecast =
+      Get.isRegistered<WeightLossProjectionController>()
+          ? Get.find<WeightLossProjectionController>().forecast.value
+          : null;
+  await showWeightGoalPlanDetailsAlert(
+    context,
+    forecast: forecast,
+    fallbackResult: result,
+  );
+}
+
+Future<void> showWeightGoalPlanDetailsAlert(
+  BuildContext context, {
+  WeightLossForecast? forecast,
+  AiAutoFillPlanResponse? fallbackResult,
+}) async {
+  final goalCode =
+      forecast?.resolvedWeightDirection ??
+      switch (fallbackResult?.goal.toUpperCase()) {
+        'GAIN_WEIGHT' => 'GAIN',
+        'MAINTAIN_HEALTH' => 'MAINTAIN',
+        _ => 'LOSE',
+      };
+  final goalLabel = switch (goalCode) {
+    'GAIN' => 'planner.goal_gain_weight'.tr,
+    'MAINTAIN' => 'planner.goal_maintain_health'.tr,
+    _ => 'planner.goal_lose_weight'.tr,
+  };
+  final currentWeight = forecast?.currentWeightKg;
+  final projectedWeight = forecast?.projectedEndWeightKg;
+  final change =
+      currentWeight != null && projectedWeight != null
+          ? projectedWeight - currentWeight
+          : (goalCode == 'GAIN' ? 1 : -1) *
+              (fallbackResult?.totalProjectedLossKg ?? 0);
+  final changeAmount =
+      change.abs() < 0.1 && change != 0
+          ? change.abs().toStringAsFixed(2)
+          : change.abs().toStringAsFixed(1);
+  final projectionText =
+      currentWeight != null && projectedWeight != null
+          ? 'planner.detail_projection'.trParams({
+            'current': currentWeight.toStringAsFixed(1),
+            'projected': projectedWeight.toStringAsFixed(1),
+            'days':
+                '${forecast?.timeframeDays ?? fallbackResult?.timeframeDays ?? 28}',
+            'change':
+                '${change > 0
+                    ? '+'
+                    : change < 0
+                    ? '−'
+                    : ''}$changeAmount',
+          })
+          : '2. ${goalCode == 'GAIN'
+              ? '+'
+              : goalCode == 'LOSE'
+              ? '−'
+              : ''}$changeAmount kg / ${fallbackResult?.timeframeDays ?? 28} days';
+  final plannedCalories =
+      forecast?.dailyPlannedCalories ??
+      fallbackResult?.dailyPlannedCalories ??
+      0;
+  final burnedCalories = forecast?.tdeeCalories ?? fallbackResult?.tdee ?? 0;
+  final calorieGap =
+      forecast?.dailyDeficitCalories ?? fallbackResult?.dailyDeficit ?? 0;
+  final balance =
+      calorieGap < 0
+          ? 'planner.balance_surplus'.trParams({
+            'amount': calorieGap.abs().round().toString(),
+          })
+          : calorieGap > 0
+          ? 'planner.balance_deficit'.trParams({
+            'amount': calorieGap.round().toString(),
+          })
+          : 'planner.balance_even'.tr;
+  final guidance =
+      forecast?.aiAnalysisSummary.trim().isNotEmpty == true
+          ? forecast!.aiAnalysisSummary.trim()
+          : fallbackResult?.aiRationale.trim() ?? '';
+
+  await showDialog<void>(
     context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    backgroundColor: context.appSurfaceLow,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    barrierColor: const Color(0x99000000),
     builder:
-        (sheetContext) => SingleChildScrollView(
-          child: _AiAutoFillResultSheet(
-            filledCount: filledCount,
-            result: result,
+        (dialogContext) => Dialog(
+          key: const ValueKey('planner-autofill-success-sheet'),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          elevation: 18,
+          shadowColor: const Color(0x66000000),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 30,
+            vertical: 28,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 480,
+              maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.86,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(38, 40, 38, 38),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 78,
+                    height: 78,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x26000000),
+                          blurRadius: 22,
+                          offset: Offset(0, 9),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.lightbulb_outline_rounded,
+                      color: Color(0xFF1976D2),
+                      size: 38,
+                    ),
+                  ),
+                  const SizedBox(height: 38),
+                  Text(
+                    'planner.plan_details'.tr,
+                    style: const TextStyle(
+                      color: Color(0xFF2D2D2D),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      [
+                        'planner.detail_goal'.trParams({'goal': goalLabel}),
+                        projectionText,
+                        'planner.detail_energy'.trParams({
+                          'intake': plannedCalories.round().toString(),
+                          'burn': burnedCalories.round().toString(),
+                          'balance': balance,
+                        }),
+                        if (guidance.isNotEmpty)
+                          'planner.detail_guidance'.trParams({
+                            'guidance': guidance,
+                          }),
+                        'planner.forecast_disclaimer'.tr,
+                      ].join('\n\n'),
+                      style: const TextStyle(
+                        color: Color(0xFF747474),
+                        fontSize: 15.5,
+                        height: 1.48,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: 224,
+                    height: 56,
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF00B45A),
+                        foregroundColor: Colors.white,
+                        elevation: 7,
+                        shadowColor: const Color(0x5500B45A),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: Text(
+                        'common.ok'.tr,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
   );
 }
 
+// Legacy expanded presentation retained for compatibility with older routes.
+// ignore: unused_element
 class _AiAutoFillResultSheet extends StatelessWidget {
+  // ignore: unused_element_parameter
   const _AiAutoFillResultSheet({required this.filledCount, this.result});
 
   final int filledCount;
@@ -1407,18 +1588,22 @@ class _AiAutoFillResultSheet extends StatelessWidget {
             : balance < 0
             ? '+${balance.abs().round()} kcal'
             : '0 kcal';
-    final projectionLabel =
-        (isGain
-                ? 'planner.days_gain'
-                : isLoss
-                ? 'planner.days_loss'
-                : 'planner.days_change')
-            .trParams({'count': '${planResult?.timeframeDays ?? 28}'});
+    final projectionLabel = (isGain
+            ? 'planner.days_gain'
+            : isLoss
+            ? 'planner.days_loss'
+            : 'planner.days_change')
+        .trParams({'count': '${planResult?.timeframeDays ?? 28}'});
+    final projectedChange = planResult?.totalProjectedLossKg.abs() ?? 0;
+    final projectedChangeText =
+        projectedChange < 0.1 && projectedChange > 0
+            ? projectedChange.toStringAsFixed(2)
+            : projectedChange.toStringAsFixed(1);
     final projectionValue =
         isGain
-            ? '+${planResult?.totalProjectedLossKg.toStringAsFixed(1) ?? '0.0'} kg'
+            ? '+$projectedChangeText kg'
             : isLoss
-            ? '−${planResult?.totalProjectedLossKg.toStringAsFixed(1) ?? '0.0'} kg'
+            ? '−$projectedChangeText kg'
             : '0.0 kg';
     final goalLabel =
         isGain
@@ -1502,11 +1687,16 @@ class _AiAutoFillResultSheet extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: accentColor.withValues(alpha: 0.22)),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.22),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1601,7 +1791,9 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                             color:
                                 (isGain && balance < 0) ||
                                         (isLoss && balance > 0) ||
-                                        (!isGain && !isLoss && balance.abs() <= 100)
+                                        (!isGain &&
+                                            !isLoss &&
+                                            balance.abs() <= 100)
                                     ? AppColors.primaryGreen
                                     : Colors.orange.shade700,
                             fontSize: 14,
@@ -1679,6 +1871,344 @@ class _AiAutoFillResultSheet extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 12),
+            Builder(
+              builder: (context) {
+                final profileController =
+                    Get.isRegistered<ProfileController>()
+                        ? Get.find<ProfileController>()
+                        : null;
+                final liveForecast =
+                    Get.isRegistered<WeightLossProjectionController>()
+                        ? Get.find<WeightLossProjectionController>()
+                            .forecast
+                            .value
+                        : null;
+                // Forecast is fetched from the server immediately after auto-fill,
+                // so it remains the source of truth even when ProfileController is
+                // not mounted on the Planner route.
+                final profileWeight = profileController?.weight.value ?? 0;
+                final curWeight =
+                    profileWeight > 0
+                        ? profileWeight
+                        : liveForecast?.currentWeightKg;
+                final projectedShift = planResult.totalProjectedLossKg;
+                final absShift = projectedShift.abs();
+                final absShiftStr =
+                    absShift < 0.1 && absShift > 0
+                        ? absShift.toStringAsFixed(2)
+                        : absShift.toStringAsFixed(1);
+
+                final double? endWeight =
+                    curWeight == null
+                        ? null
+                        : (isGain
+                            ? curWeight + projectedShift
+                            : (isLoss
+                                ? (curWeight - projectedShift).clamp(
+                                  0.0,
+                                  double.infinity,
+                                )
+                                : curWeight));
+
+                final String shiftTitle;
+                final String shiftNote;
+                final Color shiftColor;
+                final IconData shiftIcon;
+
+                if (isLoss) {
+                  shiftTitle = 'planner.weight_shift_loss'.trParams({
+                    'amount': absShiftStr,
+                  });
+                  shiftNote =
+                      projectedShift.abs() < 0.5
+                          ? 'planner.weight_shift_small_loss_note'.trParams({
+                            'amount': absShiftStr,
+                          })
+                          : 'planner.weight_shift_steady_loss_note'.trParams({
+                            'amount': absShiftStr,
+                          });
+                  shiftColor = AppColors.primaryGreen;
+                  shiftIcon = Icons.trending_down_rounded;
+                } else if (isGain) {
+                  shiftTitle = 'planner.weight_shift_gain'.trParams({
+                    'amount': absShiftStr,
+                  });
+                  shiftNote =
+                      projectedShift.abs() < 0.5
+                          ? 'planner.weight_shift_small_gain_note'.trParams({
+                            'amount': absShiftStr,
+                          })
+                          : 'planner.weight_shift_steady_gain_note'.trParams({
+                            'amount': absShiftStr,
+                          });
+                  shiftColor = AppColors.accentOrange;
+                  shiftIcon = Icons.trending_up_rounded;
+                } else {
+                  shiftTitle = 'planner.weight_shift_maintain'.tr;
+                  shiftNote = 'planner.weight_shift_maintain_note'.tr;
+                  shiftColor = AppColors.primaryGreen;
+                  shiftIcon = Icons.balance_rounded;
+                }
+
+                final tip1Title =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip1_title'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip1_title'.tr
+                            : 'planner.lifestyle_maintain_tip1_title'.tr);
+                final tip1Desc =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip1_desc'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip1_desc'.tr
+                            : 'planner.lifestyle_maintain_tip1_desc'.tr);
+
+                final tip2Title =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip2_title'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip2_title'.tr
+                            : 'planner.lifestyle_maintain_tip2_title'.tr);
+                final tip2Desc =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip2_desc'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip2_desc'.tr
+                            : 'planner.lifestyle_maintain_tip2_desc'.tr);
+
+                final tip3Title =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip3_title'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip3_title'.tr
+                            : 'planner.lifestyle_maintain_tip3_title'.tr);
+                final tip3Desc =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip3_desc'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip3_desc'.tr
+                            : 'planner.lifestyle_maintain_tip3_desc'.tr);
+
+                final tip4Title =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip4_title'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip4_title'.tr
+                            : 'planner.lifestyle_maintain_tip4_title'.tr);
+                final tip4Desc =
+                    isGain
+                        ? 'planner.lifestyle_gain_tip4_desc'.tr
+                        : (isLoss
+                            ? 'planner.lifestyle_loss_tip4_desc'.tr
+                            : 'planner.lifestyle_maintain_tip4_desc'.tr);
+
+                final lifestyleTips = [
+                  (Icons.water_drop_outlined, tip1Title, tip1Desc),
+                  (Icons.restaurant_rounded, tip2Title, tip2Desc),
+                  (Icons.timer_outlined, tip3Title, tip3Desc),
+                  (Icons.bedtime_outlined, tip4Title, tip4Desc),
+                ];
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: shiftColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: shiftColor.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(shiftIcon, color: shiftColor, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  shiftTitle,
+                                  style: TextStyle(
+                                    color: shiftColor,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (curWeight != null && endWeight != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: context.appElevatedSurface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: context.appBorder.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${'planner.current_weight'.tr}: ${curWeight.toStringAsFixed(1)} kg',
+                                    style: TextStyle(
+                                      color: context.appMutedText,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 14,
+                                    color: shiftColor,
+                                  ),
+                                  Text(
+                                    '${'planner.projected_weight'.tr}: ${endWeight.toStringAsFixed(1)} kg',
+                                    style: TextStyle(
+                                      color: shiftColor,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 6),
+                          Text(
+                            shiftNote,
+                            style: TextStyle(
+                              color: context.appMutedText,
+                              fontSize: 11,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: context.appElevatedSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.appBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: accentColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.favorite_rounded,
+                                  color: accentColor,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'planner.lifestyle_tips_title'.tr,
+                                      style: TextStyle(
+                                        color: context.appText,
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    Text(
+                                      'planner.lifestyle_tips_subtitle'.tr,
+                                      style: TextStyle(
+                                        color: context.appMutedText,
+                                        fontSize: 10.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ...lifestyleTips.map(
+                            (tip) => Padding(
+                              padding: const EdgeInsets.only(bottom: 9),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 2),
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Icon(
+                                      tip.$1,
+                                      size: 13,
+                                      color: accentColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tip.$2,
+                                          style: TextStyle(
+                                            color: context.appText,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 1),
+                                        Text(
+                                          tip.$3,
+                                          style: TextStyle(
+                                            color: context.appMutedText,
+                                            fontSize: 10.5,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
           const SizedBox(height: 20),
