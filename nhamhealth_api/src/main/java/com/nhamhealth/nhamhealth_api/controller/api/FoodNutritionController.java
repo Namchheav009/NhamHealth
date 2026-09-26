@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.nhamhealth.nhamhealth_api.dto.response.FoodNutritionResponse;
 import com.nhamhealth.nhamhealth_api.service.catalog.FoodNutritionService;
 
@@ -12,11 +13,21 @@ import com.nhamhealth.nhamhealth_api.service.catalog.FoodNutritionService;
 @RequestMapping("/api/v1/foods")
 public class FoodNutritionController {
     private final FoodNutritionService service;
-    public FoodNutritionController(FoodNutritionService service) { this.service = service; }
+
+    public FoodNutritionController(FoodNutritionService service) {
+        this.service = service;
+    }
 
     @GetMapping("/search")
-    public ResponseEntity<FoodNutritionResponse> search(@RequestParam String name) {
-        return service.search(name)
+    public ResponseEntity<FoodNutritionResponse> search(@RequestParam(name = "name", required = false) String name) {
+        if (name == null || name.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        String sanitizedName = name.trim();
+        if (sanitizedName.length() > 150) {
+            sanitizedName = sanitizedName.substring(0, 150).trim();
+        }
+        return service.search(sanitizedName)
                 .map(food -> ResponseEntity.ok(FoodNutritionResponse.from(food)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

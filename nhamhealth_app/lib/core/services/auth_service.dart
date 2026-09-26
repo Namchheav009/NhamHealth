@@ -209,6 +209,11 @@ class AuthService {
 
   Future<String?> readAccessToken() => _tokenStorage.readAccessToken();
 
+  /// Refreshes the current session, sharing an in-flight refresh request with
+  /// other callers so simultaneous 401 responses do not rotate the token more
+  /// than once.
+  Future<LoginResponse> refreshToken() => _refreshOnce();
+
   Future<AuthenticatedUser?> restoreSession() async {
     var token = await _tokenStorage.readAccessToken();
     if (token == null || token.isEmpty) return null;

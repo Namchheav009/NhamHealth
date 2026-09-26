@@ -99,6 +99,7 @@ public class MealPlannerForecastService {
                 ibmRecommendationService, null);
     }
 
+    @Transactional(readOnly = true)
     public WeightLossForecastResponse calculateForecast(
             Integer userId,
             Integer requestedDays,

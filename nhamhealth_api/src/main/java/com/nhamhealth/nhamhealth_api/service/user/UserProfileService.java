@@ -4,10 +4,8 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Locale;
 import java.util.Objects;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.nhamhealth.nhamhealth_api.dto.response.ProfileImageResponse;
 import com.nhamhealth.nhamhealth_api.dto.request.ProfileUpdateRequest;
 import com.nhamhealth.nhamhealth_api.entity.User;
@@ -112,6 +110,9 @@ public class UserProfileService {
                 });
         wellness.setHeightCm(request.heightCm());
         wellness.setWeightKg(request.weightKg());
+        if (wellness.getActivityLevel() == null || wellness.getActivityLevel().isBlank()) {
+            wellness.setActivityLevel("MODERATE");
+        }
         if (request.dateOfBirth() != null) {
             wellness.setAgeCached((short) Math.max(
                     0,

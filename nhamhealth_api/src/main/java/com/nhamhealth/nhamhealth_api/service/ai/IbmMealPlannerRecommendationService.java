@@ -197,6 +197,22 @@ public class IbmMealPlannerRecommendationService {
         }
     }
 
+    /**
+     * Ranks an already-curated recommendation list without making an external AI
+     * request. Use this while a database transaction is open so a slow provider
+     * call cannot hold or invalidate the JDBC connection.
+     */
+    public List<WeeklyMealRecommendation> rankLocally(
+            String requestedGoal, List<WeeklyMealRecommendation> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return List.of();
+        }
+        String goal = normalizeGoal(requestedGoal);
+        List<WeeklyMealRecommendation> ranked = deterministicRank(candidates, goal);
+        enrichGoalNotes(ranked, goal);
+        return ranked;
+    }
+
     public boolean isConfigured() {
         return !apiKey.isBlank() && !projectId.isBlank();
     }

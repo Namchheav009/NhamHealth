@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../config/api_config.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/authenticated_http_client.dart';
 import '../../models/planner/ai_autofill_response_model.dart';
 import '../../models/planner/ai_meal_recommendation_model.dart';
 import '../../models/planner/meal_plan.dart';
@@ -13,7 +14,8 @@ import '../../models/planner/weight_loss_forecast_model.dart';
 class MealPlannerProvider {
   MealPlannerProvider({required AuthService authService, http.Client? client})
     : _authService = authService,
-      _client = client ?? http.Client();
+      _client =
+          client ?? AuthenticatedHttpClient(authService: authService);
   final AuthService _authService;
   final http.Client _client;
   String get _lang => Get.locale?.languageCode ?? 'en';
@@ -375,7 +377,7 @@ class MealPlannerProvider {
   Future<List<PlannedMeal>> _getList(Uri uri) async {
     final response = await _client
         .get(uri, headers: await _headers())
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 30));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw const MealPlannerProviderException('Unable to load meal planner.');
     }

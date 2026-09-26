@@ -2,6 +2,7 @@ package com.nhamhealth.nhamhealth_api.service.user;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 import java.util.Locale;
 
 import org.springframework.stereotype.Service;
@@ -57,8 +58,12 @@ public class ProfileDashboardService {
                 .findByUser_UserIdAndSummaryDate(userId, summaryDate)
                 .orElse(null);
 
-        Progress calories = progress(summary, "calorie");
-        Progress protein = progress(summary, "protein");
+        List<DailyNutrientTotal> totals = summary == null
+                ? List.of()
+                : nutrientTotalRepository.findByDailyWellnessSummaryDailySummaryId(summary.getDailySummaryId());
+
+        Progress calories = progress(totals, "calorie");
+        Progress protein = progress(totals, "protein");
 
         return new ProfileDashboardResponse(
                 userId,
@@ -75,21 +80,19 @@ public class ProfileDashboardService {
                 wellness == null ? null : wellness.getWeightKg(),
                 calories,
                 protein,
-                progress(summary, "carbohydrate"),
-                progress(summary, "fat"),
-                progress(summary, "water"),
-                progress(summary, "fiber"),
-                progress(summary, "sugar"),
+                progress(totals, "carbohydrate"),
+                progress(totals, "fat"),
+                progress(totals, "water"),
+                progress(totals, "fiber"),
+                progress(totals, "sugar"),
                 summary == null ? null : summary.getAiInsightText());
     }
 
-    private Progress progress(DailyWellnessSummary summary, String nutrientName) {
-        if (summary == null) {
+    private Progress progress(List<DailyNutrientTotal> totals, String nutrientName) {
+        if (totals == null || totals.isEmpty()) {
             return null;
         }
-        return nutrientTotalRepository
-                .findByDailyWellnessSummaryDailySummaryId(summary.getDailySummaryId())
-                .stream()
+        return totals.stream()
                 .filter(total -> matches(total, nutrientName))
                 .findFirst()
                 .map(total -> new Progress(total.getConsumedAmount(), total.getGoalAmount()))

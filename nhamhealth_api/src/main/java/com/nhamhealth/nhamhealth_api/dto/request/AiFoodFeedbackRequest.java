@@ -13,4 +13,9 @@ public record AiFoodFeedbackRequest(
         @NotBlank @Size(max = 150) String foodName,
         @NotNull @DecimalMin("0.01") @DecimalMax("10000") BigDecimal servingSize,
         @NotBlank @Size(max = 40) String servingUnit) {
+
+    public AiFoodFeedbackRequest {
+        foodName = foodName != null ? foodName.trim() : null;
+        servingUnit = servingUnit != null ? servingUnit.trim() : null;
+    }
 }

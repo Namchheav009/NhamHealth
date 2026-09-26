@@ -40,11 +40,11 @@ public class PlannerMeal {
     @JoinColumn(name = "category_id", nullable = false)
     private MealCategory category;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "planner_meal_categories", joinColumns = @JoinColumn(name = "planner_meal_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
     private Set<MealCategory> categories = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "planner_meal_weight_goals", joinColumns = @JoinColumn(name = "planner_meal_id"))
     @Column(name = "weight_goal", nullable = false, length = 30)
     private Set<String> weightGoals = new HashSet<>();

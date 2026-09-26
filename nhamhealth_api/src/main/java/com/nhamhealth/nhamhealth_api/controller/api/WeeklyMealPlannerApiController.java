@@ -155,7 +155,7 @@ public class WeeklyMealPlannerApiController {
                 .toList();
         List<WeeklyMealRecommendation> ranked = rankingService == null
                 ? eligible
-                : rankingService.rank(userId(jwt), normalizedGoal, eligible);
+                : rankingService.rankLocally(normalizedGoal, eligible);
         return ResponseEntity.ok(ranked.stream().map(row -> response(row, lang, normalizedGoal)).toList());
     }
 
