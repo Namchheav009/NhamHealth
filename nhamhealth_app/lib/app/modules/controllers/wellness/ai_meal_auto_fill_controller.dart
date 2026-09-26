@@ -7,6 +7,7 @@ import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/wellness/food_nutrition_repository.dart';
 import '../../services/wellness/meal_text_parser.dart';
 import '../home/home_controller.dart';
+import '../planner/meal_planner_controller.dart';
 import 'calories_controller.dart';
 import 'wellness_controller.dart';
 
@@ -91,7 +92,7 @@ class AiMealAutoFillController extends GetxController {
     if (foods.isEmpty || isSaving.value) return;
     isSaving.value = true;
     try {
-      await profileRepository.addDailyNutrition(
+      final savedDashboard = await profileRepository.addDailyNutrition(
         calories: totalCalories,
         protein: totalProtein,
         carbs: foods.fold<double>(0, (sum, food) => sum + food.carbs),
@@ -109,19 +110,13 @@ class AiMealAutoFillController extends GetxController {
           showMessage: false,
         );
       }
-      wellnessController.addNutrition(
-        calories: totalCalories.round(),
-        protein: totalProtein,
-        carbs: foods.fold<double>(0, (sum, food) => sum + food.carbs),
-        fat: totalFat,
-        sugar: totalSugar,
-      );
+      final today = DateTime.now();
+      wellnessController.showSavedNutrition(savedDashboard, date: today);
       if (Get.isRegistered<HomeController>()) {
-        Get.find<HomeController>().addNutritionToToday(
-          calories: totalCalories.round(),
-          protein: totalProtein,
-          fat: totalFat,
-        );
+        Get.find<HomeController>().showSavedNutrition(savedDashboard, date: today);
+      }
+      if (Get.isRegistered<MealPlannerController>()) {
+        Get.find<MealPlannerController>().showSavedNutrition(savedDashboard, date: today);
       }
       AppAlert.success(
         title: 'wellness.meal_added',

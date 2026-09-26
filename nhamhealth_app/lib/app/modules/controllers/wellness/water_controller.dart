@@ -140,19 +140,11 @@ class WaterController extends GetxController {
     }
     if (Get.isRegistered<HomeController>()) {
       final home = Get.find<HomeController>();
-      home.addNutritionToToday(
-        calories: 0,
-        protein: 0,
-        water: selectedWaterAmount,
-        date: date,
-      );
-      if (_sameDay(home.selectedDay.value, date)) {
-        home.loadDashboard();
-      }
+      home.showSavedNutrition(dashboard, date: date);
     }
     if (Get.isRegistered<MealPlannerController>()) {
       final planner = Get.find<MealPlannerController>();
-      planner.loadDailyNutrition(date);
+      planner.showSavedNutrition(dashboard, date: date);
     }
   }
 

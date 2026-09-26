@@ -17,6 +17,7 @@ import '../../models/home/mood_model.dart';
 import '../../models/home/nutrition_progress_model.dart';
 import '../../models/home/recommended_meal_model.dart';
 import '../../models/meals/meal_model.dart';
+import '../../models/profile/profile_dashboard_model.dart';
 import '../../repositories/home/home_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../services/auth/google_auth_service.dart';
@@ -51,6 +52,7 @@ class HomeController extends GetxController {
   Timer? _notificationCountTimer;
   StreamSubscription<NotificationRealtimeEvent>? _notificationSubscription;
   Worker? _currentUserWorker;
+  int _loadVersion = 0;
 
   @override
   void onInit() {
@@ -153,6 +155,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> _restoreAuthenticatedUser() async {
+    if (!Get.isRegistered<AuthService>()) return;
     final user = await Get.find<AuthService>().restoreSession();
     authenticatedUser.value = user;
     if (Get.isRegistered<CurrentUserService>()) {
@@ -170,9 +173,10 @@ class HomeController extends GetxController {
     );
   }
 
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({bool showLoading = true}) async {
+    final version = ++_loadVersion;
     try {
-      isLoading.value = true;
+      if (showLoading) isLoading.value = true;
       final requestedDate = DateTime(
         selectedDay.value.year,
         selectedDay.value.month,
@@ -183,6 +187,7 @@ class HomeController extends GetxController {
       final refreshedDashboard = await repository.getHomeDashboard(
         date: requestedDate,
       );
+      if (version != _loadVersion) return;
       // Dashboard refreshes update wellness data, but must not erase meals the
       // user explicitly requested during this Home session.
       dashboard.value = HomeDashboardModel(
@@ -196,12 +201,15 @@ class HomeController extends GetxController {
         _showSelectedDay();
       }
     } catch (_) {
-      AppAlert.error(
-        title: 'home.home_unavailable',
-        message: 'home.unable_to_load_home_data',
-      );
+      if (version != _loadVersion) return;
+      if (showLoading) {
+        AppAlert.error(
+          title: 'home.home_unavailable',
+          message: 'home.unable_to_load_home_data',
+        );
+      }
     } finally {
-      isLoading.value = false;
+      if (version == _loadVersion && showLoading) isLoading.value = false;
     }
   }
 
@@ -210,6 +218,13 @@ class HomeController extends GetxController {
     final key = _dayKey(date);
     if (_summariesByDay.containsKey(key)) {
       _showSelectedDay();
+      try {
+        final result = await repository.getHomeDashboard(date: date);
+        _summariesByDay[key] = result.dailySummary;
+        if (_sameDay(selectedDay.value, date)) {
+          _showSelectedDay();
+        }
+      } catch (_) {}
       return;
     }
     try {
@@ -233,6 +248,7 @@ class HomeController extends GetxController {
     double sugar = 0,
     DateTime? date,
   }) {
+    _loadVersion++;
     final targetDate = date ?? selectedDay.value;
     final key = _dayKey(targetDate);
     final current = _summariesByDay[key] ?? _emptySummary;
@@ -244,7 +260,100 @@ class HomeController extends GetxController {
       fiber: _increment(current.fiber, fiber),
       sugar: _increment(current.sugar, sugar),
     );
-    if (_dayKey(selectedDay.value) == key) _showSelectedDay();
+    if (_sameDay(selectedDay.value, targetDate)) _showSelectedDay();
+  }
+
+  void applyMealNutritionDelta({
+    required DateTime date,
+    required double calories,
+    required double protein,
+    required double carbs,
+    required double fat,
+  }) {
+    _loadVersion++;
+    final key = _dayKey(date);
+    final current = _summariesByDay[key] ?? _emptySummary;
+    _summariesByDay[key] = DailySummaryModel(
+      calories: _increment(current.calories, calories),
+      protein: _increment(current.protein, protein),
+      fat: _increment(current.fat, fat),
+      water: current.water,
+      fiber: current.fiber,
+      sugar: current.sugar,
+    );
+    if (_sameDay(selectedDay.value, date)) {
+      _showSelectedDay();
+    }
+  }
+
+  void showSavedNutrition(
+    ProfileDashboardModel dashboardModel, {
+    required DateTime date,
+  }) {
+    _loadVersion++;
+    final key = _dayKey(date);
+    _summariesByDay[key] = DailySummaryModel(
+      calories: _toProgress(
+        'common.calories',
+        dashboardModel.calories,
+        2000,
+        'kcal',
+      ),
+      protein: _toProgress(
+        'common.protein',
+        dashboardModel.protein,
+        120,
+        'g',
+      ),
+      fat: _toProgress(
+        'common.fat',
+        dashboardModel.fat,
+        78,
+        'g',
+      ),
+      water: _toProgress(
+        'common.water',
+        dashboardModel.water,
+        8,
+        'glasses',
+      ),
+      fiber: _toProgress(
+        'common.fiber',
+        dashboardModel.fiber,
+        25,
+        'g',
+      ),
+      sugar: _toProgress(
+        'common.sugar',
+        dashboardModel.sugar,
+        50,
+        'g',
+      ),
+    );
+    if (_sameDay(selectedDay.value, date)) {
+      _showSelectedDay();
+    }
+  }
+
+  static NutritionProgressModel _toProgress(
+    String title,
+    ProfileProgressModel? progress,
+    double defaultGoal,
+    String unit,
+  ) {
+    final current = progress?.current ?? 0.0;
+    final goal = (progress?.goal ?? 0.0) > 0 ? progress!.goal : defaultGoal;
+    return NutritionProgressModel(
+      title: title,
+      value:
+          current % 1 == 0
+              ? current.toInt().toString()
+              : current.toStringAsFixed(1),
+      target:
+          goal % 1 == 0 ? goal.toInt().toString() : goal.toStringAsFixed(1),
+      progress: (current / goal).clamp(0.0, 1.0).toDouble(),
+      unit: unit,
+    );
   }
 
   final isQuickLoggingWater = false.obs;
@@ -270,19 +379,18 @@ class HomeController extends GetxController {
           Get.isRegistered<ProfileRepository>()
               ? Get.find<ProfileRepository>()
               : ProfileRepository(authService: auth);
-      await profileRepo.addDailyNutrition(
+      final savedDashboard = await profileRepo.addDailyNutrition(
         water: glasses,
         date: selectedDay.value,
       );
+      showSavedNutrition(savedDashboard, date: selectedDay.value);
       if (Get.isRegistered<WellnessController>()) {
         final wellness = Get.find<WellnessController>();
-        if (_sameDay(wellness.selectedDate.value, selectedDay.value)) {
-          unawaited(wellness.loadDailyWellness());
-        }
+        wellness.showSavedNutrition(savedDashboard, date: selectedDay.value);
       }
       if (Get.isRegistered<MealPlannerController>()) {
         final planner = Get.find<MealPlannerController>();
-        unawaited(planner.loadDailyNutrition(selectedDay.value));
+        planner.showSavedNutrition(savedDashboard, date: selectedDay.value);
       }
       AppAlert.success(
         title: 'wellness.water_added_today',
@@ -302,12 +410,11 @@ class HomeController extends GetxController {
 
   void _showSelectedDay() {
     final currentDashboard = dashboard.value;
-    if (currentDashboard == null) return;
     dashboard.value = HomeDashboardModel(
-      userName: currentDashboard.userName,
+      userName: currentDashboard?.userName ?? '',
       dailySummary:
           _summariesByDay[_dayKey(selectedDay.value)] ?? _emptySummary,
-      recommendedMeals: currentDashboard.recommendedMeals,
+      recommendedMeals: currentDashboard?.recommendedMeals ?? const [],
     );
   }
 
@@ -315,7 +422,8 @@ class HomeController extends GetxController {
     NutritionProgressModel item,
     double amount,
   ) {
-    final value = (double.tryParse(item.value) ?? 0) + amount;
+    final raw = (double.tryParse(item.value) ?? 0) + amount;
+    final value = raw < 0 ? 0.0 : raw;
     final target = double.tryParse(item.target) ?? 1;
     return NutritionProgressModel(
       title: item.title,
@@ -453,11 +561,13 @@ class HomeController extends GetxController {
 
   Future<void> openWellnessDetails() async {
     await Get.toNamed<void>(AppRoutes.wellness, arguments: selectedDay.value);
-    await loadDashboard();
+    await loadDashboard(showLoading: false);
   }
 
-  void openWaterDetails() =>
-      Get.toNamed<void>(AppRoutes.water, arguments: selectedDay.value);
+  Future<void> openWaterDetails() async {
+    await Get.toNamed<void>(AppRoutes.water, arguments: selectedDay.value);
+    await loadDashboard(showLoading: false);
+  }
 
   bool _isNavigatingMealPlanner = false;
   Future<void> openMealPlanner() async {
@@ -465,14 +575,15 @@ class HomeController extends GetxController {
     _isNavigatingMealPlanner = true;
     try {
       await Get.toNamed<void>(AppRoutes.mealPlanner);
-      await loadDashboard();
+      await loadDashboard(showLoading: false);
     } finally {
       _isNavigatingMealPlanner = false;
     }
   }
 
-  void openFoodAnalyzer() {
-    Get.toNamed<void>(AppRoutes.aiFood);
+  Future<void> openFoodAnalyzer() async {
+    await Get.toNamed<void>(AppRoutes.aiFood);
+    await loadDashboard(showLoading: false);
   }
 
   Future<void> logout() async {

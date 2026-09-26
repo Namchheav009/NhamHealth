@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../widgets/main_tab_scope.dart';
+import '../controllers/home/home_controller.dart';
+import '../controllers/planner/meal_planner_controller.dart';
 import 'community/community_page.dart';
 import 'home/home_view.dart';
 import 'meals/meal_view.dart';
@@ -30,6 +35,12 @@ class _MainTabsViewState extends State<MainTabsView> {
       _selectedIndex = index;
       _visited.add(index);
     });
+    if (index == 0 && Get.isRegistered<HomeController>()) {
+      unawaited(Get.find<HomeController>().loadDashboard(showLoading: false));
+    } else if (index == 2 && Get.isRegistered<MealPlannerController>()) {
+      final planner = Get.find<MealPlannerController>();
+      unawaited(planner.loadDailyNutrition(planner.selectedDate));
+    }
   }
 
   @override

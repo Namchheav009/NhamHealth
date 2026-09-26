@@ -516,17 +516,10 @@ class AiFoodController extends GetxController {
       }
       wellnessController.showSavedNutrition(savedDashboard, date: today);
       if (Get.isRegistered<HomeController>()) {
-        Get.find<HomeController>().addNutritionToToday(
-          calories: food.calories.round(),
-          protein: food.protein,
-          fat: food.fat,
-          water: waterGlasses,
-          fiber: food.fiber,
-          sugar: food.sugar,
-        );
+        Get.find<HomeController>().showSavedNutrition(savedDashboard, date: today);
       }
       if (Get.isRegistered<MealPlannerController>()) {
-        Get.find<MealPlannerController>().loadDailyNutrition(today);
+        Get.find<MealPlannerController>().showSavedNutrition(savedDashboard, date: today);
       }
       wasAdded.value = true;
       await AppAlert.actionSuccess(

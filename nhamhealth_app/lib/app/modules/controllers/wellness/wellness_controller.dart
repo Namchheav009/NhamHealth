@@ -108,6 +108,7 @@ class WellnessController extends GetxController {
       final dashboard = await repository.getDashboard(date: selectedDate.value);
       if (version != _loadVersion) return;
       _applyDashboard(dashboard);
+      _notifyCrossControllers(selectedDate.value, dashboard);
     } on Object {
       if (version != _loadVersion) return;
       AppAlert.error(
@@ -128,14 +129,23 @@ class WellnessController extends GetxController {
     selectedDate.value = DateTime(date.year, date.month, date.day);
     isLoading.value = false;
     _applyDashboard(dashboard);
-    _notifyCrossControllers(date);
+    _notifyCrossControllers(date, dashboard);
   }
 
-  void _notifyCrossControllers(DateTime date) {
+  void _notifyCrossControllers(DateTime date, [ProfileDashboardModel? dashboard]) {
+    if (dashboard != null) {
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().showSavedNutrition(dashboard, date: date);
+      }
+      if (Get.isRegistered<MealPlannerController>()) {
+        Get.find<MealPlannerController>().showSavedNutrition(dashboard, date: date);
+      }
+      return;
+    }
     if (Get.isRegistered<HomeController>()) {
       final home = Get.find<HomeController>();
       if (_sameDay(home.selectedDay.value, date)) {
-        unawaited(home.loadDashboard());
+        unawaited(home.loadDashboard(showLoading: false));
       }
     }
     if (Get.isRegistered<MealPlannerController>()) {
@@ -339,14 +349,38 @@ class WellnessController extends GetxController {
     required double sugar,
     double water = 0,
     double fiber = 0,
+    DateTime? date,
   }) {
-    _incrementNutrient('Calories', calories.toDouble());
-    _incrementNutrient('Protein', protein);
-    _incrementNutrient('Carbohydrates', carbs);
-    _incrementNutrient('Fat', fat);
-    _incrementNutrient('Sugar', sugar);
-    _incrementNutrient('Water', water);
-    _incrementNutrient('Fiber', fiber);
+    final targetDate = date ?? selectedDate.value;
+    if (_sameDay(selectedDate.value, targetDate)) {
+      _incrementNutrient('Calories', calories.toDouble());
+      _incrementNutrient('Protein', protein);
+      _incrementNutrient('Carbohydrates', carbs);
+      _incrementNutrient('Fat', fat);
+      _incrementNutrient('Sugar', sugar);
+      _incrementNutrient('Water', water);
+      _incrementNutrient('Fiber', fiber);
+    }
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().addNutritionToToday(
+        calories: calories,
+        protein: protein,
+        fat: fat,
+        water: water,
+        fiber: fiber,
+        sugar: sugar,
+        date: targetDate,
+      );
+    }
+    if (Get.isRegistered<MealPlannerController>()) {
+      Get.find<MealPlannerController>().applyMealNutritionDelta(
+        date: targetDate,
+        calories: calories.toDouble(),
+        protein: protein,
+        carbs: carbs,
+        fat: fat,
+      );
+    }
   }
 
   void _incrementNutrient(String name, double amount) {

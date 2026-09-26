@@ -1027,20 +1027,86 @@ class MealPlannerController extends GetxController {
     }
   }
 
+  void showSavedNutrition(
+    ProfileDashboardModel dashboard, {
+    required DateTime date,
+  }) {
+    if (_sameDay(selectedDate, date)) {
+      dailyDashboard.value = dashboard;
+      dailyWaterGlasses.value =
+          (dashboard.water?.current ?? 0).round().clamp(0, 20);
+    }
+  }
+
+  void applyMealNutritionDelta({
+    required DateTime date,
+    required double calories,
+    required double protein,
+    required double carbs,
+    required double fat,
+  }) {
+    if (!_sameDay(selectedDate, date)) return;
+    final current = dailyDashboard.value;
+    if (current != null) {
+      dailyDashboard.value = current.copyWith(
+        calories: _deltaProgress(current.calories, calories, 2000),
+        protein: _deltaProgress(current.protein, protein, 120),
+        carbs: _deltaProgress(current.carbs, carbs, 205),
+        fat: _deltaProgress(current.fat, fat, 78),
+      );
+    }
+  }
+
+  ProfileProgressModel _deltaProgress(
+    ProfileProgressModel? existing,
+    double delta,
+    double defaultGoal,
+  ) {
+    final raw = (existing?.current ?? 0.0) + delta;
+    final current = raw < 0 ? 0.0 : raw;
+    final goal = (existing?.goal ?? 0.0) > 0 ? existing!.goal : defaultGoal;
+    return ProfileProgressModel(current: current, goal: goal);
+  }
+
   void _applyWellnessDelta(
     PlannedMeal meal, {
     required DateTime date,
     required double servings,
     required double direction,
   }) {
-    if (direction == 0 || !Get.isRegistered<WellnessController>()) return;
-    Get.find<WellnessController>().applyMealNutritionDelta(
+    if (direction == 0) return;
+    final calDelta = meal.calories * servings * direction;
+    final proDelta = meal.proteinGrams * servings * direction;
+    final carbDelta = meal.carbsGrams * servings * direction;
+    final fatDelta = meal.fatGrams * servings * direction;
+
+    applyMealNutritionDelta(
       date: date,
-      calories: meal.calories * servings * direction,
-      protein: meal.proteinGrams * servings * direction,
-      carbs: meal.carbsGrams * servings * direction,
-      fat: meal.fatGrams * servings * direction,
+      calories: calDelta,
+      protein: proDelta,
+      carbs: carbDelta,
+      fat: fatDelta,
     );
+
+    if (Get.isRegistered<WellnessController>()) {
+      Get.find<WellnessController>().applyMealNutritionDelta(
+        date: date,
+        calories: calDelta,
+        protein: proDelta,
+        carbs: carbDelta,
+        fat: fatDelta,
+      );
+    }
+
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().applyMealNutritionDelta(
+        date: date,
+        calories: calDelta,
+        protein: proDelta,
+        carbs: carbDelta,
+        fat: fatDelta,
+      );
+    }
   }
 
   Future<void> removeMeal(MealPlanSlot slot) async {
@@ -1071,32 +1137,21 @@ class MealPlannerController extends GetxController {
     unawaited(loadWaterIntake(date));
     if (Get.isRegistered<WellnessController>()) {
       final wellness = Get.find<WellnessController>();
-      if (_dateKey(wellness.selectedDate.value) == _dateKey(date)) {
+      if (_sameDay(wellness.selectedDate.value, date)) {
         await wellness.loadDailyWellness();
       }
     }
     if (Get.isRegistered<HomeController>()) {
       final home = Get.find<HomeController>();
-      if (_dateKey(home.selectedDay.value) == _dateKey(date)) {
-        await home.loadDashboard();
+      if (_sameDay(home.selectedDay.value, date)) {
+        await home.loadDashboard(showLoading: false);
       }
     }
   }
 
-  void _notifyNutritionSync(DateTime date) {
-    if (Get.isRegistered<WellnessController>()) {
-      final wellness = Get.find<WellnessController>();
-      if (_dateKey(wellness.selectedDate.value) == _dateKey(date)) {
-        unawaited(wellness.loadDailyWellness());
-      }
-    }
-    if (Get.isRegistered<HomeController>()) {
-      final home = Get.find<HomeController>();
-      if (_dateKey(home.selectedDay.value) == _dateKey(date)) {
-        unawaited(home.loadDashboard());
-      }
-    }
-  }
+
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   Future<void> resetAllMealsToPlanned({bool currentDayOnly = true}) async {
     final dates = currentDayOnly ? [selectedDate] : planDays;
@@ -1312,11 +1367,11 @@ class MealPlannerController extends GetxController {
     if (_profileRepository != null) {
       try {
         final dashboard = await _profileRepository.getDashboard(date: date);
-        dailyDashboard.value = dashboard;
-        dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
-          0,
-          20,
-        );
+        if (_sameDay(selectedDate, date)) {
+          dailyDashboard.value = dashboard;
+          dailyWaterGlasses.value =
+              (dashboard.water?.current ?? 0).round().clamp(0, 20);
+        }
       } catch (_) {
         // Keep the last server value visible if refreshing fails.
       }
@@ -1346,12 +1401,19 @@ class MealPlannerController extends GetxController {
         water: 1,
         date: selectedDate,
       );
-      dailyDashboard.value = dashboard;
-      dailyWaterGlasses.value = (dashboard.water?.current ?? 0).round().clamp(
-        0,
-        20,
-      );
-      _notifyNutritionSync(selectedDate);
+      showSavedNutrition(dashboard, date: selectedDate);
+      if (Get.isRegistered<WellnessController>()) {
+        Get.find<WellnessController>().showSavedNutrition(
+          dashboard,
+          date: selectedDate,
+        );
+      }
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().showSavedNutrition(
+          dashboard,
+          date: selectedDate,
+        );
+      }
       return;
     }
     dailyWaterGlasses.value++;

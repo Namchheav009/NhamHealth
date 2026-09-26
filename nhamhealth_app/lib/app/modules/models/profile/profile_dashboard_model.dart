@@ -72,6 +72,52 @@ class ProfileDashboardModel {
     if (value is! Map<String, dynamic>) return null;
     return ProfileProgressModel.fromJson(value);
   }
+
+  ProfileDashboardModel copyWith({
+    int? userId,
+    String? email,
+    String? fullName,
+    String? profileImageUrl,
+    String? membership,
+    String? phone,
+    bool? phoneVerified,
+    DateTime? dateOfBirth,
+    String? gender,
+    int? age,
+    double? heightCm,
+    double? weightKg,
+    ProfileProgressModel? calories,
+    ProfileProgressModel? protein,
+    ProfileProgressModel? carbs,
+    ProfileProgressModel? fat,
+    ProfileProgressModel? water,
+    ProfileProgressModel? fiber,
+    ProfileProgressModel? sugar,
+    String? insight,
+  }) {
+    return ProfileDashboardModel(
+      userId: userId ?? this.userId,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      membership: membership ?? this.membership,
+      phone: phone ?? this.phone,
+      phoneVerified: phoneVerified ?? this.phoneVerified,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      age: age ?? this.age,
+      heightCm: heightCm ?? this.heightCm,
+      weightKg: weightKg ?? this.weightKg,
+      calories: calories ?? this.calories,
+      protein: protein ?? this.protein,
+      carbs: carbs ?? this.carbs,
+      fat: fat ?? this.fat,
+      water: water ?? this.water,
+      fiber: fiber ?? this.fiber,
+      sugar: sugar ?? this.sugar,
+      insight: insight ?? this.insight,
+    );
+  }
 }
 
 class ProfileProgressModel {
@@ -84,6 +130,16 @@ class ProfileProgressModel {
     return ProfileProgressModel(
       current: (json['current'] as num?)?.toDouble() ?? 0,
       goal: (json['goal'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  ProfileProgressModel copyWith({
+    double? current,
+    double? goal,
+  }) {
+    return ProfileProgressModel(
+      current: current ?? this.current,
+      goal: goal ?? this.goal,
     );
   }
 }
